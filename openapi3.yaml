@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: service-name
+  title: exporter-trigger
   description: basic template for map colonies service
   version: 1.0.0
   license:
@@ -8,19 +8,6 @@ info:
     url: https://opensource.org/licenses/MIT
 
 paths:
-  /anotherResource:
-    get:
-      operationId: getAnotherResource
-      tags:
-        - anotherResource
-      summary: gets the resource
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/anotherResource'
   /resourceName:
     get:
       operationId: getResourceName

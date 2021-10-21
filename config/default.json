@@ -8,7 +8,7 @@
   "telemetry": {
     "logger": {
       "level": "info",
-      "prettyPrint": false
+      "prettyPrint": true
     }
   },
   "server": {
@@ -23,6 +23,24 @@
         "enabled": true,
         "options": null
       }
+    }
+  },
+  "httpRetry": {
+    "attempts": 5,
+    "delay": "exponential",
+    "shouldResetTimeout": true
+  },
+  "jobManager": {
+    "url": "http://job-manager-job-manager",
+    "expirationTime":
+  },
+  "rasterCatalogManager": {
+    "url": "RASTER_CATALOG_MANAGER_URL"
+  },
+  "workerTypes": {
+    "tiles": {
+      "jobType": "WORKER_TYPES_TILES_JOB_TYPE",
+      "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
     }
   }
 }
