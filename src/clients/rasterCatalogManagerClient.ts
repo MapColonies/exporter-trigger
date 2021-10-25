@@ -4,20 +4,26 @@ import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../common/constants';
 import { AxiosResponse } from 'axios';
+import { NotFoundError } from '@map-colonies/error-types';
 
-type ArrayOfDict = (Record<string, unknown> | undefined)[];
+type PycswRecord = Record<string, unknown>;
+type PycswFindRecordResponse = (PycswRecord | undefined)[];
 
 @injectable()
-export class RasterCatalogManager extends HttpClient {
+export class RasterCatalogManagerClient extends HttpClient {
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
     super(logger, config.get<string>('rasterCatalogManager.url'), 'RasterCatalogManager', config.get<IHttpRetryConfig>('httpRetry'));
   }
 
-  public async findLayer(id: string) {
+  public async findLayer(id: string): Promise<PycswRecord> {
     const findLayerUrl = `/records/find`;
     this.logger.info(`Retrieving record with id ${id}`);
-    const layer = (await this.post<AxiosResponse>(findLayerUrl, { id })).data as ArrayOfDict[0];
+    const layer = (await this.post<PycswFindRecordResponse>(findLayerUrl, { id }))[0];
 
+    if (layer === undefined)
+        throw new NotFoundError(`Could not find layer with dbID: ${id}`);
+
+    this.logger.debug(`Retrieved layer: ${JSON.stringify(layer)}`);
     return layer;
   }
 }

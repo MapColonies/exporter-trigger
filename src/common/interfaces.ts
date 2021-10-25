@@ -38,6 +38,10 @@ export interface IJobCreationResponse {
   taskId: string;
 }
 
+export interface IBasicResponse {
+  message: string
+}
+
 export enum OperationStatus {
   PENDING = 'Pending',
   IN_PROGRESS = 'In-Progress',

@@ -65,7 +65,9 @@ export class JobManagerClient extends HttpClient {
       ],
     };
 
-    this.logger.info(`creating job and task for ${data.dbId}`);
+    this.logger.info(`Creating job and task for ${data.dbId}`);
+    this.logger.debug(JSON.stringify(createJobRequest));
+    
     const res = await this.post<ICreateJobResponse>(createLayerTasksUrl, createJobRequest);
     return {
       jobId: res.id,

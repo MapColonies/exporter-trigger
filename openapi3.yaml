@@ -1,74 +1,102 @@
 openapi: 3.0.1
 info:
   title: exporter-trigger
-  description: basic template for map colonies service
+  description: Service that responsible for activating the export geopackage process
   version: 1.0.0
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-
+servers:
+  - url: http://localhost:80
 paths:
-  /resourceName:
-    get:
-      operationId: getResourceName
+  /create:
+    post:
       tags:
-        - resourceName
-      summary: gets the resource
+        - createGpkg
+      summary: Trigger export geopackage process
+      operationId: exportTilesToGpkg
+      requestBody:
+        $ref: '#/components/requestBodies/ExportGetmapBody'
       responses:
         200:
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource'
-    post:
-      operationId: createResource
-      tags:
-        - resourceName
-      summary: creates a new record of type resource
-      responses:
-        201:
-          description: created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/resource'
+                $ref: '#/components/schemas/createGpkgJobResponse'
         400:
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+
 components:
+  requestBodies:
+    ExportProcessBody:
+      description: Export geopackage request
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exportProcess'
+    
+    ExportGetmapBody:
+      description: Export to gpkg via GetMap
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exportGetMap'      
+
   schemas:
-    error:
+    exportGetMap:
       type: object
-      required:
-        - message
       properties:
-        message:
-          type: string
-    resource:
-      type: object
-      required:
-        - id
-        - name
-        - description
-      properties:
-        id:
+        dbId:
+            type: string
+            format: uuid
+            description: ID as the primary key from the Raster Catalog
+        packageName:
+            type: string
+            description: The name of the desired GPKG. NO need to add extension (.gpkg) to this name
+        bbox:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+          description: Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in crs units as array
+        targetResolution:
           type: number
-          format: int64
-        name:
+          description: The target resolution in which the tiles will be created - DEGREE to PIXEL
+        callbackURL:
           type: string
-        description:
+          description: The callback URL to notify the process if finished
+        CRS:
           type: string
-    anotherResource:
-      type: object
+          description: The CRS to be used, defaults to EPSG:4326
+          enum: ['EPSG:4326']
+        priority:
+          type: number
+          description: The priority of the record. Maximum priority = most urgent.
+          minimum: 0
+          maximum: 999999999
       required:
-        - kind
-        - isAlive
-      properties:
-        kind:
-          type: string
-        isAlive:
-          type: boolean
+        - dbId
+        - bbox
+        - targetResolution
+        - callbackURL
+        - packageName          
+
+      example:
+        dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
+        packageName: myPackage
+        bbox:
+          [
+            34.811938017107494,
+            31.95475033759175,
+            34.82237261707599,
+            31.96426962177354,
+          ]
+        targetResolution: 4.29153442382812e-05
+        callbackURL: 'http://example.getmap.com/callback'
+        CRS: 'EPSG:4326'
+        priority: 0        
