@@ -63,7 +63,8 @@ components:
         packageName:
           type: string
           description: The name of the desired GPKG (no need for .gpkg extension)
-          # pattern:
+          pattern: '^[\/\w\-. ]+$' # Allowed characters for file name in Linux
+          maxLength: 255 # Linux maximum file name length is 255 bytes
         bbox:
           type: array
           items:
