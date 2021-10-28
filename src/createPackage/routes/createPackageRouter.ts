@@ -6,7 +6,7 @@ const createPackageRouterFactory: FactoryFunction<Router> = (dependencyContainer
   const router = Router();
   const controller = dependencyContainer.resolve(CreatePackageController);
 
-  router.post('/create', controller.create);
+  router.post('/', controller.create);
 
   return router;
 };

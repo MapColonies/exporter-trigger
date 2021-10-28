@@ -39,7 +39,7 @@ export interface IJobCreationResponse {
 }
 
 export interface IBasicResponse {
-  message: string
+  message: string;
 }
 
 export enum OperationStatus {

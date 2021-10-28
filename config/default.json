@@ -35,12 +35,12 @@
     "expirationTime": 30
   },
   "rasterCatalogManager": {
-    "url": "RASTER_CATALOG_MANAGER_URL"
+    "url": "http://raster-catalog-manager"
   },
   "workerTypes": {
     "tiles": {
-      "jobType": "WORKER_TYPES_TILES_JOB_TYPE",
-      "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
+      "jobType": "rasterTilesExporter",
+      "taskType": "rasterTilesExporter"
     }
   }
 }

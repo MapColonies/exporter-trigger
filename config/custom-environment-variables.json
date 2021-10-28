@@ -40,7 +40,7 @@
     }
   },
   "httpRetry": {
-    "attempts": { 
+    "attempts": {
       "__name": "HTTP_RETRY_ATTEMPTS",
       "__format": "number"
     },

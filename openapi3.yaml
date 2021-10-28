@@ -3,8 +3,10 @@ info:
   title: exporter-trigger
   description: Service that responsible for activating the export geopackage process
   version: 1.0.0
-servers:
-  - url: http://localhost:80
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
 paths:
   /create:
     post:
@@ -27,36 +29,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+        404:
+          description: Could not find layer with matched dbId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalError'
 
 components:
   requestBodies:
-    ExportProcessBody:
-      description: Export geopackage request
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/exportProcess'
-    
     ExportGetmapBody:
       description: Export to gpkg via GetMap
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/exportGetMap'      
+            $ref: '#/components/schemas/exportGetMap'
 
   schemas:
     exportGetMap:
       type: object
       properties:
         dbId:
-            type: string
-            format: uuid
-            description: ID as the primary key from the Raster Catalog
+          type: string
+          format: uuid
+          description: ID as the primary key from the Raster Catalog
         packageName:
-            type: string
-            description: The name of the desired GPKG. NO need to add extension (.gpkg) to this name
+          type: string
+          description: The name of the desired GPKG (no need for .gpkg extension)
+          # pattern:
         bbox:
           type: array
           items:
@@ -70,10 +77,8 @@ components:
         callbackURL:
           type: string
           description: The callback URL to notify the process if finished
-        CRS:
-          type: string
-          description: The CRS to be used, defaults to EPSG:4326
-          enum: ['EPSG:4326']
+        crs:
+          $ref: '#/components/schemas/CRS'
         priority:
           type: number
           description: The priority of the record. Maximum priority = most urgent.
@@ -84,19 +89,51 @@ components:
         - bbox
         - targetResolution
         - callbackURL
-        - packageName          
+        - packageName
 
       example:
         dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
         packageName: myPackage
-        bbox:
-          [
-            34.811938017107494,
-            31.95475033759175,
-            34.82237261707599,
-            31.96426962177354,
-          ]
+        bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354]
         targetResolution: 4.29153442382812e-05
         callbackURL: 'http://example.getmap.com/callback'
-        CRS: 'EPSG:4326'
-        priority: 0        
+        crs: 'EPSG:4326'
+        priority: 0
+
+    createGpkgJobResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+      required:
+        - jobId
+        - taskId
+
+    error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+
+    internalError:
+      type: object
+      required:
+        - message
+        - stacktrace
+      properties:
+        message:
+          type: string
+        stacktrace:
+          type: string
+
+    CRS:
+      type: string
+      description: List of supported
+      enum:
+        - EPSG:4326

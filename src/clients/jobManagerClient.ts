@@ -1,21 +1,9 @@
 import { inject, injectable } from 'tsyringe';
-import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
+import { degreesPerPixelToZoomLevel, HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { ICreateJobBody, ICreateJobResponse, IJobCreationResponse, IWorkerInput } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
-
-// TODO: Will be replaced by MC-UTILS
-export const zoomLevelFromRes = (resolution: number): number => {
-  const MIN_ZOOM_LEVEL = 0;
-  const MAX_ZOOM_LEVEL = 22;
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  const zoomLevel = Math.ceil(Math.log2(180 / (resolution * 256)));
-  if (zoomLevel < MIN_ZOOM_LEVEL || zoomLevel > MAX_ZOOM_LEVEL) {
-    throw new Error(`Invalid zoom level ${zoomLevel} for resolution ${resolution}`);
-  }
-  return zoomLevel;
-};
 
 @injectable()
 export class JobManagerClient extends HttpClient {
@@ -33,7 +21,7 @@ export class JobManagerClient extends HttpClient {
   public async createJob(data: IWorkerInput): Promise<IJobCreationResponse> {
     const { cswProductId: resourceId, version } = data;
     const createLayerTasksUrl = `/jobs`;
-    const zoomLevel = zoomLevelFromRes(data.targetResolution);
+    const zoomLevel = degreesPerPixelToZoomLevel(data.targetResolution);
 
     const expirationTime = new Date();
     expirationTime.setDate(expirationTime.getDate() + this.expirationTime);
@@ -67,7 +55,7 @@ export class JobManagerClient extends HttpClient {
 
     this.logger.info(`Creating job and task for ${data.dbId}`);
     this.logger.debug(JSON.stringify(createJobRequest));
-    
+
     const res = await this.post<ICreateJobResponse>(createLayerTasksUrl, createJobRequest);
     return {
       jobId: res.id,

@@ -38,7 +38,7 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
-    this.serverInstance.use('/create-package', this.createPackageRouter);
+    this.serverInstance.use('/create', this.createPackageRouter);
     this.buildDocsRoutes();
   }
 
