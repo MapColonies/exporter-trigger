@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { IWorkerInput } from '../../src/common/interfaces';
 
 const layerFromCatalog = {

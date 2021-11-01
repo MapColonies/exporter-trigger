@@ -22,7 +22,7 @@ describe('JobManagerClient', () => {
       (jobManagerClient as unknown as { post: unknown }).post = postFun.mockResolvedValue({ id: '123', taskIds: ['123'] });
       await jobManagerClient.createJob(workerInput);
 
-      expect(postFun).toBeCalledTimes(1);
+      expect(postFun).toHaveBeenCalledTimes(1);
     });
   });
 });

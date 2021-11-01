@@ -6,9 +6,9 @@ import { getApp } from '../../../src/app';
 import { RasterCatalogManagerClient } from '../../../src/clients/rasterCatalogManagerClient';
 import { SERVICES } from '../../../src/common/constants';
 import { ICreatePackage } from '../../../src/common/interfaces';
-import { CreatePackageSender } from './helpers/createPackageSender';
 import { layerFromCatalog } from '../../mocks/data';
 import { JobManagerClient } from '../../../src/clients/jobManagerClient';
+import { CreatePackageSender } from './helpers/createPackageSender';
 
 describe('tiles', function () {
   let requestSender: CreatePackageSender;

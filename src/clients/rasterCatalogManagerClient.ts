@@ -2,11 +2,11 @@ import { inject, injectable } from 'tsyringe';
 import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
-import { SERVICES } from '../common/constants';
 import { NotFoundError } from '@map-colonies/error-types';
+import { SERVICES } from '../common/constants';
 
 type PycswRecord = Record<string, unknown>;
-type PycswFindRecordResponse = PycswRecord[] | [];
+type PycswFindRecordResponse = PycswRecord[] | [undefined];
 
 @injectable()
 export class RasterCatalogManagerClient extends HttpClient {
@@ -19,7 +19,9 @@ export class RasterCatalogManagerClient extends HttpClient {
     this.logger.info(`Retrieving record with id ${id}`);
     const layer = (await this.post<PycswFindRecordResponse>(findLayerUrl, { id }))[0];
 
-    if (layer === undefined) throw new NotFoundError(`Could not find layer with dbID: ${id}`);
+    if (layer === undefined) {
+      throw new NotFoundError(`Could not find layer with dbID: ${id}`);
+    }
 
     this.logger.debug(`Retrieved layer: ${JSON.stringify(layer)}`);
     return layer;
