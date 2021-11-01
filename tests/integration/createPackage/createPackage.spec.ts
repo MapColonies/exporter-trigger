@@ -54,4 +54,23 @@ describe('tiles', function () {
       expect(resposne.status).toBe(httpStatusCodes.OK);
     });
   });
+
+  describe('Sad Path', function () {
+    it('should return 400 status code beause of bad data - no "bbox" field', async function () {
+      const body = {
+        dbId: layerFromCatalog.id,
+        packageName: 'myPackage',
+        targetResolution: 0.0000429153442382812,
+        callbackURL: 'http://example.getmap.com/callback',
+        crs: 'EPSG:4326',
+        priority: 0,
+      } as unknown as ICreatePackage;
+
+      const resposne = await requestSender.create(body);
+
+      expect(findLayerSpy).toHaveBeenCalledTimes(0);
+      expect(createJobSpy).toHaveBeenCalledTimes(0);
+      expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
+    });
+  });
 });
