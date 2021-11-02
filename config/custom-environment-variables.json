@@ -38,5 +38,32 @@
         }
       }
     }
+  },
+  "httpRetry": {
+    "attempts": {
+      "__name": "HTTP_RETRY_ATTEMPTS",
+      "__format": "number"
+    },
+    "delay": "HTTP_RETRY_DELAY",
+    "shouldResetTimeout": {
+      "__name": "HTTP_RETRY_SHOULD_RESET_TIMEOUT",
+      "__format": "boolean"
+    }
+  },
+  "jobManager": {
+    "url": "JOB_MANAGER_URL",
+    "expirationTime": {
+      "__name": "JOB_MANAGER_EXPIRATION_TIME",
+      "__format": "number"
+    }
+  },
+  "rasterCatalogManager": {
+    "url": "RASTER_CATALOG_MANAGER_URL"
+  },
+  "workerTypes": {
+    "tiles": {
+      "jobType": "WORKER_TYPES_TILES_JOB_TYPE",
+      "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
+    }
   }
 }

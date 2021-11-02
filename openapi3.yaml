@@ -1,59 +1,119 @@
 openapi: 3.0.1
 info:
-  title: service-name
-  description: basic template for map colonies service
+  title: exporter-trigger
+  description: Service that responsible for activating the export geopackage process
   version: 1.0.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 paths:
-  /anotherResource:
-    get:
-      operationId: getAnotherResource
-      tags:
-        - anotherResource
-      summary: gets the resource
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/anotherResource'
-  /resourceName:
-    get:
-      operationId: getResourceName
-      tags:
-        - resourceName
-      summary: gets the resource
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/resource'
+  /create:
     post:
-      operationId: createResource
       tags:
-        - resourceName
-      summary: creates a new record of type resource
+        - createGpkg
+      summary: Trigger export geopackage process
+      operationId: exportTilesToGpkg
+      requestBody:
+        $ref: '#/components/requestBodies/ExportGetmapBody'
       responses:
-        201:
-          description: created
+        200:
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource'
+                $ref: '#/components/schemas/createGpkgJobResponse'
         400:
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+        404:
+          description: Could not find layer with matched dbId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalError'
+
 components:
+  requestBodies:
+    ExportGetmapBody:
+      description: Export to gpkg via GetMap
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exportGetMap'
+
   schemas:
+    exportGetMap:
+      type: object
+      properties:
+        dbId:
+          type: string
+          format: uuid
+          description: ID as the primary key from the Raster Catalog
+        packageName:
+          type: string
+          description: The name of the desired GPKG (no need for .gpkg extension)
+          pattern: '^[\/\w\-. ]+$' # Allowed characters for file name in Linux
+          maxLength: 255 # Linux maximum file name length is 255 bytes
+        bbox:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+          description: Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in crs units as array
+        targetResolution:
+          type: number
+          description: The target resolution in which the tiles will be created - DEGREE to PIXEL
+        callbackURL:
+          type: string
+          description: The callback URL to notify the process if finished
+        crs:
+          $ref: '#/components/schemas/CRS'
+        priority:
+          type: number
+          description: The priority of the record. Maximum priority = most urgent.
+          minimum: 0
+          maximum: 999999999
+      required:
+        - dbId
+        - bbox
+        - targetResolution
+        - callbackURL
+        - packageName
+
+      example:
+        dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
+        packageName: myPackage
+        bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354]
+        targetResolution: 4.29153442382812e-05
+        callbackURL: 'http://example.getmap.com/callback'
+        crs: 'EPSG:4326'
+        priority: 0
+
+    createGpkgJobResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+      required:
+        - jobId
+        - taskId
+
     error:
       type: object
       required:
@@ -61,27 +121,20 @@ components:
       properties:
         message:
           type: string
-    resource:
+
+    internalError:
       type: object
       required:
-        - id
-        - name
-        - description
+        - message
+        - stacktrace
       properties:
-        id:
-          type: number
-          format: int64
-        name:
+        message:
           type: string
-        description:
+        stacktrace:
           type: string
-    anotherResource:
-      type: object
-      required:
-        - kind
-        - isAlive
-      properties:
-        kind:
-          type: string
-        isAlive:
-          type: boolean
+
+    CRS:
+      type: string
+      description: List of supported
+      enum:
+        - EPSG:4326

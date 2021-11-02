@@ -14,3 +14,6 @@ export const SERVICES: Record<string, symbol> = {
   METER: Symbol('Meter'),
 };
 /* eslint-enable @typescript-eslint/naming-convention */
+
+export const DEFAULT_PRIORITY = 1000;
+export const DEFAULT_CRS = 'EPSG:4326';
