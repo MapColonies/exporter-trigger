@@ -1,126 +1,40 @@
-# Map Colonies typescript service template
+# Exporter Trigger
+This service triggers export process from user's input.
 
-----------------------------------
+# Usage
+###  For local development
+Clone the repository, hit `npm install` & `npm start`. Make sure you have your configurations set right. 
+###  Docker
+Build an image with the provided `Dockerfile`, then run it.
 
-![badge-alerts-lgtm](https://img.shields.io/lgtm/alerts/github/MapColonies/ts-server-boilerplate?style=for-the-badge)
+# Environment Variables
+**Service Specific**
+* JOB_MANAGER_URL
+* JOB_MANAGER_EXPIRATION_TIME - amount of days from creation till this job is expired
+* RASTER_CATALOG_MANAGER_URL
+* WORKER_TYPES_TILES_JOB_TYPE - configuration for exporter job type
+* WORKER_TYPES_TILES_TASK_TYPE - configuration for exporter task type
 
-![grade-badge-lgtm](https://img.shields.io/lgtm/grade/javascript/github/MapColonies/ts-server-boilerplate?style=for-the-badge)
+**HTTP Requests**
+* HTTP_RETRY_ATTEMPTS
+* HTTP_RETRY_DELAY
+* HTTP_RETRY_SHOULD_RESET_TIMEOUT
 
-![snyk](https://img.shields.io/snyk/vulnerabilities/github/MapColonies/ts-server-boilerplate?style=for-the-badge)
+**Telemetry**
+* TELEMETRY_SERVICE_NAME
+* TELEMETRY_HOST_NAME
+* TELEMETRY_SERVICE_VERSION
+* TELEMETRY_TRACING_ENABLED
+* TELEMETRY_TRACING_URL
+* TELEMETRY_METRICS_ENABLED
+* TELEMETRY_METRICS_URL
+* TELEMETRY_METRICS_INTERVAL
 
-----------------------------------
+**Logging**
+* LOG_LEVEL
+* LOG_PRETTY_PRINT_ENABLED
 
-This is a basic repo template for building new MapColonies web services in Typescript.
-
-### Template Features:
-
-- eslint configuration by [@map-colonies/eslint-config](https://github.com/MapColonies/eslint-config)
-
-- prettier configuration by [@map-colonies/prettier-config](https://github.com/MapColonies/prettier-config)
-
-- jest
-
-- .nvmrc
-
-- Multi stage producton-ready Dockerfile
-
-- commitlint
-
-- git hooks
-
-- logging by [@map-colonies/js-logger](https://github.com/MapColonies/js-logger)
-
-- OpenAPI request validation
-
-- config load with [node-config](https://www.npmjs.com/package/node-config)
-
-- Tracing and metrics by [@map-colonies/telemetry](https://github.com/MapColonies/telemetry)
-
-- github templates
-
-- bug report
-
-- feature request
-
-- pull request
-
-- github actions
-
-- on pull_request
-
-- LGTM
-
-- test
-
-- lint
-
-- snyk
-
-## API
-Checkout the OpenAPI spec [here](/openapi3.yaml)
-
-## Installation
-
-Install deps with npm
-
-```bash
-npm install
-```
-### Install Git Hooks
-```bash
-npx husky install
-```
-
-## Run Locally
-
-Clone the project
-
-```bash
-
-git clone https://link-to-project
-
-```
-
-Go to the project directory
-
-```bash
-
-cd my-project
-
-```
-
-Install dependencies
-
-```bash
-
-npm install
-
-```
-
-Start the server
-
-```bash
-
-npm run start
-
-```
-
-## Running Tests
-
-To run tests, run the following command
-
-```bash
-
-npm run test
-
-```
-
-To only run unit tests:
-```bash
-npm run test:unit
-```
-
-To only run integration tests:
-```bash
-npm run test:integration
-```
+**Server**
+* SERVER_PORT
+* REQUEST_PAYLOAD_LIMIT
+* RESPONSE_COMPRESSION_ENABLED

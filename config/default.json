@@ -24,5 +24,23 @@
         "options": null
       }
     }
+  },
+  "httpRetry": {
+    "attempts": 5,
+    "delay": "exponential",
+    "shouldResetTimeout": true
+  },
+  "jobManager": {
+    "url": "http://job-manager-job-manager",
+    "expirationTime": 30
+  },
+  "rasterCatalogManager": {
+    "url": "http://raster-catalog-manager"
+  },
+  "workerTypes": {
+    "tiles": {
+      "jobType": "rasterTilesExporter",
+      "taskType": "rasterTilesExporter"
+    }
   }
 }
