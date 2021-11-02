@@ -15,7 +15,7 @@ cloudProvider:
   flavor: openshift
 
 image:
-  repository: ts-server-boilerplate
+  repository: exporter-trigger
   tag: 'latest'
 
 env:
@@ -32,6 +32,19 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
+  jobManager:
+    url: http://job-manager
+    expirationTime: 30
+  rasterCatalogManager:
+    url: http://raster-catalog-manager
+  workerTypes:
+    tiles:
+      jobType: rasterTilesExporter
+      taskType: rasterTilesExporter
+  httpRetry:
+    attempts: 5
+    delay: exponential
+    shouldResetTimeout: true
 
 resources:
   enabled: true
