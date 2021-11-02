@@ -12,20 +12,18 @@ type CreatePackageHandler = RequestHandler<undefined, IBasicResponse | IJobCreat
 
 @injectable()
 export class CreatePackageController {
-  private readonly createdResourceCounter: BoundCounter;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(CreatePackageManager) private readonly manager: CreatePackageManager,
     @inject(SERVICES.METER) private readonly meter: Meter
-  ) {
-    this.createdResourceCounter = meter.createCounter('created_resource');
-  }
+  ) {}
 
   public create: CreatePackageHandler = async (req, res, next) => {
     const userInput: ICreatePackage = req.body;
     try {
-      this.logger.debug(`Creating package with input ${JSON.stringify(userInput)}`);
+      this.logger.info(`Creating package "${userInput.packageName}"`);
+      this.logger.debug(`User input: ${JSON.stringify(userInput)}`);
       const jobCreated = await this.manager.createPackage(userInput);
       return res.status(httpStatus.OK).json(jobCreated);
     } catch (err) {

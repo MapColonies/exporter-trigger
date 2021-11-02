@@ -49,6 +49,7 @@ describe('tiles', function () {
 
       const resposne = await requestSender.create(body);
 
+      expect(resposne).toSatisfyApiSpec();
       expect(findLayerSpy).toHaveBeenCalledTimes(1);
       expect(createJobSpy).toHaveBeenCalledTimes(1);
       expect(resposne.status).toBe(httpStatusCodes.OK);
