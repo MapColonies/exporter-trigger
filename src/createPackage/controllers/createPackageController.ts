@@ -1,6 +1,5 @@
 import { Logger } from '@map-colonies/js-logger';
 import { Meter } from '@map-colonies/telemetry';
-import { BoundCounter } from '@opentelemetry/api-metrics';
 import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
@@ -12,7 +11,6 @@ type CreatePackageHandler = RequestHandler<undefined, IBasicResponse | IJobCreat
 
 @injectable()
 export class CreatePackageController {
-
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(CreatePackageManager) private readonly manager: CreatePackageManager,
