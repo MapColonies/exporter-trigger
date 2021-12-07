@@ -21,7 +21,7 @@ const layerMetadata = {
   productVersion: '1.0',
   productType: 'Orthophoto',
   srsName: 'WGS84GEO',
-  resolution: '0.0000018519',
+  resolution: '0.000018519',
   maxResolutionMeter: '0.2',
   rms: null,
   scale: null,
