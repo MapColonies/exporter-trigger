@@ -1,7 +1,8 @@
 import { inject, injectable } from 'tsyringe';
-import { degreesPerPixelToZoomLevel, HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import config from 'config';
+import { degreesPerPixelToZoomLevel, HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { Logger } from '@map-colonies/js-logger';
+import { LayerMetadata } from '@map-colonies/mc-model-types';
 import { ICreateJobBody, ICreateJobResponse, IJobCreationResponse, IWorkerInput } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 
@@ -18,7 +19,7 @@ export class JobManagerClient extends HttpClient {
     this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
   }
 
-  public async createJob(data: IWorkerInput): Promise<IJobCreationResponse> {
+  public async createJob(data: IWorkerInput, layer: LayerMetadata): Promise<IJobCreationResponse> {
     const { cswProductId: resourceId, version } = data;
     const createLayerTasksUrl = `/jobs`;
     const zoomLevel = degreesPerPixelToZoomLevel(data.targetResolution);
@@ -30,6 +31,10 @@ export class JobManagerClient extends HttpClient {
       resourceId: resourceId,
       version: version,
       type: this.tilesJobType,
+      internalId: data.dbId,
+      producerName: layer.producerName,
+      productName: layer.productName,
+      productType: layer.productType,
       parameters: {
         ...data,
         userId: 'tester', // TODO: replace with request value

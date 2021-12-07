@@ -67,6 +67,10 @@ export interface ICreateJobBody {
   status?: OperationStatus;
   reason?: string;
   tasks?: ICreateTaskBody[];
+  internalId?: string;
+  producerName?: string;
+  productName?: string;
+  productType?: string;
 }
 
 export interface ICreateJobResponse {

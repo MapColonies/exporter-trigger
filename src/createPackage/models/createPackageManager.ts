@@ -1,6 +1,5 @@
 import { sep } from 'path';
 import { Logger } from '@map-colonies/js-logger';
-import { LayerMetadata } from '@map-colonies/mc-model-types';
 import { Polygon, MultiPolygon } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
@@ -19,7 +18,7 @@ export class CreatePackageManager {
   public async createPackage(userInput: ICreatePackage): Promise<IJobCreationResponse> {
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
 
-    const layerMetadata = layer.metadata as LayerMetadata;
+    const layerMetadata = layer.metadata;
 
     const workerInput: IWorkerInput = {
       footprint: layerMetadata.footprint as Polygon | MultiPolygon,
@@ -35,7 +34,7 @@ export class CreatePackageManager {
       crs: userInput.crs ?? DEFAULT_CRS,
     };
 
-    const jobCreated = await this.jobManagerClient.createJob(workerInput);
+    const jobCreated = await this.jobManagerClient.createJob(workerInput, layerMetadata);
     return jobCreated;
   }
 }
