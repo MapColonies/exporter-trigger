@@ -100,7 +100,6 @@ const workerInput: IWorkerInput = {
   cswProductId: '2021_10_26T10_59_14Z_MAS_6_ORT_247993',
   targetResolution: 0.0000429153442382812,
   dbId: '07a8d8dc-4624-434d-b799-8f2f57643b2f',
-  packageName: 'myPackage',
   callbackURL: 'http://example.getmap.com/callback',
   tilesPath: '2021_10_26T10_59_14Z_MAS_6_ORT_247993/1.0',
   priority: 0,

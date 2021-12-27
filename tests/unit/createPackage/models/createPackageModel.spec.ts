@@ -31,7 +31,6 @@ describe('CreatePackageManager', () => {
         targetResolution: 0.0000014576721191406,
         callbackURL: 'http://callback-url.com',
         bbox: [0, 0, 1, 1],
-        packageName: 'temp',
       };
 
       findLayerStub = jest.fn();

@@ -37,7 +37,6 @@ describe('tiles', function () {
     it('should return 200 status code and the job created details', async function () {
       const body: ICreatePackage = {
         dbId: layerFromCatalog.id,
-        packageName: 'myPackage',
         bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
         targetResolution: 0.0000429153442382812,
         callbackURL: 'http://example.getmap.com/callback',
@@ -60,7 +59,6 @@ describe('tiles', function () {
     it('should return 400 status code beause of bad data - no "bbox" field', async function () {
       const body = {
         dbId: layerFromCatalog.id,
-        packageName: 'myPackage',
         targetResolution: 0.0000429153442382812,
         callbackURL: 'http://example.getmap.com/callback',
         crs: 'EPSG:4326',
