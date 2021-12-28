@@ -2,11 +2,10 @@ openapi: 3.0.1
 info:
   title: exporter-trigger
   description: Service that responsible for activating the export geopackage process
-  version: 1.0.0
+  version: 2.0.1
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 paths:
   /create:
     post:
@@ -17,7 +16,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/ExportGetmapBody'
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
@@ -31,19 +30,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        404:
+        '404':
           description: Could not find layer with matched dbId
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        500:
+        '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/internalError'
-
 components:
   requestBodies:
     ExportGetmapBody:
@@ -53,7 +51,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/exportGetMap'
-
   schemas:
     exportGetMap:
       type: object
@@ -66,7 +63,9 @@ components:
           $ref: '#/components/schemas/BBOX'
         targetResolution:
           type: number
-          description: The target resolution in which the tiles will be created - DEGREE to PIXEL
+          description: >-
+            The target resolution in which the tiles will be created - DEGREE to
+            PIXEL
         callbackURL:
           type: array
           items:
@@ -84,7 +83,6 @@ components:
         - bbox
         - targetResolution
         - callbackURL
-
       example:
         dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
         bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354]
@@ -92,7 +90,6 @@ components:
         callbackURL: ['http://example.getmap.com/callback', 'http://example.getmap.com/callback2']
         crs: 'EPSG:4326'
         priority: 0
-
     createGpkgJobResponse:
       type: object
       properties:
@@ -143,7 +140,6 @@ components:
         - targetResolution
         - requestId
         - success
-
     error:
       type: object
       required:
@@ -151,7 +147,6 @@ components:
       properties:
         message:
           type: string
-
     internalError:
       type: object
       required:
@@ -162,7 +157,6 @@ components:
           type: string
         stacktrace:
           type: string
-
     CRS:
       type: string
       description: List of supported

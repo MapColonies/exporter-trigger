@@ -3,6 +3,7 @@ import { JobManagerClient } from '../../../src/clients/jobManagerClient';
 import { JobStatus } from '../../../src/common/enums';
 import { jobs, workerInput } from '../../mocks/data';
 
+
 let jobManagerClient: JobManagerClient;
 let postFun: jest.Mock;
 let putFun: jest.Mock;
@@ -23,7 +24,7 @@ describe('JobManagerClient', () => {
     it('should create job successfully', async () => {
       postFun = jest.fn();
       (jobManagerClient as unknown as { post: unknown }).post = postFun.mockResolvedValue({ id: '123', taskIds: ['123'] });
-      await jobManagerClient.createJob(workerInput);
+      await jobManagerClient.createJob(workerInput, layerMetadata);
 
       expect(postFun).toHaveBeenCalledTimes(1);
     });

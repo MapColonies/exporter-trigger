@@ -3,9 +3,14 @@ import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { NotFoundError } from '@map-colonies/error-types';
+import { LayerMetadata, Link } from '@map-colonies/mc-model-types';
 import { SERVICES } from '../common/constants';
 
-type PycswRecord = Record<string, unknown>;
+interface PycswRecord {
+  id: string;
+  metadata: LayerMetadata;
+  links: Link[];
+}
 type PycswFindRecordResponse = PycswRecord[] | [undefined];
 
 @injectable()

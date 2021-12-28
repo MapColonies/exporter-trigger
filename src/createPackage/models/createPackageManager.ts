@@ -1,6 +1,5 @@
 import { sep } from 'path';
 import { Logger } from '@map-colonies/js-logger';
-import { LayerMetadata } from '@map-colonies/mc-model-types';
 import { Polygon, MultiPolygon } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
@@ -104,5 +103,6 @@ export class CreatePackageManager {
         taskIds: processingJob.tasks?.map((t) => (t as { id: string }).id) as string[],
       };
     }
+
   }
 }
