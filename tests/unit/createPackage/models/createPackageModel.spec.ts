@@ -1,15 +1,17 @@
 import jsLogger from '@map-colonies/js-logger';
 import { JobManagerClient } from '../../../../src/clients/jobManagerClient';
 import { RasterCatalogManagerClient } from '../../../../src/clients/rasterCatalogManagerClient';
-import { ICreatePackage } from '../../../../src/common/interfaces';
+import { ICreateJobResponse, ICreatePackage } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
-import { layerFromCatalog } from '../../../mocks/data';
+import { jobs, layerFromCatalog } from '../../../mocks/data';
 
 let createPackageManager: CreatePackageManager;
 let jobManagerClient: JobManagerClient;
 let rasterCatalogManagerClient: RasterCatalogManagerClient;
 let findLayerStub: jest.Mock;
 let createJobStub: jest.Mock;
+let getJobsStub: jest.Mock;
+let updateJobStub: jest.Mock;
 
 describe('CreatePackageManager', () => {
   beforeEach(() => {
@@ -29,12 +31,13 @@ describe('CreatePackageManager', () => {
       const userInput: ICreatePackage = {
         dbId: '6007f15c-8978-4c83-adcb-655fb2185856',
         targetResolution: 0.0000014576721191406,
-        callbackURL: 'http://callback-url.com',
+        callbackURL: ['http://callback-url.com'],
         bbox: [0, 0, 1, 1],
       };
 
       findLayerStub = jest.fn();
       createJobStub = jest.fn();
+      getJobsStub = jest.fn();
 
       rasterCatalogManagerClient.findLayer = findLayerStub.mockResolvedValue(layerFromCatalog);
       jobManagerClient.createJob = createJobStub.mockResolvedValue({
@@ -42,10 +45,71 @@ describe('CreatePackageManager', () => {
         taskId: '66aa1e2e-784c-4178-b5a0-af962937d561',
       });
 
+      const jobManager = jobManagerClient as unknown as { getJobs: unknown };
+      jobManager.getJobs = getJobsStub.mockResolvedValue(jobs);
+
+      // eslint-disable-next-line
+      const checkForDuplicateResponse = await (createPackageManager as unknown as { checkForDuplicate: any }).checkForDuplicate({
+        resourceId: 'temp_resourceId',
+        version: 'temp_version',
+        dbId: 'temp_dbId',
+        targetResolution: 0.0000525,
+        bbox: [0, 0, 0, 0],
+        crs: 'EPSG:4326',
+      });
+
       await createPackageManager.createPackage(userInput);
 
+      expect(getJobsStub).toHaveBeenCalledTimes(6);
       expect(findLayerStub).toHaveBeenCalledTimes(1);
       expect(createJobStub).toHaveBeenCalledTimes(1);
+      expect(checkForDuplicateResponse).toBeUndefined();
+    });
+
+    it('should return job and task-ids of existing in progress/pending job', async () => {
+      const userInput: ICreatePackage = {
+        dbId: '6007f15c-8978-4c83-adcb-655fb2185856',
+        targetResolution: 0.0000014576721191406,
+        callbackURL: ['http://callback-url.com'],
+        bbox: [0, 5, 30, 21],
+        crs: 'EPSG:4326',
+      };
+
+      findLayerStub = jest.fn();
+      createJobStub = jest.fn();
+      getJobsStub = jest.fn();
+      updateJobStub = jest.fn();
+
+      rasterCatalogManagerClient.findLayer = findLayerStub.mockResolvedValue(layerFromCatalog);
+      jobManagerClient.createJob = createJobStub.mockResolvedValue(undefined);
+
+      const jobManager = jobManagerClient as unknown as { getJobs: unknown; updateJob: unknown };
+      jobManager.getJobs = getJobsStub.mockResolvedValue(jobs);
+      jobManager.updateJob = updateJobStub.mockResolvedValue(undefined);
+
+      // eslint-disable-next-line
+      const checkForDuplicateResponse = await (createPackageManager as unknown as { checkForDuplicate: any }).checkForDuplicate(
+        {
+          resourceId: layerFromCatalog.metadata.productId,
+          version: layerFromCatalog.metadata.productVersion,
+          dbId: layerFromCatalog.id,
+          targetResolution: userInput.targetResolution,
+          bbox: userInput.bbox,
+          crs: userInput.crs,
+        },
+        []
+      );
+
+      await createPackageManager.createPackage(userInput);
+      const expectedReturn: ICreateJobResponse = {
+        jobId: '5da59244-4748-4b0d-89b9-2c5e6ba72e70',
+        taskIds: ['a3ffa55e-67b7-11ec-90d6-0242ac120003'],
+      };
+
+      expect(getJobsStub).toHaveBeenCalledTimes(4);
+      expect(findLayerStub).toHaveBeenCalledTimes(1);
+      expect(createJobStub).toHaveBeenCalledTimes(0);
+      expect(checkForDuplicateResponse).toEqual(expectedReturn);
     });
   });
 });

@@ -39,12 +39,12 @@ describe('tiles', function () {
         dbId: layerFromCatalog.id,
         bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
         targetResolution: 0.0000429153442382812,
-        callbackURL: 'http://example.getmap.com/callback',
+        callbackURL: ['http://example.getmap.com/callback'],
         crs: 'EPSG:4326',
         priority: 0,
       };
       findLayerSpy.mockResolvedValue(layerFromCatalog);
-      createJobSpy.mockResolvedValue({ jobId: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskId: '6556896a-113c-4397-a48b-0cb2c99658f5' });
+      createJobSpy.mockResolvedValue({ jobId: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
 
       const resposne = await requestSender.create(body);
 

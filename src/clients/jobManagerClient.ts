@@ -6,10 +6,8 @@ import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
 import { SERVICES } from '../common/constants';
 import {
-  ICallbackResponse,
   ICreateJobBody,
   ICreateJobResponse,
-  ICreatePackage,
   ICreateTaskBody,
   IFindJob,
   IJob,
@@ -19,15 +17,10 @@ import {
 } from '../common/interfaces';
 import { JobStatus } from '../common/enums';
 
-type JobManagerCreateJobResponse = {
+interface JobManagerCreateJobResponse {
   id: string;
   taskIds: string[];
-};
-
-type GetCompletedJobResponse = {
-  originalParams: ICreatePackage;
-  callbackParams: ICallbackResponse;
-};
+}
 
 @injectable()
 export class JobManagerClient extends HttpClient {
@@ -42,26 +35,10 @@ export class JobManagerClient extends HttpClient {
     this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
   }
 
-  private async getJobs<T>(queryParams: IFindJob) {
-    this.logger.info(`Getting jobs that match these parameters: ${JSON.stringify(queryParams)}`);
-    const jobs = await this.get<IJob<T>[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
-    return jobs;
-  }
-
-  public async updateJob(jobId: string, payload: IUpdateJob<ICreatePackage>): Promise<void> {
+  public async updateJob(jobId: string, payload: IUpdateJob): Promise<void> {
     this.logger.debug(`Updating job ${jobId} with payload ${JSON.stringify(payload)}`);
     const updateJobUrl = `/jobs/${jobId}`;
     await this.put(updateJobUrl, payload);
-  }
-
-  private findJobWithMatchingParams(jobs: IJob<ICreatePackage>[], jobParams: JobDuplicationParams): IJob<ICreatePackage> | undefined {
-    return jobs.find(
-      (job) =>
-        job.parameters.dbId === jobParams.dbId &&
-        job.parameters.targetResolution === jobParams.targetResolution &&
-        job.parameters.crs === jobParams.crs &&
-        booleanEqual(bboxPolygon(job.parameters.bbox), bboxPolygon(jobParams.bbox))
-    );
   }
 
   public async createJob(data: IWorkerInput): Promise<ICreateJobResponse> {
@@ -71,7 +48,7 @@ export class JobManagerClient extends HttpClient {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationTime);
 
-    const createJobRequest: ICreateJobBody<ICreateTaskBody, IWorkerInput> = {
+    const createJobRequest: ICreateJobBody<ICreateTaskBody> = {
       resourceId: resourceId,
       version: version,
       type: this.tilesJobType,
@@ -79,6 +56,9 @@ export class JobManagerClient extends HttpClient {
       parameters: {
         ...data,
       },
+      internalId: data.dbId,
+      productType: data.productType,
+      productName: data.cswProductId,
       tasks: [
         {
           type: this.tilesTaskType,
@@ -108,7 +88,7 @@ export class JobManagerClient extends HttpClient {
     };
   }
 
-  public async findCompletedJobs(jobParams: JobDuplicationParams): Promise<ICallbackResponse | undefined> {
+  public async findCompletedJob(jobParams: JobDuplicationParams): Promise<IJob | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
@@ -118,23 +98,16 @@ export class JobManagerClient extends HttpClient {
       status: JobStatus.COMPLETED,
     };
 
-    const jobs = await this.getJobs<GetCompletedJobResponse>(queryParams);
-
+    const jobs = await this.getJobs(queryParams);
     if (jobs) {
-      const matchingJob = jobs.find(
-        (job) =>
-          job.parameters.originalParams.dbId === jobParams.dbId &&
-          job.parameters.originalParams.targetResolution === jobParams.targetResolution &&
-          job.parameters.originalParams.crs === jobParams.crs &&
-          booleanEqual(bboxPolygon(job.parameters.originalParams.bbox), bboxPolygon(jobParams.bbox))
-      );
-
-      return matchingJob?.parameters.callbackParams;
+      const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);
+      return matchingJob;
     }
+
     return undefined;
   }
 
-  public async findInProgressJob(jobParams: JobDuplicationParams) {
+  public async findInProgressJob(jobParams: JobDuplicationParams): Promise<IJob | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
@@ -144,21 +117,17 @@ export class JobManagerClient extends HttpClient {
       status: JobStatus.IN_PROGRESS,
     };
 
-    const jobs = await this.getJobs<ICreatePackage>(queryParams);
+    const jobs = await this.getJobs(queryParams);
     if (jobs) {
-      const matchingJob = jobs.find(
-        (job) =>
-          job.parameters.dbId === jobParams.dbId &&
-          job.parameters.targetResolution === jobParams.targetResolution &&
-          job.parameters.crs === jobParams.crs &&
-          booleanEqual(bboxPolygon(job.parameters.bbox), bboxPolygon(jobParams.bbox))
-      );
+      const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);
       return matchingJob;
     }
+
+    return undefined;
   }
 
-  public async findPendingJob(jobParams: JobDuplicationParams) {
-    const queryParams = {
+  public async findPendingJob(jobParams: JobDuplicationParams): Promise<IJob | undefined> {
+    const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
       isCleaned: 'false',
@@ -167,16 +136,29 @@ export class JobManagerClient extends HttpClient {
       status: JobStatus.PENDING,
     };
 
-    const jobs = await this.getJobs<ICreatePackage>(queryParams);
+    const jobs = await this.getJobs(queryParams);
     if (jobs) {
-      const matchingJob = jobs.find(
-        (job) =>
-          job.parameters.dbId === jobParams.dbId &&
-          job.parameters.targetResolution === jobParams.targetResolution &&
-          job.parameters.crs === jobParams.crs &&
-          booleanEqual(bboxPolygon(job.parameters.bbox), bboxPolygon(jobParams.bbox))
-      );
+      const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);
       return matchingJob;
     }
+
+    return undefined;
+  }
+
+  private async getJobs(queryParams: IFindJob): Promise<IJob[] | undefined> {
+    this.logger.info(`Getting jobs that match these parameters: ${JSON.stringify(queryParams)}`);
+    const jobs = await this.get<IJob[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
+    return jobs;
+  }
+
+  private findJobWithMatchingParams(jobs: IJob[], jobParams: JobDuplicationParams): IJob | undefined {
+    const matchingJob = jobs.find(
+      (job) =>
+        job.parameters.dbId === jobParams.dbId &&
+        job.parameters.targetResolution === jobParams.targetResolution &&
+        job.parameters.crs === jobParams.crs &&
+        booleanEqual(bboxPolygon(job.parameters.bbox), bboxPolygon(jobParams.bbox))
+    );
+    return matchingJob;
   }
 }

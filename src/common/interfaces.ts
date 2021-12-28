@@ -21,6 +21,7 @@ export interface ICreatePackage {
   callbackURL: string[];
   bbox: BBox2d;
   priority?: number;
+  callbackParams?: ICallbackResponse;
 }
 
 export interface IWorkerInput extends ICreatePackage {
@@ -47,16 +48,19 @@ export interface ICreateTaskBody {
   attempts?: number;
 }
 
-export interface ICreateJobBody<T, P> {
+export interface ICreateJobBody<T> {
   resourceId: string;
   version: string;
-  parameters: P;
+  parameters: ICreatePackage;
   type: string;
   description?: string;
   status?: JobStatus;
   reason?: string;
   tasks?: T[];
   expirationDate: Date;
+  internalId: string;
+  productName: string;
+  productType: string;
 }
 
 export interface ICreateJobResponse {
@@ -64,12 +68,12 @@ export interface ICreateJobResponse {
   taskIds: string[];
 }
 
-export interface IJob<T> {
+export interface IJob {
   id: string;
   resourceId: string;
   version: string;
   description?: string;
-  parameters: T;
+  parameters: ICreatePackage;
   reason?: string;
   created: Date;
   updated: Date;
@@ -80,14 +84,14 @@ export interface IJob<T> {
   tasks?: unknown[];
 }
 
-export interface IUpdateJob<T> {
+export interface IUpdateJob {
   status?: JobStatus;
   percentage?: number;
   reason?: string;
   isCleaned?: boolean;
   priority?: number;
   expirationDate?: Date;
-  parameters: T;
+  parameters?: ICreatePackage;
 }
 
 export interface IFindJob {

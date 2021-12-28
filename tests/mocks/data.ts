@@ -1,5 +1,6 @@
 /* eslint-disable */
-import { IWorkerInput } from '../../src/common/interfaces';
+import { JobStatus } from '../../src/common/enums';
+import { IJob, IWorkerInput } from '../../src/common/interfaces';
 
 const layerFromCatalog = {
   id: '6007f15c-8978-4c83-adcb-655fb2185856',
@@ -80,6 +81,63 @@ const layerFromCatalog = {
   },
 };
 
+const jobs: IJob[] = [
+  {
+    id: '5da59244-4748-4b0d-89b9-2c5e6ba72e70',
+    resourceId: layerFromCatalog.metadata.productId,
+    version: layerFromCatalog.metadata.productVersion,
+    parameters: {
+      dbId: layerFromCatalog.id,
+      targetResolution: 0.0000014576721191406,
+      callbackURL: ['http://localhost:1234'],
+      bbox: [0, 5, 30, 21],
+      crs: 'EPSG:4326',
+    },
+    tasks: [{ id: 'a3ffa55e-67b7-11ec-90d6-0242ac120003' }],
+    created: new Date(),
+    updated: new Date(),
+    status: JobStatus.COMPLETED,
+    isCleaned: false,
+    priority: 1000,
+  },
+  {
+    id: '55ad245d-1f1b-4ab1-93b6-d94f957f5a97',
+    resourceId: layerFromCatalog.metadata.productId,
+    version: layerFromCatalog.metadata.productVersion,
+    parameters: {
+      dbId: layerFromCatalog.id,
+      targetResolution: 0.0000014576721191406,
+      callbackURL: ['http://localhost:1234'],
+      bbox: [0, 5, 30, 21],
+      crs: 'EPSG:4326',
+    },
+    tasks: [{ id: 'a3ffa55e-67b7-11ec-90d6-0242ac120003' }],
+    created: new Date(),
+    updated: new Date(),
+    status: JobStatus.IN_PROGRESS,
+    isCleaned: false,
+    priority: 1000,
+  },
+  {
+    id: '76e7677e-67b6-11ec-90d6-0242ac120003',
+    resourceId: layerFromCatalog.metadata.productId,
+    version: layerFromCatalog.metadata.productVersion,
+    parameters: {
+      dbId: layerFromCatalog.id,
+      targetResolution: 0.0000014576721191406,
+      callbackURL: ['http://localhost:1234'],
+      bbox: [0, 5, 30, 21],
+      crs: 'EPSG:4326',
+    },
+    tasks: [{ id: 'a3ffa55e-67b7-11ec-90d6-0242ac120003' }],
+    created: new Date(),
+    updated: new Date(),
+    status: JobStatus.PENDING,
+    isCleaned: false,
+    priority: 1000,
+  },
+];
+
 const workerInput: IWorkerInput = {
   footprint: {
     type: 'Polygon',
@@ -98,12 +156,14 @@ const workerInput: IWorkerInput = {
   bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
   version: '1.0',
   cswProductId: '2021_10_26T10_59_14Z_MAS_6_ORT_247993',
-  targetResolution: 0.0000429153442382812,
+  targetResolution: 0.0000014576721191406,
   dbId: '07a8d8dc-4624-434d-b799-8f2f57643b2f',
-  callbackURL: 'http://example.getmap.com/callback',
-  tilesPath: '2021_10_26T10_59_14Z_MAS_6_ORT_247993/1.0',
+  callbackURL: ['http://example.getmap.com/callback'],
+  tilesPath: '2021_10_26T10_59_14Z_MAS_6_ORT_247993/1.0/Orthophoto',
+  packageName: 'gm_test_1',
   priority: 0,
   crs: 'EPSG:4326',
+  productType: 'Orthohphoto',
 };
 
-export { layerFromCatalog, workerInput };
+export { layerFromCatalog, workerInput, jobs };

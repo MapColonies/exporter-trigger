@@ -22,7 +22,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/createGpkgJobResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/createGpkgJobResponse'
+                  - $ref: '#/components/schemas/createGpkgJobResponse2'
         400:
           description: Bad Request
           content:
@@ -61,12 +63,7 @@ components:
           format: uuid
           description: ID as the primary key from the Raster Catalog
         bbox:
-          type: array
-          items:
-            type: number
-          minItems: 4
-          maxItems: 4
-          description: Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in crs units as array
+          $ref: '#/components/schemas/BBOX'
         targetResolution:
           type: number
           description: The target resolution in which the tiles will be created - DEGREE to PIXEL
@@ -102,14 +99,50 @@ components:
         jobId:
           type: string
           format: uuid
-        taskId:
+        taskIds:
           type: array
           items:
             type: string
             format: uuid
       required:
         - jobId
-        - taskId
+        - taskIds
+
+    createGpkgJobResponse2:
+      type: object
+      properties:
+        fileUri:
+          type: string
+        expirationTime:
+          type: string
+          format: date
+        fileSize:
+          type: number
+        dbId:
+          type: string
+          format: uuid
+        packageName:
+          type: string
+        bbox:
+           $ref: '#/components/schemas/BBOX'
+        targetResolution:
+          type: number
+        requestId:
+          type: string
+        success:
+          type: boolean
+        errorReason:
+          type: string
+      required:
+        - fileUri
+        - expirationTime
+        - fileSize
+        - dbId
+        - packageName
+        - bbox
+        - targetResolution
+        - requestId
+        - success
 
     error:
       type: object
@@ -135,3 +168,11 @@ components:
       description: List of supported
       enum:
         - EPSG:4326
+        
+    BBOX:
+      type: array
+      items:
+        type: number
+      minItems: 4
+      maxItems: 4
+      description: Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in crs units as array
