@@ -19,7 +19,7 @@ export class CreatePackageManager {
 
   public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
-    const layerMetadata = layer.metadata as LayerMetadata;
+    const layerMetadata = layer.metadata;
 
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
     const { bbox, dbId, targetResolution, crs, priority, callbackURL } = userInput;

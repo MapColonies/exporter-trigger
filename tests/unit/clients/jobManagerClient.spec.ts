@@ -24,7 +24,7 @@ describe('JobManagerClient', () => {
     it('should create job successfully', async () => {
       postFun = jest.fn();
       (jobManagerClient as unknown as { post: unknown }).post = postFun.mockResolvedValue({ id: '123', taskIds: ['123'] });
-      await jobManagerClient.createJob(workerInput, layerMetadata);
+      await jobManagerClient.createJob(workerInput);
 
       expect(postFun).toHaveBeenCalledTimes(1);
     });

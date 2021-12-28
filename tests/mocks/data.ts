@@ -1,4 +1,5 @@
 /* eslint-disable */
+import { LayerMetadata } from '@map-colonies/mc-model-types';
 import { JobStatus } from '../../src/common/enums';
 import { IJob, IWorkerInput } from '../../src/common/interfaces';
 
