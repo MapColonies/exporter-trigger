@@ -3,7 +3,7 @@ import { JobManagerClient } from '../../../../src/clients/jobManagerClient';
 import { RasterCatalogManagerClient } from '../../../../src/clients/rasterCatalogManagerClient';
 import { ICreateJobResponse, ICreatePackage } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
-import { jobs, layerFromCatalog, userInput } from '../../../mocks/data';
+import { inProgressJob, jobs, layerFromCatalog, userInput } from '../../../mocks/data';
 
 let createPackageManager: CreatePackageManager;
 let jobManagerClient: JobManagerClient;
@@ -31,7 +31,7 @@ describe('CreatePackageManager', () => {
       const input = {
         resourceId: 'temp_resourceId',
         version: 'temp_version',
-        dbId: 'layerFromCatalog.id',
+        dbId: layerFromCatalog.id,
         targetResolution: 0.0000525,
         bbox: [0, 0, 0, 0],
         crs: 'EPSG:4326', 
@@ -72,7 +72,7 @@ describe('CreatePackageManager', () => {
       jobManagerClient.createJob = createJobStub.mockResolvedValue(undefined);
 
       const jobManager = jobManagerClient as unknown as { getJobs: unknown; updateJob: unknown };
-      jobManager.getJobs = getJobsStub.mockResolvedValue([jobs[0], jobs[1]]);
+      jobManager.getJobs = getJobsStub.mockResolvedValue([inProgressJob]);
       jobManager.updateJob = updateJobStub.mockResolvedValue(undefined);
 
       // eslint-disable-next-line
@@ -92,11 +92,11 @@ describe('CreatePackageManager', () => {
 
       await createPackageManager.createPackage(userInput);
       const expectedReturn: ICreateJobResponse = {
-        jobId: '5da59244-4748-4b0d-89b9-2c5e6ba72e70',
-        taskIds: ['a3ffa55e-67b7-11ec-90d6-0242ac120003'],
+        jobId: inProgressJob.id,
+        taskIds: [inProgressJob.tasks[0].id],
       };
 
-      expect(getJobsStub).toHaveBeenCalledTimes(2);
+      expect(getJobsStub).toHaveBeenCalledTimes(4);
       expect(findLayerStub).toHaveBeenCalledTimes(1);
       expect(createJobStub).toHaveBeenCalledTimes(0);
       expect(checkForDuplicateResponse).toEqual(expectedReturn);

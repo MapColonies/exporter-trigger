@@ -102,7 +102,7 @@ const layerFromCatalog = {
   metadata: layerMetadata,
 };
 
-const jobsMock: IJobResponse<IJobParameters, ITaskParameters> = {
+const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
   id: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
   resourceId: 'string',
   version: '1.0',
@@ -197,6 +197,89 @@ const jobsMock: IJobResponse<IJobParameters, ITaskParameters> = {
   updated: '2021-12-29T08:07:00.270Z',
 };
 
+const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
+  id: 'fa3ab609-377a-4d96-bf0b-e0bb72f683b8',
+  resourceId: 'string',
+  version: '1.0',
+  type: 'rasterTilesExporter',
+  description: '',
+  parameters: {
+    crs: 'EPSG:4326',
+    bbox: [0, 0, 25, 41],
+    dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
+    version: '1.0',
+    footprint: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-180, -90],
+          [-180, 90],
+          [180, 90],
+          [180, -90],
+          [-180, -90],
+        ],
+      ],
+    },
+    tilesPath: 'string/1.0/OrthophotoHistory',
+    callbackURL: ['http://localhost:6969'],
+    packageName: 'gm_0c3e455f_4aeb_4258_982d_f7773469a92d_4_0_000000_0000025_0000041_00000',
+    productType: 'OrthophotoHistory',
+    cswProductId: 'string',
+    targetResolution: 0.0439453125,
+  },
+  status: OperationStatus.PENDING,
+  reason: '',
+  isCleaned: false,
+  priority: 0,
+  expirationDate: new Date(),
+  internalId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
+  productName: 'string',
+  productType: 'OrthophotoHistory',
+  taskCount: 1,
+  completedTasks: 0,
+  failedTasks: 0,
+  expiredTasks: 0,
+  pendingTasks: 0,
+  inProgressTasks: 1,
+  tasks: [
+    {
+      id: '1f765695-338b-4752-b182-a8cbae3c610e',
+      type: 'rasterTilesExporter',
+      description: '',
+      parameters: {
+        crs: 'EPSG:4326',
+        bbox: [0, 0, 25, 41],
+        dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
+        footprint: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-180, -90],
+              [-180, 90],
+              [180, 90],
+              [180, -90],
+              [-180, -90],
+            ],
+          ],
+        },
+        tilesPath: 'string/1.0/OrthophotoHistory',
+        zoomLevel: 4,
+        callbackURL: ['http://localhost:6969'],
+        packageName: 'gm_0c3e455f_4aeb_4258_982d_f7773469a92d_4_0_000000_0000025_0000041_00000',
+        productType: 'OrthophotoHistory',
+      },
+      status: OperationStatus.PENDING,
+      reason: '',
+      attempts: 0,
+      resettable: true,
+      created: '2021-12-29T10:42:13.487Z',
+      updated: '2021-12-29T10:42:16.231Z',
+    },
+  ],
+  created: '2021-12-29T10:42:13.487Z',
+  updated: '2021-12-29T10:42:13.487Z',
+};
+
 const workerInput: IWorkerInput = {
   footprint: {
     type: 'Polygon',
@@ -226,9 +309,8 @@ const workerInput: IWorkerInput = {
 };
 
 const jobs = [
-  { ...jobsMock, status: OperationStatus.IN_PROGRESS, tasks: [{ ...jobsMock.tasks[0], status: OperationStatus.IN_PROGRESS }] },
-  { ...jobsMock, status: OperationStatus.PENDING, tasks: [{ ...jobsMock.tasks[0], status: OperationStatus.PENDING }] },
-  // jobsMock,
+  inProgressJob,
+  completedJob,
 ];
 
 const userInput: ICreatePackage = {
@@ -239,4 +321,4 @@ const userInput: ICreatePackage = {
   crs: 'EPSG:4326',
 };
 
-export { layerFromCatalog, workerInput, jobs, userInput };
+export { layerFromCatalog, workerInput, jobs, userInput, completedJob, inProgressJob };
