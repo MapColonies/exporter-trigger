@@ -1,8 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { JobManagerClient } from '../../../src/clients/jobManagerClient';
-import { JobStatus } from '../../../src/common/enums';
 import { jobs, workerInput } from '../../mocks/data';
-
 
 let jobManagerClient: JobManagerClient;
 let postFun: jest.Mock;
@@ -32,7 +31,7 @@ describe('JobManagerClient', () => {
     it('should update job successfully', async () => {
       putFun = jest.fn();
       (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
-      await jobManagerClient.updateJob('123213', { status: JobStatus.COMPLETED });
+      await jobManagerClient.updateJob('123213', { status: OperationStatus.COMPLETED });
 
       expect(putFun).toHaveBeenCalledTimes(1);
     });

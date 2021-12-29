@@ -4,23 +4,16 @@ import { degreesPerPixelToZoomLevel, HttpClient, IHttpRetryConfig } from '@map-c
 import { Logger } from '@map-colonies/js-logger';
 import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
+import { ICreateJobBody, IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../common/constants';
-import {
-  ICreateJobBody,
-  ICreateJobResponse,
-  ICreateTaskBody,
-  IFindJob,
-  IJob,
-  IUpdateJob,
-  IWorkerInput,
-  JobDuplicationParams,
-} from '../common/interfaces';
-import { JobStatus } from '../common/enums';
+import { ICreateJobResponse, IFindJob, IJobParameters, ITaskParameters, IWorkerInput, JobDuplicationParams } from '../common/interfaces';
 
 interface JobManagerCreateJobResponse {
   id: string;
   taskIds: string[];
 }
+
+type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
 
 @injectable()
 export class JobManagerClient extends HttpClient {
@@ -35,7 +28,7 @@ export class JobManagerClient extends HttpClient {
     this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
   }
 
-  public async updateJob(jobId: string, payload: IUpdateJob): Promise<void> {
+  public async updateJob(jobId: string, payload: IUpdateJobBody<IJobParameters>): Promise<void> {
     this.logger.debug(`Updating job ${jobId} with payload ${JSON.stringify(payload)}`);
     const updateJobUrl = `/jobs/${jobId}`;
     await this.put(updateJobUrl, payload);
@@ -48,7 +41,7 @@ export class JobManagerClient extends HttpClient {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationTime);
 
-    const createJobRequest: ICreateJobBody<ICreateTaskBody> = {
+    const createJobRequest: ICreateJobBody<IJobParameters, ITaskParameters> = {
       resourceId: resourceId,
       version: version,
       type: this.tilesJobType,
@@ -59,6 +52,7 @@ export class JobManagerClient extends HttpClient {
       internalId: data.dbId,
       productType: data.productType,
       productName: data.cswProductId,
+      priority: data.priority,
       tasks: [
         {
           type: this.tilesTaskType,
@@ -68,7 +62,6 @@ export class JobManagerClient extends HttpClient {
             zoomLevel,
             callbackURL: data.callbackURL,
             bbox: data.bbox,
-            priority: data.priority,
             tilesPath: data.tilesPath,
             footprint: data.footprint,
             productType: data.productType,
@@ -88,14 +81,14 @@ export class JobManagerClient extends HttpClient {
     };
   }
 
-  public async findCompletedJob(jobParams: JobDuplicationParams): Promise<IJob | undefined> {
+  public async findCompletedJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
       isCleaned: 'false',
       type: this.tilesJobType,
       shouldReturnTasks: 'false',
-      status: JobStatus.COMPLETED,
+      status: OperationStatus.COMPLETED,
     };
 
     const jobs = await this.getJobs(queryParams);
@@ -107,14 +100,14 @@ export class JobManagerClient extends HttpClient {
     return undefined;
   }
 
-  public async findInProgressJob(jobParams: JobDuplicationParams): Promise<IJob | undefined> {
+  public async findInProgressJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
       isCleaned: 'false',
       type: this.tilesJobType,
       shouldReturnTasks: 'true',
-      status: JobStatus.IN_PROGRESS,
+      status: OperationStatus.IN_PROGRESS,
     };
 
     const jobs = await this.getJobs(queryParams);
@@ -126,14 +119,14 @@ export class JobManagerClient extends HttpClient {
     return undefined;
   }
 
-  public async findPendingJob(jobParams: JobDuplicationParams): Promise<IJob | undefined> {
+  public async findPendingJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
       isCleaned: 'false',
       type: this.tilesJobType,
       shouldReturnTasks: 'true',
-      status: JobStatus.PENDING,
+      status: OperationStatus.PENDING,
     };
 
     const jobs = await this.getJobs(queryParams);
@@ -145,13 +138,13 @@ export class JobManagerClient extends HttpClient {
     return undefined;
   }
 
-  private async getJobs(queryParams: IFindJob): Promise<IJob[] | undefined> {
+  private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
     this.logger.info(`Getting jobs that match these parameters: ${JSON.stringify(queryParams)}`);
-    const jobs = await this.get<IJob[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
+    const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
     return jobs;
   }
 
-  private findJobWithMatchingParams(jobs: IJob[], jobParams: JobDuplicationParams): IJob | undefined {
+  private findJobWithMatchingParams(jobs: JobResponse[], jobParams: JobDuplicationParams): JobResponse | undefined {
     const matchingJob = jobs.find(
       (job) =>
         job.parameters.dbId === jobParams.dbId &&

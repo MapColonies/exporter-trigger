@@ -23,7 +23,7 @@ paths:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/createGpkgJobResponse'
-                  - $ref: '#/components/schemas/createGpkgJobResponse2'
+                  - $ref: '#/components/schemas/naiveCacheJobResponse'
         400:
           description: Bad Request
           content:
@@ -105,7 +105,7 @@ components:
         - jobId
         - taskIds
 
-    createGpkgJobResponse2:
+    naiveCacheJobResponse:
       type: object
       properties:
         fileUri:
@@ -121,7 +121,7 @@ components:
         packageName:
           type: string
         bbox:
-           $ref: '#/components/schemas/BBOX'
+          $ref: '#/components/schemas/BBOX'
         targetResolution:
           type: number
         requestId:
@@ -162,7 +162,7 @@ components:
       description: List of supported
       enum:
         - EPSG:4326
-        
+
     BBOX:
       type: array
       items:

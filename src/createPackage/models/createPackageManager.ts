@@ -100,9 +100,8 @@ export class CreatePackageManager {
       });
       return {
         jobId: processingJob.id,
-        taskIds: processingJob.tasks?.map((t) => (t as { id: string }).id) as string[],
+        taskIds: processingJob.tasks.map((t) => (t as { id: string }).id) ,
       };
     }
-
   }
 }

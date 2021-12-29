@@ -29,7 +29,6 @@ export interface IWorkerInput extends ICreatePackage {
   version: string;
   cswProductId: string;
   tilesPath: string;
-  priority: number;
   crs: string;
   packageName: string;
   productType: string;
@@ -39,60 +38,60 @@ export interface IBasicResponse {
   message: string;
 }
 
-export interface ICreateTaskBody {
-  description?: string;
-  parameters: Record<string, unknown>;
-  reason?: string;
-  type?: string;
-  status?: JobStatus;
-  attempts?: number;
-}
+// export interface ICreateTaskBody {
+//   description?: string;
+//   parameters: Record<string, unknown>;
+//   reason?: string;
+//   type?: string;
+//   status?: JobStatus;
+//   attempts?: number;
+// }
 
-export interface ICreateJobBody<T> {
-  resourceId: string;
-  version: string;
-  parameters: ICreatePackage;
-  type: string;
-  description?: string;
-  status?: JobStatus;
-  reason?: string;
-  tasks?: T[];
-  expirationDate: Date;
-  internalId: string;
-  productName: string;
-  productType: string;
-}
+// export interface ICreateJobBody<T> {
+//   resourceId: string;
+//   version: string;
+//   parameters: ICreatePackage;
+//   type: string;
+//   description?: string;
+//   status?: JobStatus;
+//   reason?: string;
+//   tasks?: T[];
+//   expirationDate: Date;
+//   internalId: string;
+//   productName: string;
+//   productType: string;
+// }
 
 export interface ICreateJobResponse {
   jobId: string;
   taskIds: string[];
 }
 
-export interface IJob {
-  id: string;
-  resourceId: string;
-  version: string;
-  description?: string;
-  parameters: ICreatePackage;
-  reason?: string;
-  created: Date;
-  updated: Date;
-  status: JobStatus;
-  percentage?: number;
-  isCleaned: boolean;
-  priority: number;
-  tasks?: unknown[];
-}
+// export interface IJob {
+//   id: string;
+//   resourceId: string;
+//   version: string;
+//   description?: string;
+//   parameters: ICreatePackage;
+//   reason?: string;
+//   created: Date;
+//   updated: Date;
+//   status: JobStatus;
+//   percentage?: number;
+//   isCleaned: boolean;
+//   priority: number;
+//   tasks?: unknown[];
+// }
 
-export interface IUpdateJob {
-  status?: JobStatus;
-  percentage?: number;
-  reason?: string;
-  isCleaned?: boolean;
-  priority?: number;
-  expirationDate?: Date;
-  parameters?: ICreatePackage;
-}
+// export interface IUpdateJob {
+//   status?: JobStatus;
+//   percentage?: number;
+//   reason?: string;
+//   isCleaned?: boolean;
+//   priority?: number;
+//   expirationDate?: Date;
+//   parameters?: ICreatePackage;
+// }
 
 export interface IFindJob {
   resourceId: string;
@@ -122,4 +121,30 @@ export interface JobDuplicationParams {
   targetResolution: number;
   crs: string;
   bbox: BBox2d;
+}
+export interface IJobParameters {
+  dbId: string;
+  targetResolution: number;
+  crs: string;
+  callbackURL: string[];
+  bbox: BBox2d;
+  packageName: string;
+  footprint: Polygon | MultiPolygon;
+  version: string;
+  cswProductId: string;
+  tilesPath: string;
+  productType: string;
+  callbackParams?: ICallbackResponse;
+}
+
+export interface ITaskParameters {
+  callbackURL: string[];
+  bbox: BBox2d | true;
+  dbId: string;
+  footprint: Polygon | MultiPolygon;
+  tilesPath: string;
+  zoomLevel: number;
+  packageName: string;
+  productType: string;
+  crs: string;
 }

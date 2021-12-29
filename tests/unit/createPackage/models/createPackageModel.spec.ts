@@ -3,7 +3,7 @@ import { JobManagerClient } from '../../../../src/clients/jobManagerClient';
 import { RasterCatalogManagerClient } from '../../../../src/clients/rasterCatalogManagerClient';
 import { ICreateJobResponse, ICreatePackage } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
-import { jobs, layerFromCatalog } from '../../../mocks/data';
+import { jobs, layerFromCatalog, userInput } from '../../../mocks/data';
 
 let createPackageManager: CreatePackageManager;
 let jobManagerClient: JobManagerClient;
@@ -28,11 +28,14 @@ describe('CreatePackageManager', () => {
 
   describe('#create', () => {
     it('should create job and return its job and task ids', async () => {
-      const userInput: ICreatePackage = {
-        dbId: '6007f15c-8978-4c83-adcb-655fb2185856',
-        targetResolution: 0.0000014576721191406,
-        callbackURL: ['http://callback-url.com'],
-        bbox: [0, 0, 1, 1],
+      const input = {
+        resourceId: 'temp_resourceId',
+        version: 'temp_version',
+        dbId: 'layerFromCatalog.id',
+        targetResolution: 0.0000525,
+        bbox: [0, 0, 0, 0],
+        crs: 'EPSG:4326', 
+        callbackURL: ['http://localhost:8080']
       };
 
       findLayerStub = jest.fn();
@@ -49,16 +52,9 @@ describe('CreatePackageManager', () => {
       jobManager.getJobs = getJobsStub.mockResolvedValue(jobs);
 
       // eslint-disable-next-line
-      const checkForDuplicateResponse = await (createPackageManager as unknown as { checkForDuplicate: any }).checkForDuplicate({
-        resourceId: 'temp_resourceId',
-        version: 'temp_version',
-        dbId: 'temp_dbId',
-        targetResolution: 0.0000525,
-        bbox: [0, 0, 0, 0],
-        crs: 'EPSG:4326',
-      });
+      const checkForDuplicateResponse = await (createPackageManager as unknown as { checkForDuplicate: any }).checkForDuplicate(input);
 
-      await createPackageManager.createPackage(userInput);
+      await createPackageManager.createPackage(input as unknown as ICreatePackage);
 
       expect(getJobsStub).toHaveBeenCalledTimes(6);
       expect(findLayerStub).toHaveBeenCalledTimes(1);
@@ -67,14 +63,6 @@ describe('CreatePackageManager', () => {
     });
 
     it('should return job and task-ids of existing in progress/pending job', async () => {
-      const userInput: ICreatePackage = {
-        dbId: '6007f15c-8978-4c83-adcb-655fb2185856',
-        targetResolution: 0.0000014576721191406,
-        callbackURL: ['http://callback-url.com'],
-        bbox: [0, 5, 30, 21],
-        crs: 'EPSG:4326',
-      };
-
       findLayerStub = jest.fn();
       createJobStub = jest.fn();
       getJobsStub = jest.fn();
@@ -84,7 +72,7 @@ describe('CreatePackageManager', () => {
       jobManagerClient.createJob = createJobStub.mockResolvedValue(undefined);
 
       const jobManager = jobManagerClient as unknown as { getJobs: unknown; updateJob: unknown };
-      jobManager.getJobs = getJobsStub.mockResolvedValue(jobs);
+      jobManager.getJobs = getJobsStub.mockResolvedValue([jobs[0], jobs[1]]);
       jobManager.updateJob = updateJobStub.mockResolvedValue(undefined);
 
       // eslint-disable-next-line
@@ -100,13 +88,15 @@ describe('CreatePackageManager', () => {
         []
       );
 
+      console.log(checkForDuplicateResponse);
+
       await createPackageManager.createPackage(userInput);
       const expectedReturn: ICreateJobResponse = {
         jobId: '5da59244-4748-4b0d-89b9-2c5e6ba72e70',
         taskIds: ['a3ffa55e-67b7-11ec-90d6-0242ac120003'],
       };
 
-      expect(getJobsStub).toHaveBeenCalledTimes(4);
+      expect(getJobsStub).toHaveBeenCalledTimes(2);
       expect(findLayerStub).toHaveBeenCalledTimes(1);
       expect(createJobStub).toHaveBeenCalledTimes(0);
       expect(checkForDuplicateResponse).toEqual(expectedReturn);
