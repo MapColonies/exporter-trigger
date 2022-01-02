@@ -1,9 +1,10 @@
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { JobManagerClient } from '../../../src/clients/jobManagerClient';
+import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
+import { IJobParameters, ITaskParameters } from '../../../src/common/interfaces';
 import { jobs, workerInput } from '../../mocks/data';
 
-let jobManagerClient: JobManagerClient;
+let jobManagerClient: JobManagerWrapper;
 let postFun: jest.Mock;
 let putFun: jest.Mock;
 let getJobs: jest.Mock;
@@ -12,7 +13,7 @@ describe('JobManagerClient', () => {
   describe('#createJob', () => {
     beforeEach(() => {
       const logger = jsLogger({ enabled: false });
-      jobManagerClient = new JobManagerClient(logger);
+      jobManagerClient = new JobManagerWrapper(logger);
     });
 
     afterEach(() => {
@@ -23,7 +24,7 @@ describe('JobManagerClient', () => {
     it('should create job successfully', async () => {
       postFun = jest.fn();
       (jobManagerClient as unknown as { post: unknown }).post = postFun.mockResolvedValue({ id: '123', taskIds: ['123'] });
-      await jobManagerClient.createJob(workerInput);
+      await jobManagerClient.create(workerInput);
 
       expect(postFun).toHaveBeenCalledTimes(1);
     });
@@ -46,7 +47,7 @@ describe('JobManagerClient', () => {
         resourceId: jobs[0].resourceId,
         version: jobs[0].version,
         dbId: jobs[0].parameters.dbId,
-        targetResolution: jobs[0].parameters.targetResolution,
+        zoomLevel: jobs[0].parameters.zoomLevel,
         crs: 'EPSG:4326',
         bbox: jobs[0].parameters.bbox,
       });
@@ -65,7 +66,7 @@ describe('JobManagerClient', () => {
         resourceId: jobs[0].resourceId,
         version: jobs[0].version,
         dbId: jobs[0].parameters.dbId,
-        targetResolution: jobs[0].parameters.targetResolution,
+        zoomLevel: jobs[0].parameters.zoomLevel,
         crs: 'EPSG:4326',
         bbox: jobs[0].parameters.bbox,
       });

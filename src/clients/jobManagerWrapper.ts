@@ -1,47 +1,40 @@
 import { inject, injectable } from 'tsyringe';
 import config from 'config';
-import { degreesPerPixelToZoomLevel, HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { Logger } from '@map-colonies/js-logger';
 import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
-import { ICreateJobBody, IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { ICreateJobBody, IJobResponse, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../common/constants';
 import { ICreateJobResponse, IFindJob, IJobParameters, ITaskParameters, IWorkerInput, JobDuplicationParams } from '../common/interfaces';
 
-interface JobManagerCreateJobResponse {
-  id: string;
-  taskIds: string[];
-}
-
 type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
+type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;
 
 @injectable()
-export class JobManagerClient extends HttpClient {
+export class JobManagerWrapper extends JobManagerClient {
   private readonly tilesJobType: string;
   private readonly tilesTaskType: string;
   private readonly expirationTime: number;
 
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
-    super(logger, config.get<string>('jobManager.url'), 'JobManager', config.get<IHttpRetryConfig>('httpRetry'));
+    super(
+      logger,
+      config.get<string>('workerTypes.tiles.jobType'),
+      config.get<string>('workerTypes.tiles.taskType'),
+      config.get<string>('jobManager.url')
+    );
     this.expirationTime = config.get<number>('jobManager.expirationTime');
     this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
     this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
   }
 
-  public async updateJob(jobId: string, payload: IUpdateJobBody<IJobParameters>): Promise<void> {
-    this.logger.debug(`Updating job ${jobId} with payload ${JSON.stringify(payload)}`);
-    const updateJobUrl = `/jobs/${jobId}`;
-    await this.put(updateJobUrl, payload);
-  }
-
-  public async createJob(data: IWorkerInput): Promise<ICreateJobResponse> {
+  public async create(data: IWorkerInput): Promise<ICreateJobResponse> {
     const { cswProductId: resourceId, version } = data;
-    const zoomLevel = degreesPerPixelToZoomLevel(data.targetResolution);
 
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationTime);
 
-    const createJobRequest: ICreateJobBody<IJobParameters, ITaskParameters> = {
+    const createJobRequest: CreateJobBody = {
       resourceId: resourceId,
       version: version,
       type: this.tilesJobType,
@@ -59,8 +52,8 @@ export class JobManagerClient extends HttpClient {
           parameters: {
             dbId: data.dbId,
             crs: data.crs,
-            zoomLevel,
-            callbackURL: data.callbackURL,
+            zoomLevel: data.zoomLevel,
+            callbackURLs: data.callbackURLs,
             bbox: data.bbox,
             tilesPath: data.tilesPath,
             footprint: data.footprint,
@@ -71,13 +64,11 @@ export class JobManagerClient extends HttpClient {
       ],
     };
 
-    this.logger.info(`Creating job and task for ${data.dbId}`);
-    this.logger.debug(JSON.stringify(createJobRequest));
-
-    const res = await this.post<JobManagerCreateJobResponse>('/jobs', createJobRequest);
+    const res = await this.createJob<IJobParameters, ITaskParameters>(createJobRequest);
     return {
-      jobId: res.id,
+      id: res.id,
       taskIds: res.taskIds,
+      status: OperationStatus.IN_PROGRESS,
     };
   }
 
@@ -148,7 +139,7 @@ export class JobManagerClient extends HttpClient {
     const matchingJob = jobs.find(
       (job) =>
         job.parameters.dbId === jobParams.dbId &&
-        job.parameters.targetResolution === jobParams.targetResolution &&
+        job.parameters.zoomLevel === jobParams.zoomLevel &&
         job.parameters.crs === jobParams.crs &&
         booleanEqual(bboxPolygon(job.parameters.bbox), bboxPolygon(jobParams.bbox))
     );

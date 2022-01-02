@@ -24,6 +24,8 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/createGpkgJobResponse'
                   - $ref: '#/components/schemas/naiveCacheJobResponse'
+                discriminator:
+                  propertyName: response
         400:
           description: Bad Request
           content:
@@ -52,6 +54,18 @@ components:
           schema:
             $ref: '#/components/schemas/exportGetMap'
   schemas:
+    CommonResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - In-Progress
+            - Completed
+      discriminator:
+        propertyName: response
     exportGetMap:
       type: object
       properties:
@@ -63,10 +77,9 @@ components:
           $ref: '#/components/schemas/BBOX'
         targetResolution:
           type: number
-          description: >-
-            The target resolution in which the tiles will be created - DEGREE to
+          description: The target resolution in which the tiles will be created - DEGREE to
             PIXEL
-        callbackURL:
+        callbackURLs:
           type: array
           items:
             type: string
@@ -82,18 +95,24 @@ components:
         - dbId
         - bbox
         - targetResolution
-        - callbackURL
+        - callbackURLs
       example:
         dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
         bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354]
         targetResolution: 4.29153442382812e-05
-        callbackURL: ['http://example.getmap.com/callback', 'http://example.getmap.com/callback2']
+        callbackURLs: ['http://example.getmap.com/callback', 'http://example.getmap.com/callback2']
         crs: 'EPSG:4326'
         priority: 0
     createGpkgJobResponse:
+      allOf:
+        - $ref: '#/components/schemas/CommonResponse'
       type: object
       properties:
-        jobId:
+        status:
+          type: string
+          enum:
+            - In-Progress
+        id:
           type: string
           format: uuid
         taskIds:
@@ -102,12 +121,17 @@ components:
             type: string
             format: uuid
       required:
-        - jobId
+        - id
         - taskIds
-
     naiveCacheJobResponse:
+      allOf:
+        - $ref: '#/components/schemas/CommonResponse'
       type: object
       properties:
+        status:
+          type: string
+          enum:
+            - Completed
         fileUri:
           type: string
         expirationTime:
@@ -162,7 +186,6 @@ components:
       description: List of supported
       enum:
         - EPSG:4326
-
     BBOX:
       type: array
       items:

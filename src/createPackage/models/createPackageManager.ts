@@ -4,44 +4,47 @@ import { Polygon, MultiPolygon } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
-import { ICreatePackage, ICreateJobResponse, IWorkerInput, JobDuplicationParams, ICallbackResponse } from '../../common/interfaces';
-import { JobManagerClient } from '../../clients/jobManagerClient';
+import { ICreatePackage, ICreateJobResponse, IWorkerInput, JobDuplicationParams, IJobParameters, ICallbackResposne } from '../../common/interfaces';
+import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
 @injectable()
 export class CreatePackageManager {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(JobManagerClient) private readonly jobManagerClient: JobManagerClient,
+    @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {}
 
-  public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
+  public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResposne> {
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
 
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
-    const { bbox, dbId, targetResolution, crs, priority, callbackURL } = userInput;
+    const { bbox, dbId, targetResolution, crs, priority, callbackURLs } = userInput;
+    const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
 
     const dupParams: JobDuplicationParams = {
       resourceId: resourceId as string,
       version: version as string,
       dbId,
-      targetResolution,
+      zoomLevel,
       bbox,
       crs: crs ?? DEFAULT_CRS,
     };
 
-    const duplicationExist = await this.checkForDuplicate(dupParams, userInput.callbackURL);
+    const duplicationExist = await this.checkForDuplicate(dupParams, userInput.callbackURLs);
     if (!duplicationExist) {
-      const packageName = this.generatePackageName(userInput.dbId, userInput.targetResolution, userInput.bbox);
+      const packageName = this.generatePackageName(userInput.dbId, zoomLevel, userInput.bbox);
       const workerInput: IWorkerInput = {
         bbox,
         targetResolution,
+        zoomLevel,
         dbId,
         packageName,
-        callbackURL,
+        callbackURLs,
         version: version as string,
         cswProductId: resourceId as string,
         footprint: footprint as Polygon | MultiPolygon,
@@ -51,16 +54,15 @@ export class CreatePackageManager {
         productType: productType ?? DEFAULT_PRODUCT_TYPE,
       };
 
-      const jobCreated = await this.jobManagerClient.createJob(workerInput);
+      const jobCreated = await this.jobManagerClient.create(workerInput);
       return jobCreated;
     }
 
     return duplicationExist;
   }
 
-  private generatePackageName(cswId: string, resolution: number, bbox: BBox2d): string {
+  private generatePackageName(cswId: string, zoomLevel: number, bbox: BBox2d): string {
     const numberOfDecimals = 5;
-    const zoomLevel = degreesPerPixelToZoomLevel(resolution);
     const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_')).join('');
     return `gm_${cswId.replace(/-/g, '_')}_${zoomLevel}_${bboxToString}`;
   }
@@ -68,8 +70,8 @@ export class CreatePackageManager {
   private async checkForDuplicate(
     dupParams: JobDuplicationParams,
     callbackUrls: string[]
-  ): Promise<ICallbackResponse | ICreateJobResponse | undefined> {
-    const completedExists = await this.checkForCompleted(dupParams);
+  ): Promise<ICallbackResposne | ICreateJobResponse | undefined> {
+    let completedExists = await this.checkForCompleted(dupParams);
     if (completedExists) {
       return completedExists;
     }
@@ -79,28 +81,39 @@ export class CreatePackageManager {
       return processingExists;
     }
 
+    // For race condition
+    completedExists = await this.checkForCompleted(dupParams);
+    if (completedExists) {
+      return completedExists;
+    }
+
     return undefined;
   }
 
-  private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResponse | undefined> {
-    this.logger.debug(`Checking for duplications with parameters: ${JSON.stringify(dupParams)}`);
+  private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResposne | undefined> {
+    this.logger.info(`Checking for COMPLETED duplications with parameters: ${JSON.stringify(dupParams)}`);
     const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
     if (responseJob) {
-      return responseJob.parameters.callbackParams;
+      return {
+        ...responseJob.parameters.callbackParams,
+        status: OperationStatus.COMPLETED,
+      } as ICallbackResposne;
     }
   }
 
-  private async checkForProcessing(jobParams: JobDuplicationParams, addedCallbackUrls: string[]): Promise<ICreateJobResponse | undefined> {
-    const processingJob = (await this.jobManagerClient.findInProgressJob(jobParams)) ?? (await this.jobManagerClient.findPendingJob(jobParams));
+  private async checkForProcessing(dupParams: JobDuplicationParams, addedCallbackUrls: string[]): Promise<ICreateJobResponse | undefined> {
+    this.logger.info(`Checking for PROCESSING duplications with parameters: ${JSON.stringify(dupParams)}`);
+    const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
 
     if (processingJob) {
-      const newCallbackURLs = [...new Set([...processingJob.parameters.callbackURL, ...addedCallbackUrls])];
-      await this.jobManagerClient.updateJob(processingJob.id, {
-        parameters: { ...processingJob.parameters, callbackURL: newCallbackURLs },
+      const newCallbackURLs = [...new Set([...processingJob.parameters.callbackURLs, ...addedCallbackUrls])];
+      await this.jobManagerClient.updateJob<IJobParameters>(processingJob.id, {
+        parameters: { ...processingJob.parameters, callbackURLs: newCallbackURLs },
       });
       return {
-        jobId: processingJob.id,
-        taskIds: processingJob.tasks.map((t) => (t as { id: string }).id) ,
+        id: processingJob.id,
+        taskIds: processingJob.tasks.map((t) => t.id),
+        status: OperationStatus.IN_PROGRESS,
       };
     }
   }

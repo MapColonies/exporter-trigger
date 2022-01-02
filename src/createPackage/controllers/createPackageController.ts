@@ -5,9 +5,9 @@ import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
 import { CreatePackageManager } from '../models/createPackageManager';
-import { IBasicResponse, ICreatePackage, ICreateJobResponse, ICallbackResponse } from '../../common/interfaces';
+import { IBasicResponse, ICreatePackage, ICreateJobResponse, ICallbackResposne } from '../../common/interfaces';
 
-type CreatePackageHandler = RequestHandler<undefined, IBasicResponse | ICreateJobResponse | ICallbackResponse, ICreatePackage>;
+type CreatePackageHandler = RequestHandler<undefined, IBasicResponse | ICreateJobResponse | ICallbackResposne, ICreatePackage>;
 
 @injectable()
 export class CreatePackageController {

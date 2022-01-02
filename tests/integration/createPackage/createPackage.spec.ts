@@ -7,7 +7,7 @@ import { RasterCatalogManagerClient } from '../../../src/clients/rasterCatalogMa
 import { SERVICES } from '../../../src/common/constants';
 import { ICreatePackage } from '../../../src/common/interfaces';
 import { layerFromCatalog } from '../../mocks/data';
-import { JobManagerClient } from '../../../src/clients/jobManagerClient';
+import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { CreatePackageSender } from './helpers/createPackageSender';
 
 describe('tiles', function () {
@@ -25,7 +25,7 @@ describe('tiles', function () {
     });
     requestSender = new CreatePackageSender(app);
     findLayerSpy = jest.spyOn(RasterCatalogManagerClient.prototype, 'findLayer');
-    createJobSpy = jest.spyOn(JobManagerClient.prototype, 'createJob');
+    createJobSpy = jest.spyOn(JobManagerWrapper.prototype, 'createJob');
   });
 
   afterEach(function () {
@@ -39,12 +39,12 @@ describe('tiles', function () {
         dbId: layerFromCatalog.id,
         bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
         targetResolution: 0.0000429153442382812,
-        callbackURL: ['http://example.getmap.com/callback'],
+        callbackURLs: ['http://example.getmap.com/callback'],
         crs: 'EPSG:4326',
         priority: 0,
       };
       findLayerSpy.mockResolvedValue(layerFromCatalog);
-      createJobSpy.mockResolvedValue({ jobId: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
+      createJobSpy.mockResolvedValue({ id: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
 
       const resposne = await requestSender.create(body);
 
@@ -60,7 +60,7 @@ describe('tiles', function () {
       const body = {
         dbId: layerFromCatalog.id,
         targetResolution: 0.0000429153442382812,
-        callbackURL: 'http://example.getmap.com/callback',
+        callbackURLs: ['http://example.getmap.com/callback'],
         crs: 'EPSG:4326',
         priority: 0,
       } as unknown as ICreatePackage;
