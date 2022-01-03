@@ -26,8 +26,7 @@ describe('tiles', function () {
       useChild: true,
     });
     requestSender = new CreatePackageSender(app);
-    // @ts-ignore
-    checkForDuplicateSpy = jest.spyOn(CreatePackageManager.prototype, 'checkForDuplicate');
+    checkForDuplicateSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForDuplicate: jest.Mock }, 'checkForDuplicate');
     findLayerSpy = jest.spyOn(RasterCatalogManagerClient.prototype, 'findLayer');
     createJobSpy = jest.spyOn(JobManagerWrapper.prototype, 'createJob');
   });
