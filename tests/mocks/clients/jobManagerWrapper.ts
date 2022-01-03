@@ -11,7 +11,7 @@ const jobManagerWrapperMock = {
   findCompletedJob: findCompletedJobMock,
   findInProgressJob: findInProgressJobMock,
   findPendingJob: findPendingJobMock,
-  create: createMock
+  create: createMock,
 } as unknown as JobManagerWrapper;
 
 export { jobManagerWrapperMock, createMock, createJobMock, findCompletedJobMock, findInProgressJobMock, findPendingJobMock };

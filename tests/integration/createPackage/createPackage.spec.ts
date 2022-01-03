@@ -8,8 +8,8 @@ import { SERVICES } from '../../../src/common/constants';
 import { ICreatePackage } from '../../../src/common/interfaces';
 import { layerFromCatalog } from '../../mocks/data';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
-import { CreatePackageSender } from './helpers/createPackageSender';
 import { CreatePackageManager } from '../../../src/createPackage/models/createPackageManager';
+import { CreatePackageSender } from './helpers/createPackageSender';
 
 describe('tiles', function () {
   let requestSender: CreatePackageSender;
@@ -50,7 +50,7 @@ describe('tiles', function () {
       findLayerSpy.mockResolvedValue(layerFromCatalog);
       createJobSpy.mockResolvedValue({ id: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
       checkForDuplicateSpy.mockResolvedValue(undefined);
-      
+
       const resposne = await requestSender.create(body);
 
       expect(resposne).toSatisfyApiSpec();
