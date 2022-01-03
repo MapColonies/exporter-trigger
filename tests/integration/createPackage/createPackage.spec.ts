@@ -9,11 +9,13 @@ import { ICreatePackage } from '../../../src/common/interfaces';
 import { layerFromCatalog } from '../../mocks/data';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { CreatePackageSender } from './helpers/createPackageSender';
+import { CreatePackageManager } from '../../../src/createPackage/models/createPackageManager';
 
 describe('tiles', function () {
   let requestSender: CreatePackageSender;
   let findLayerSpy: jest.SpyInstance;
   let createJobSpy: jest.SpyInstance;
+  let checkForDuplicateSpy: jest.SpyInstance;
 
   beforeEach(function () {
     const app = getApp({
@@ -24,6 +26,8 @@ describe('tiles', function () {
       useChild: true,
     });
     requestSender = new CreatePackageSender(app);
+    // @ts-ignore
+    checkForDuplicateSpy = jest.spyOn(CreatePackageManager.prototype, 'checkForDuplicate');
     findLayerSpy = jest.spyOn(RasterCatalogManagerClient.prototype, 'findLayer');
     createJobSpy = jest.spyOn(JobManagerWrapper.prototype, 'createJob');
   });
@@ -45,14 +49,14 @@ describe('tiles', function () {
       };
       findLayerSpy.mockResolvedValue(layerFromCatalog);
       createJobSpy.mockResolvedValue({ id: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
+      checkForDuplicateSpy.mockResolvedValue(undefined);
+      
+      const resposne = await requestSender.create(body);
 
-      const response = await requestSender.create(body);
-      console.log(response.body);
-
-      expect(response).toSatisfyApiSpec();
+      expect(resposne).toSatisfyApiSpec();
       expect(findLayerSpy).toHaveBeenCalledTimes(1);
       expect(createJobSpy).toHaveBeenCalledTimes(1);
-      expect(response.status).toBe(httpStatusCodes.OK);
+      expect(resposne.status).toBe(httpStatusCodes.OK);
     });
   });
 
