@@ -3,12 +3,18 @@ import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
-import { ICreateJobBody, IJobResponse, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../common/constants';
-import { ICreateJobResponse, IFindJob, IJobParameters, ITaskParameters, IWorkerInput, JobDuplicationParams } from '../common/interfaces';
-
-type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
-type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;
+import {
+  CreateJobBody,
+  ICreateJobResponse,
+  IFindJob,
+  IJobParameters,
+  ITaskParameters,
+  IWorkerInput,
+  JobDuplicationParams,
+  JobResponse,
+} from '../common/interfaces';
 
 @injectable()
 export class JobManagerWrapper extends JobManagerClient {

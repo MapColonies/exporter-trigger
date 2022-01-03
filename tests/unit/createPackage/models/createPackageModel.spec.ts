@@ -53,12 +53,14 @@ describe('CreatePackageManager', () => {
 
       // eslint-disable-next-line
       const checkForDuplicateResponse = await (createPackageManager as unknown as { checkForDuplicate: any }).checkForDuplicate(jobDupParams, []);
+      const ignoreCalls = getJobsStub.mock.calls.length;
 
       await createPackageManager.createPackage(jobDupParams as unknown as ICreatePackage);
+      const actualCalls = getJobsStub.mock.calls.length - ignoreCalls;
 
-      expect(getJobsStub).toHaveBeenCalledTimes(8);
       expect(findLayerStub).toHaveBeenCalledTimes(1);
       expect(createJobStub).toHaveBeenCalledTimes(1);
+      expect(actualCalls).toBe(3);
       expect(checkForDuplicateResponse).toBeUndefined();
     });
 

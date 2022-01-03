@@ -7,7 +7,15 @@ import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
-import { ICreatePackage, ICreateJobResponse, IWorkerInput, JobDuplicationParams, IJobParameters, ICallbackResposne } from '../../common/interfaces';
+import {
+  ICreatePackage,
+  ICreateJobResponse,
+  IWorkerInput,
+  JobDuplicationParams,
+  IJobParameters,
+  ICallbackResposne,
+  JobResponse,
+} from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
 @injectable()
@@ -78,13 +86,12 @@ export class CreatePackageManager {
 
     const processingExists = await this.checkForProcessing(dupParams, callbackUrls);
     if (processingExists) {
+      // For race condition
+      completedExists = await this.checkForCompleted(dupParams);
+      if (completedExists) {
+        return completedExists;
+      }
       return processingExists;
-    }
-
-    // For race condition
-    completedExists = await this.checkForCompleted(dupParams);
-    if (completedExists) {
-      return completedExists;
     }
 
     return undefined;
@@ -106,15 +113,20 @@ export class CreatePackageManager {
     const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
 
     if (processingJob) {
-      const newCallbackURLs = [...new Set([...processingJob.parameters.callbackURLs, ...addedCallbackUrls])];
-      await this.jobManagerClient.updateJob<IJobParameters>(processingJob.id, {
-        parameters: { ...processingJob.parameters, callbackURLs: newCallbackURLs },
-      });
+      await this.updateCallbackURLs(processingJob, addedCallbackUrls);
+
       return {
         id: processingJob.id,
         taskIds: processingJob.tasks.map((t) => t.id),
         status: OperationStatus.IN_PROGRESS,
       };
     }
+  }
+
+  private async updateCallbackURLs(processingJob: JobResponse, newCalbackURLs: string[]): Promise<void> {
+    const newCallbackURLs = [...new Set([...processingJob.parameters.callbackURLs, ...newCalbackURLs])];
+    await this.jobManagerClient.updateJob<IJobParameters>(processingJob.id, {
+      parameters: { ...processingJob.parameters, callbackURLs: newCallbackURLs },
+    });
   }
 }

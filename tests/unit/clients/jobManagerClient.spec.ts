@@ -1,7 +1,6 @@
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
-import { IJobParameters, ITaskParameters } from '../../../src/common/interfaces';
 import { jobs, workerInput } from '../../mocks/data';
 
 let jobManagerClient: JobManagerWrapper;
