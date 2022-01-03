@@ -21,8 +21,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/createGpkgJobResponse'
-        '400':
+                oneOf:
+                  - $ref: '#/components/schemas/createGpkgJobResponse'
+                  - $ref: '#/components/schemas/naiveCacheJobResponse'
+                discriminator:
+                  propertyName: response
+        400:
           description: Bad Request
           content:
             application/json:
@@ -50,6 +54,18 @@ components:
           schema:
             $ref: '#/components/schemas/exportGetMap'
   schemas:
+    CommonResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - In-Progress
+            - Completed
+      discriminator:
+        propertyName: response
     exportGetMap:
       type: object
       properties:
@@ -57,27 +73,16 @@ components:
           type: string
           format: uuid
           description: ID as the primary key from the Raster Catalog
-        packageName:
-          type: string
-          description: The name of the desired GPKG (no need for .gpkg extension)
-          pattern: ^[\/\w\-. ]+$
-          maxLength: 255
         bbox:
-          type: array
-          items:
-            type: number
-          minItems: 4
-          maxItems: 4
-          description: >-
-            Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy]
-            in crs units as array
+          $ref: '#/components/schemas/BBOX'
         targetResolution:
           type: number
-          description: >-
-            The target resolution in which the tiles will be created - DEGREE to
+          description: The target resolution in which the tiles will be created - DEGREE to
             PIXEL
-        callbackURL:
-          type: string
+        callbackURLs:
+          type: array
+          items:
+            type: string
           description: The callback URL to notify the process if finished
         crs:
           $ref: '#/components/schemas/CRS'
@@ -90,32 +95,75 @@ components:
         - dbId
         - bbox
         - targetResolution
-        - callbackURL
-        - packageName
+        - callbackURLs
       example:
         dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
-        packageName: myPackage
-        bbox:
-          - 34.811938017107494
-          - 31.95475033759175
-          - 34.82237261707599
-          - 31.96426962177354
-        targetResolution: 0.0000429153442382812
-        callbackURL: http://example.getmap.com/callback
-        crs: EPSG:4326
+        bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354]
+        targetResolution: 4.29153442382812e-05
+        callbackURLs: ['http://example.getmap.com/callback', 'http://example.getmap.com/callback2']
+        crs: 'EPSG:4326'
         priority: 0
     createGpkgJobResponse:
+      allOf:
+        - $ref: '#/components/schemas/CommonResponse'
       type: object
       properties:
-        jobId:
+        status:
+          type: string
+          enum:
+            - In-Progress
+        id:
           type: string
           format: uuid
-        taskId:
-          type: string
-          format: uuid
+        taskIds:
+          type: array
+          items:
+            type: string
+            format: uuid
       required:
-        - jobId
-        - taskId
+        - id
+        - taskIds
+    naiveCacheJobResponse:
+      allOf:
+        - $ref: '#/components/schemas/CommonResponse'
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - Completed
+        fileUri:
+          type: string
+        expirationTime:
+          type: string
+          format: date
+        fileSize:
+          type: number
+        dbId:
+          type: string
+          format: uuid
+        packageName:
+          type: string
+        bbox:
+          $ref: '#/components/schemas/BBOX'
+        targetResolution:
+          type: number
+        requestId:
+          type: string
+        success:
+          type: boolean
+        errorReason:
+          type: string
+      required:
+        - fileUri
+        - expirationTime
+        - fileSize
+        - dbId
+        - packageName
+        - bbox
+        - targetResolution
+        - requestId
+        - success
     error:
       type: object
       required:
@@ -138,3 +186,10 @@ components:
       description: List of supported
       enum:
         - EPSG:4326
+    BBOX:
+      type: array
+      items:
+        type: number
+      minItems: 4
+      maxItems: 4
+      description: Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in crs units as array

@@ -1,3 +1,4 @@
+import { ICreateJobBody, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { Polygon, MultiPolygon } from '@turf/helpers';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 
@@ -17,63 +18,93 @@ export interface ICreatePackage {
   dbId: string;
   targetResolution: number;
   crs?: string;
-  callbackURL: string;
+  callbackURLs: string[];
   bbox: BBox2d;
   priority?: number;
-  packageName: string;
+  callbackParams?: ICallbackParams;
 }
 
 export interface IWorkerInput extends ICreatePackage {
   footprint: Polygon | MultiPolygon;
-  bbox: BBox2d;
   version: string;
   cswProductId: string;
   tilesPath: string;
-  priority: number;
   crs: string;
-}
-
-export interface IJobCreationResponse {
-  jobId: string;
-  taskId: string;
+  packageName: string;
+  productType: string;
+  zoomLevel: number;
 }
 
 export interface IBasicResponse {
   message: string;
 }
 
-export enum OperationStatus {
-  PENDING = 'Pending',
-  IN_PROGRESS = 'In-Progress',
-  COMPLETED = 'Completed',
-  FAILED = 'Failed',
-}
-
-export interface ICreateTaskBody {
-  description?: string;
-  parameters: Record<string, unknown>;
-  reason?: string;
-  type?: string;
-  status?: OperationStatus;
-  attempts?: number;
-}
-
-export interface ICreateJobBody {
-  resourceId: string;
-  version: string;
-  parameters: Record<string, unknown>;
-  type: string;
-  description?: string;
-  status?: OperationStatus;
-  reason?: string;
-  tasks?: ICreateTaskBody[];
-  internalId?: string;
-  producerName?: string;
-  productName?: string;
-  productType?: string;
-}
-
 export interface ICreateJobResponse {
   id: string;
   taskIds: string[];
+  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
+export interface IFindJob {
+  resourceId: string;
+  version: string;
+  status: string;
+  isCleaned: string;
+  type: string;
+  shouldReturnTasks: string;
+}
+export interface ICallbackParams {
+  fileUri: string;
+  expirationTime: Date;
+  fileSize: number;
+  dbId: string;
+  packageName: string;
+  bbox: BBox2d | true;
+  targetResolution: number;
+  requestId: string;
+  success: boolean;
+  errorReason?: string;
+}
+
+export interface ICallbackResposne extends ICallbackParams {
+  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
+}
+
+export interface JobDuplicationParams {
+  resourceId: string;
+  version: string;
+  dbId: string;
+  zoomLevel: number;
+  crs: string;
+  bbox: BBox2d;
+}
+
+export interface IJobParameters {
+  dbId: string;
+  targetResolution: number;
+  crs: string;
+  callbackURLs: string[];
+  bbox: BBox2d;
+  packageName: string;
+  footprint: Polygon | MultiPolygon;
+  version: string;
+  cswProductId: string;
+  tilesPath: string;
+  productType: string;
+  zoomLevel: number;
+  callbackParams?: ICallbackParams;
+}
+
+export interface ITaskParameters {
+  callbackURLs: string[];
+  bbox: BBox2d | true;
+  dbId: string;
+  footprint: Polygon | MultiPolygon;
+  tilesPath: string;
+  zoomLevel: number;
+  packageName: string;
+  productType: string;
+  crs: string;
+}
+
+export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
+export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;
