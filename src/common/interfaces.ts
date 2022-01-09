@@ -30,7 +30,6 @@ export interface IWorkerInput extends ICreatePackage {
   cswProductId: string;
   tilesPath: string;
   crs: string;
-  packageName: string;
   productType: string;
   zoomLevel: number;
 }
@@ -84,7 +83,6 @@ export interface IJobParameters {
   crs: string;
   callbackURLs: string[];
   bbox: BBox2d;
-  packageName: string;
   footprint: Polygon | MultiPolygon;
   version: string;
   cswProductId: string;
@@ -101,7 +99,6 @@ export interface ITaskParameters {
   footprint: Polygon | MultiPolygon;
   tilesPath: string;
   zoomLevel: number;
-  packageName: string;
   productType: string;
   crs: string;
 }

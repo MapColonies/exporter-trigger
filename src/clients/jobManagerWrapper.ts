@@ -65,7 +65,6 @@ export class JobManagerWrapper extends JobManagerClient {
             tilesPath: data.tilesPath,
             footprint: data.footprint,
             productType: data.productType,
-            packageName: data.packageName,
           },
         },
       ],
