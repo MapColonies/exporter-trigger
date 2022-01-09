@@ -18,4 +18,3 @@ export const SERVICES: Record<string, symbol> = {
 export const DEFAULT_PRIORITY = 1000;
 export const DEFAULT_CRS = 'EPSG:4326';
 export const DEFAULT_PRODUCT_TYPE = 'Orthophoto';
-export const GPKG_EXTENSION = 'gpkg';

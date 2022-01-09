@@ -2,11 +2,10 @@ import { sep } from 'path';
 import { Logger } from '@map-colonies/js-logger';
 import { Polygon, MultiPolygon } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
-import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
-import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, GPKG_EXTENSION, SERVICES } from '../../common/constants';
+import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
 import {
   ICreatePackage,
   ICreateJobResponse,
@@ -45,13 +44,11 @@ export class CreatePackageManager {
 
     const duplicationExist = await this.checkForDuplicate(dupParams, userInput.callbackURLs);
     if (!duplicationExist) {
-      const packageName = this.generatePackageName(userInput.dbId, zoomLevel, userInput.bbox);
       const workerInput: IWorkerInput = {
         bbox,
         targetResolution,
         zoomLevel,
         dbId,
-        packageName,
         callbackURLs,
         version: version as string,
         cswProductId: resourceId as string,
@@ -67,12 +64,6 @@ export class CreatePackageManager {
     }
 
     return duplicationExist;
-  }
-
-  private generatePackageName(cswId: string, zoomLevel: number, bbox: BBox2d): string {
-    const numberOfDecimals = 5;
-    const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_')).join('');
-    return `gm_${cswId.replace(/-/g, '_')}_${zoomLevel}_${bboxToString}.${GPKG_EXTENSION}`;
   }
 
   private async checkForDuplicate(
