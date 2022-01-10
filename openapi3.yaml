@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: exporter-trigger
   description: Service that responsible for activating the export geopackage process
-  version: 2.0.1
+  version: 2.1.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -26,7 +26,7 @@ paths:
                   - $ref: '#/components/schemas/naiveCacheJobResponse'
                 discriminator:
                   propertyName: response
-        400:
+        '400':
           description: Bad Request
           content:
             application/json:
@@ -77,7 +77,8 @@ components:
           $ref: '#/components/schemas/BBOX'
         targetResolution:
           type: number
-          description: The target resolution in which the tiles will be created - DEGREE to
+          description: >-
+            The target resolution in which the tiles will be created - DEGREE to
             PIXEL
         callbackURLs:
           type: array
@@ -98,10 +99,16 @@ components:
         - callbackURLs
       example:
         dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
-        bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354]
-        targetResolution: 4.29153442382812e-05
-        callbackURLs: ['http://example.getmap.com/callback', 'http://example.getmap.com/callback2']
-        crs: 'EPSG:4326'
+        bbox:
+          - 34.811938017107494
+          - 31.95475033759175
+          - 34.82237261707599
+          - 31.96426962177354
+        targetResolution: 0.0000429153442382812
+        callbackURLs:
+          - http://example.getmap.com/callback
+          - http://example.getmap.com/callback2
+        crs: EPSG:4326
         priority: 0
     createGpkgJobResponse:
       allOf:
@@ -192,4 +199,6 @@ components:
         type: number
       minItems: 4
       maxItems: 4
-      description: Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in crs units as array
+      description: >-
+        Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in
+        crs units as array

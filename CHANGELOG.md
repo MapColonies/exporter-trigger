@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.1.0](https://github.com/MapColonies/exporter-trigger/compare/v2.0.1...v2.1.0) (2022-01-10)
+
+
+### Features
+
+* implement naive cache solution ([#17](https://github.com/MapColonies/exporter-trigger/issues/17)) ([8253e9d](https://github.com/MapColonies/exporter-trigger/commit/8253e9d48bde81ec9054182c241cdf1eff8beab0))
+
+
+### Bug Fixes
+
+* add gpkg ext to file name ([#19](https://github.com/MapColonies/exporter-trigger/issues/19)) ([6c89620](https://github.com/MapColonies/exporter-trigger/commit/6c896206b52c67d8228e85de6f740fa147ba845b))
+
 ### [2.0.1](https://github.com/MapColonies/exporter-trigger/compare/v2.0.0...v2.0.1) (2021-12-19)
 
 
