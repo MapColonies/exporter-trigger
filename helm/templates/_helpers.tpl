@@ -65,6 +65,17 @@ Returns the environment from global if exists or from the chart's values, defaul
 {{- end -}}
 
 {{/*
+Returns the cloud provider image pull secret name from global if exists or from the chart's values
+*/}}
+{{- define "exporter-trigger.cloudProviderImagePullSecretName" -}}
+{{- if .Values.global.cloudProvider.imagePullSecretName }}
+    {{- .Values.global.cloudProvider.imagePullSecretName -}}
+{{- else if .Values.cloudProvider -}}
+    {{- .Values.cloudProvider.imagePullSecretName -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns the cloud provider name from global if exists or from the chart's values, defaults to minikube
 */}}
 {{- define "exporter-trigger.cloudProviderFlavor" -}}

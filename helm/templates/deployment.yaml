@@ -2,6 +2,7 @@
 {{- $chartName := include "exporter-trigger.name" . -}}
 {{- $cloudProviderFlavor := include "exporter-trigger.cloudProviderFlavor" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "exporter-trigger.cloudProviderDockerRegistryUrl" . -}}
+{{- $cloudProviderImagePullSecretName := include "exporter-trigger.cloudProviderImagePullSecretName" . -}}
 {{- $imageTag := include "exporter-trigger.tag" . -}}
 {{- if .Values.enabled -}}
 apiVersion: apps/v1
@@ -30,6 +31,10 @@ spec:
         run: {{ $releaseName }}-{{ $chartName }}
         {{- include "exporter-trigger.selectorLabels" . | nindent 8 }}
     spec:
+      {{- if $cloudProviderImagePullSecretName }}
+      imagePullSecrets:
+      - name: {{ $cloudProviderImagePullSecretName | quote }}
+      {{- end }}    
       containers:
         - name: {{ $releaseName }}-{{ $chartName }}-deployment
           {{- with .Values.image }}
