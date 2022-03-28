@@ -28,7 +28,6 @@ export class CreatePackageManager {
   public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResposne> {
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
-
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
     const { bbox, dbId, targetResolution, crs, priority, callbackURLs } = userInput;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
@@ -53,7 +52,7 @@ export class CreatePackageManager {
         version: version as string,
         cswProductId: resourceId as string,
         footprint: footprint as Polygon | MultiPolygon,
-        tilesPath: (resourceId as string) + sep + (version as string) + sep + (layerMetadata.productType as string),
+        tilesPath: (resourceId as string) + sep + (layerMetadata.productType as string),
         priority: priority ?? DEFAULT_PRIORITY,
         crs: crs ?? DEFAULT_CRS,
         productType: productType ?? DEFAULT_PRODUCT_TYPE,
