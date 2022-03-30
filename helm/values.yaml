@@ -12,6 +12,7 @@ rasterCommon:
     exporter:
       jobType: tilesExport
       taskType: tilesExport
+  storageProvider: FS
 
 enabled: true
 environment: development
