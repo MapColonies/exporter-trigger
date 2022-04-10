@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.2.0](https://github.com/MapColonies/exporter-trigger/compare/v2.1.1...v2.2.0) (2022-04-10)
+
+
+### Features
+
+* update to new model ([#22](https://github.com/MapColonies/exporter-trigger/issues/22)) ([3672476](https://github.com/MapColonies/exporter-trigger/commit/367247680bbd872b56fffa1c51a3d374d49c1ad0)), closes [#23](https://github.com/MapColonies/exporter-trigger/issues/23)
+
 ### [2.1.1](https://github.com/MapColonies/exporter-trigger/compare/v2.1.0...v2.1.1) (2022-01-19)
 
 ## [2.1.0](https://github.com/MapColonies/exporter-trigger/compare/v2.0.1...v2.1.0) (2022-01-10)
