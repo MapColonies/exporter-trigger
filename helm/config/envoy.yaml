@@ -23,6 +23,12 @@ static_resources:
                           route:
                             cluster: service
                 http_filters:
+                  - name: envoy.filters.http.set_metadata
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.set_metadata.v3.Config
+                      metadata_namespace: map_colonies
+                      value: 
+                        domain: {{ .Values.envoy.requestedDomain }}
                   - name: envoy.ext_authz
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
@@ -36,11 +42,10 @@ static_resources:
                           target_uri: localhost:{{ .Values.opa.port }}
                           stat_prefix: ext_authz
                         timeout: 0.5s
-                        initial_metadata:
-                          - header:
-                              key: X-Required-Domain
-                              value: {{ .Values.envoy.requestedDomain }}
-                            append: false
+                      metadata_context_namespaces:
+                        - envoy.filters.http.set_metadata
+                        - map_colonies
+                        - envoy.filters.http.set_metadata.map_colonies
                   - name: envoy.filters.http.router
   clusters:
     - name: service

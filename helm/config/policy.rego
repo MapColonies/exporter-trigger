@@ -2,6 +2,7 @@ package envoy.authz
 
 import input.attributes.request.http as http_request
 import input.parsed_query as query_params
+import input.attributes.metadataContext.filterMetadata.map_colonies as map_colonies 
 
 default allow = false
 
@@ -20,7 +21,7 @@ payload = payload {
 }
 
 user_has_resource_access[payload] {
-  lower(payload.d[_]) = {{ .Values.rasterCommon.authentication.opa.domains | lower | quote }}
+  lower(payload.d[_]) = lower(map_colonies.domain)
 }
 
 valid_origin[payload] {

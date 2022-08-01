@@ -14,9 +14,8 @@ rasterCommon:
       taskType: tilesExport
   authentication:
     opa:
-      enabled: true
-      customHeaderName: "X-Api-key"
-      domains: raster #TODO: remove
+      enabled: false
+      customHeaderName: ""
 
 enabled: true
 environment: development
@@ -27,19 +26,18 @@ resetOnConfigChange: true
 
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
-  flavor: minikube #openshift
+  flavor: openshift
   imagePullSecretName: acr-registry
 
 image:
   repository: exporter-trigger
-  tag: 'latest'
+  tag: 'v2.2.0'
 
 opa:
   image: openpolicyagent/opa
   imageTag: 0.29.4-envoy-3
   port: 9191
-  enableLogging: true #false
-  requestedDomain: rasterExport
+  enableLogging: false
   resources:
     enabled: true
     value:
@@ -51,9 +49,10 @@ opa:
         memory: 128Mi
 envoy:
   image: envoyproxy/envoy
-  imageTag: v1.18.3
+  imageTag: v1.20.7
   port: 8000
   maxRequestBytes: 8192
+  requestedDomain: rasterExport
   resources:
     enabled: true
     value:
@@ -96,7 +95,7 @@ resources:
       memory: 128Mi
 
 route:
-  enabled: false
+  enabled: true
   path: /
   timeout:
     enabled: false # defaults to 30s by openshift
