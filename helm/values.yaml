@@ -12,6 +12,10 @@ rasterCommon:
     exporter:
       jobType: tilesExport
       taskType: tilesExport
+  authentication:
+    opa:
+      enabled: false
+      customHeaderName: ""
 
 enabled: true
 environment: development
@@ -29,10 +33,40 @@ image:
   repository: exporter-trigger
   tag: 'latest'
 
+opa:
+  image: openpolicyagent/opa
+  imageTag: 0.29.4-envoy-3
+  port: 9191
+  enableLogging: false
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+envoy:
+  image: envoyproxy/envoy
+  imageTag: v1.20.7
+  port: 8000
+  maxRequestBytes: 8192
+  requestedDomain: rasterExport
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
 env:
   port: 8080
+  internalPort: 80
   targetPort: 8080
-  protocol: TCP
   logLevel: info
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
