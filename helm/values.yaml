@@ -31,7 +31,7 @@ cloudProvider:
 
 image:
   repository: exporter-trigger
-  tag: 'v2.2.0'
+  tag: 'latest'
 
 opa:
   image: openpolicyagent/opa

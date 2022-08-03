@@ -43,9 +43,7 @@ static_resources:
                           stat_prefix: ext_authz
                         timeout: 0.5s
                       metadata_context_namespaces:
-                        - envoy.filters.http.set_metadata
                         - map_colonies
-                        - envoy.filters.http.set_metadata.map_colonies
                   - name: envoy.filters.http.router
   clusters:
     - name: service
