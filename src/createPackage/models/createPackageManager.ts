@@ -5,7 +5,7 @@ import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygo
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { bboxToTileRange} from '@map-colonies/mc-utils';
+import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
@@ -18,19 +18,21 @@ import {
   IJobParameters,
   ICallbackResposne,
   JobResponse,
+  ITaskParameters,
+  MergerSourceType,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
 @injectable()
 export class CreatePackageManager {
-  private readonly tilesProvider: string;
+  private readonly tilesProvider: MergerSourceType;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
-    this.tilesProvider = config.get("tilesProvider");
-    this.tilesProvider = this.tilesProvider.toUpperCase();
+    this.tilesProvider = config.get('tilesProvider');
+    this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
   }
 
   public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResposne> {
@@ -39,9 +41,9 @@ export class CreatePackageManager {
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
     const { bbox, dbId, targetResolution, crs, priority, callbackURLs } = userInput;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
-    const sanitizedBbox = this.sanitizeBbox(bbox,footprint as Polygon | MultiPolygon,zoomLevel)
+    const sanitizedBbox = this.sanitizeBbox(bbox, footprint as Polygon | MultiPolygon, zoomLevel);
 
-    if(sanitizedBbox === null){
+    if (sanitizedBbox === null) {
       throw new BadRequestError(`requested bbox has no intersection with requested layer`);
     }
 
@@ -50,37 +52,36 @@ export class CreatePackageManager {
       version: version as string,
       dbId,
       zoomLevel,
-      bbox:sanitizedBbox,
+      sanitizedBbox,
       crs: crs ?? DEFAULT_CRS,
     };
 
     const duplicationExist = await this.checkForDuplicate(dupParams, userInput.callbackURLs);
     if (!duplicationExist) {
       const batches: ITileRange[] = [];
-      for(let i = 0; i<= zoomLevel; i++ ){
-        batches.push(bboxToTileRange(sanitizedBbox,i));
+      for (let i = 0; i <= zoomLevel; i++) {
+        batches.push(bboxToTileRange(sanitizedBbox, i));
       }
       const separator = this.getSeparator();
-      const task = {
+      const task: ITaskParameters = {
         batches: batches,
         sources: [
           {
-            path: this.generatePackageName(dbId,zoomLevel,sanitizedBbox), //gpkg path
-            type: "GPKG",
+            path: this.generatePackageName(dbId, zoomLevel, sanitizedBbox), //gpkg path
+            type: 'GPKG',
             extent: {
               minX: bbox[0],
               minY: bbox[1],
               maxX: bbox[2],
-              maxY: bbox[3]
-            }
+              maxY: bbox[3],
+            },
           },
           {
             path: (resourceId as string) + separator + (layerMetadata.productType as string), //tiles path
-            type: this.tilesProvider
-          }
-        ]
-      }
-
+            type: this.tilesProvider,
+          },
+        ],
+      };
 
       const jobCreated = await this.jobManagerClient.create(workerInput);
       return jobCreated;
@@ -90,15 +91,15 @@ export class CreatePackageManager {
   }
 
   private getSeparator(): string {
-      return this.tilesProvider === 'S3' ? '/' : sep;
+    return this.tilesProvider === 'S3' ? '/' : sep;
   }
 
-  private sanitizeBbox(bbox: BBox, footprint:  Polygon | MultiPolygon, zoom: number): BBox2d | null {
-    const intersaction = intersect(bboxPolygon(bbox),footprint);
-    if(intersaction === null){
+  private sanitizeBbox(bbox: BBox, footprint: Polygon | MultiPolygon, zoom: number): BBox2d | null {
+    const intersaction = intersect(bboxPolygon(bbox), footprint);
+    if (intersaction === null) {
       return null;
     }
-    bbox = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d,zoom);
+    bbox = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
     return bbox;
   }
 
