@@ -65,5 +65,6 @@
       "jobType": "WORKER_TYPES_TILES_JOB_TYPE",
       "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
     }
-  }
+  },
+  "tilesProvider": "TILES_PROVIDER"
 }
