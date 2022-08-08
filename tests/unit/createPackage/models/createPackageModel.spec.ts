@@ -34,7 +34,7 @@ describe('CreatePackageManager', () => {
         version: 'temp_version',
         dbId: layerFromCatalog.id,
         zoomLevel: 4,
-        bbox: [0, 1, 3, 5],
+        sanitizedBbox: [0, 1, 3, 5],
         crs: 'EPSG:4326',
       };
 

@@ -30,11 +30,11 @@ const layerMetadata = {
     type: 'Polygon',
     coordinates: [
       [
-        [-180, -90],
+        [-180, -89.999],
         [-180, 90],
         [180, 90],
-        [180, -90],
-        [-180, -90],
+        [180, -89.999],
+        [-180, -89.999],
       ],
     ],
   },
@@ -77,7 +77,7 @@ const layerMetadata = {
       },
     ],
   },
-  productBoundingBox: '-180,-90,180,90',
+  productBoundingBox: '-180,-89.999,180,90',
 } as unknown as LayerMetadata;
 
 const layerFromCatalog = {
@@ -111,25 +111,8 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
   parameters: {
     crs: 'EPSG:4326',
     bbox: [0, 0, 25, 41],
-    dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-    version: '1.0',
-    footprint: {
-      type: 'Polygon',
-      coordinates: [
-        [
-          [-180, -90],
-          [-180, 90],
-          [180, 90],
-          [180, -90],
-          [-180, -90],
-        ],
-      ],
-    },
-    tilesPath: 'string/OrthophotoHistory',
     zoomLevel: 4,
     callbackURLs: ['http://localhost:1234'],
-    productType: 'OrthophotoHistory',
-    cswProductId: 'string',
     callbackParams: {
       bbox: [0, 0, 25, 41],
       dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
@@ -163,27 +146,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       id: '542ebbfd-f4d1-4c77-bd4d-97ca121f0de7',
       type: 'rasterTilesExporter',
       description: '',
-      parameters: {
-        crs: 'EPSG:4326',
-        bbox: [0, 0, 25, 41],
-        dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-        footprint: {
-          type: 'Polygon',
-          coordinates: [
-            [
-              [-180, -90],
-              [-180, 90],
-              [180, 90],
-              [180, -90],
-              [-180, -90],
-            ],
-          ],
-        },
-        tilesPath: 'string/OrthophotoHistory',
-        zoomLevel: 4,
-        callbackURLs: ['http://localhost:1234'],
-        productType: 'OrthophotoHistory',
-      },
+      parameters: {},
       status: OperationStatus.COMPLETED,
       reason: '',
       attempts: 0,
@@ -205,25 +168,8 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   parameters: {
     crs: 'EPSG:4326',
     bbox: [0, 0, 25, 41],
-    dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-    version: '1.0',
-    footprint: {
-      type: 'Polygon',
-      coordinates: [
-        [
-          [-180, -90],
-          [-180, 90],
-          [180, 90],
-          [180, -90],
-          [-180, -90],
-        ],
-      ],
-    },
-    tilesPath: 'string/OrthophotoHistory',
     zoomLevel: 4,
     callbackURLs: ['http://localhost:6969'],
-    productType: 'OrthophotoHistory',
-    cswProductId: 'string',
     targetResolution: 0.0439453125,
   },
   status: OperationStatus.IN_PROGRESS,
@@ -245,27 +191,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
       id: '1f765695-338b-4752-b182-a8cbae3c610e',
       type: 'rasterTilesExporter',
       description: '',
-      parameters: {
-        crs: 'EPSG:4326',
-        bbox: [0, 0, 25, 41],
-        dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-        footprint: {
-          type: 'Polygon',
-          coordinates: [
-            [
-              [-180, -90],
-              [-180, 90],
-              [180, 90],
-              [180, -90],
-              [-180, -90],
-            ],
-          ],
-        },
-        tilesPath: 'string/OrthophotoHistory',
-        zoomLevel: 4,
-        callbackURLs: ['http://localhost:6969'],
-        productType: 'OrthophotoHistory',
-      },
+      parameters: {},
       status: OperationStatus.IN_PROGRESS,
       reason: '',
       attempts: 0,
@@ -286,19 +212,6 @@ const workerInput: IWorkerInput = {
   callbackURLs: ['http://localhost:6969'],
   version: '1.0',
   cswProductId: 'string',
-  footprint: {
-    type: 'Polygon',
-    coordinates: [
-      [
-        [-180, -90],
-        [-180, 90],
-        [180, 90],
-        [180, -90],
-        [-180, -90],
-      ],
-    ],
-  },
-  tilesPath: 'string/OrthophotoHistory',
   priority: 0,
   crs: 'EPSG:4326',
   productType: 'OrthophotoHistory',

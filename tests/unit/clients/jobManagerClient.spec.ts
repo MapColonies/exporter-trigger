@@ -45,10 +45,10 @@ describe('JobManagerClient', () => {
       const completedJobs = await jobManagerClient.findCompletedJob({
         resourceId: jobs[0].resourceId,
         version: jobs[0].version,
-        dbId: jobs[0].parameters.dbId,
+        dbId: jobs[0].internalId as string,
         zoomLevel: jobs[0].parameters.zoomLevel,
         crs: 'EPSG:4326',
-        bbox: jobs[0].parameters.bbox,
+        sanitizedBbox: jobs[0].parameters.sanitizedBbox,
       });
 
       expect(getJobs).toHaveBeenCalledTimes(1);
@@ -64,10 +64,10 @@ describe('JobManagerClient', () => {
       const completedJobs = await jobManagerClient.findInProgressJob({
         resourceId: jobs[0].resourceId,
         version: jobs[0].version,
-        dbId: jobs[0].parameters.dbId,
+        dbId: jobs[0].internalId as string,
         zoomLevel: jobs[0].parameters.zoomLevel,
         crs: 'EPSG:4326',
-        bbox: jobs[0].parameters.bbox,
+        sanitizedBbox: jobs[0].parameters.sanitizedBbox,
       });
 
       expect(getJobs).toHaveBeenCalledTimes(1);
