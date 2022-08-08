@@ -16,10 +16,11 @@ import {
   IWorkerInput,
   JobDuplicationParams,
   IJobParameters,
-  ICallbackResposne,
+  ICallbackResposne as ICallbackResponse,
   JobResponse,
-  ITaskParameters,
   MergerSourceType,
+  IMapSource,
+  ICallbackTarget,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
@@ -35,14 +36,20 @@ export class CreatePackageManager {
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
   }
 
-  public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResposne> {
+  public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
     const { bbox, dbId, targetResolution, crs, priority, callbackURLs } = userInput;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
-    const sanitizedBbox = this.sanitizeBbox(bbox, footprint as Polygon | MultiPolygon, zoomLevel);
 
+    const srcRes = layerMetadata.maxResolutionDeg as number;
+    const maxZoom = degreesPerPixelToZoomLevel(srcRes);
+    if (zoomLevel > maxZoom) {
+      throw new BadRequestError(`the requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
+    }
+
+    const sanitizedBbox = this.sanitizeBbox(bbox, footprint as Polygon | MultiPolygon, zoomLevel);
     if (sanitizedBbox === null) {
       throw new BadRequestError(`requested bbox has no intersection with requested layer`);
     }
@@ -55,32 +62,44 @@ export class CreatePackageManager {
       sanitizedBbox,
       crs: crs ?? DEFAULT_CRS,
     };
+    const callbacks = callbackURLs.map((url) => ({ url, bbox }));
 
-    const duplicationExist = await this.checkForDuplicate(dupParams, userInput.callbackURLs);
+    const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
     if (!duplicationExist) {
       const batches: ITileRange[] = [];
       for (let i = 0; i <= zoomLevel; i++) {
         batches.push(bboxToTileRange(sanitizedBbox, i));
       }
       const separator = this.getSeparator();
-      const task: ITaskParameters = {
-        batches: batches,
-        sources: [
-          {
-            path: this.generatePackageName(dbId, zoomLevel, sanitizedBbox), //gpkg path
-            type: 'GPKG',
-            extent: {
-              minX: bbox[0],
-              minY: bbox[1],
-              maxX: bbox[2],
-              maxY: bbox[3],
-            },
+      const sources: IMapSource[] = [
+        {
+          path: this.generatePackageName(dbId, zoomLevel, sanitizedBbox), //gpkg path
+          type: 'GPKG',
+          extent: {
+            minX: bbox[0],
+            minY: bbox[1],
+            maxX: bbox[2],
+            maxY: bbox[3],
           },
-          {
-            path: (resourceId as string) + separator + (layerMetadata.productType as string), //tiles path
-            type: this.tilesProvider,
-          },
-        ],
+        },
+        {
+          path: (resourceId as string) + separator + (layerMetadata.productType as string), //tiles path
+          type: this.tilesProvider,
+        },
+      ];
+      const workerInput: IWorkerInput = {
+        sanitizedBbox,
+        targetResolution,
+        zoomLevel,
+        dbId,
+        version: version as string,
+        cswProductId: resourceId as string,
+        crs: crs ?? DEFAULT_CRS,
+        productType: productType ?? DEFAULT_PRODUCT_TYPE,
+        batches,
+        sources,
+        priority: priority ?? DEFAULT_PRIORITY,
+        callbacks: callbacks,
       };
 
       const jobCreated = await this.jobManagerClient.create(workerInput);
@@ -111,8 +130,8 @@ export class CreatePackageManager {
 
   private async checkForDuplicate(
     dupParams: JobDuplicationParams,
-    callbackUrls: string[]
-  ): Promise<ICallbackResposne | ICreateJobResponse | undefined> {
+    callbackUrls: ICallbackTarget[]
+  ): Promise<ICallbackResponse | ICreateJobResponse | undefined> {
     let completedExists = await this.checkForCompleted(dupParams);
     if (completedExists) {
       return completedExists;
@@ -131,23 +150,23 @@ export class CreatePackageManager {
     return undefined;
   }
 
-  private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResposne | undefined> {
+  private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResponse | undefined> {
     this.logger.info(`Checking for COMPLETED duplications with parameters: ${JSON.stringify(dupParams)}`);
     const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
     if (responseJob) {
       return {
         ...responseJob.parameters.callbackParams,
         status: OperationStatus.COMPLETED,
-      } as ICallbackResposne;
+      } as ICallbackResponse;
     }
   }
 
-  private async checkForProcessing(dupParams: JobDuplicationParams, addedCallbackUrls: string[]): Promise<ICreateJobResponse | undefined> {
+  private async checkForProcessing(dupParams: JobDuplicationParams, newCallbacks: ICallbackTarget[]): Promise<ICreateJobResponse | undefined> {
     this.logger.info(`Checking for PROCESSING duplications with parameters: ${JSON.stringify(dupParams)}`);
     const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
 
     if (processingJob) {
-      await this.updateCallbackURLs(processingJob, addedCallbackUrls);
+      await this.updateCallbackURLs(processingJob, newCallbacks);
 
       return {
         id: processingJob.id,
@@ -157,10 +176,23 @@ export class CreatePackageManager {
     }
   }
 
-  private async updateCallbackURLs(processingJob: JobResponse, newCalbackURLs: string[]): Promise<void> {
-    const newCallbackURLs = [...new Set([...processingJob.parameters.callbackURLs, ...newCalbackURLs])];
+  private async updateCallbackURLs(processingJob: JobResponse, newCallbacks: ICallbackTarget[]): Promise<void> {
+    const callbacks = processingJob.parameters.callbacks;
+    for (const newCallback of newCallbacks) {
+      const hasCallback = callbacks.findIndex((callback) => {
+        let exist = callback.url === newCallback.url;
+        for (let i = 0; i < callback.bbox.length; i++) {
+          exist &&= callback.bbox[i] === newCallback.bbox[i];
+        }
+        return exist;
+      });
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      if (hasCallback === -1) {
+        callbacks.push(newCallback);
+      }
+    }
     await this.jobManagerClient.updateJob<IJobParameters>(processingJob.id, {
-      parameters: { ...processingJob.parameters, callbackURLs: newCallbackURLs },
+      parameters: processingJob.parameters,
     });
   }
 }

@@ -1,4 +1,3 @@
-import { Polygon, MultiPolygon } from '@turf/helpers';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { ICreateJobBody, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { ITileRange } from '@map-colonies/mc-utils';
@@ -22,17 +21,26 @@ export interface ICreatePackage {
   callbackURLs: string[];
   bbox: BBox2d;
   priority?: number;
-  callbackParams?: ICallbackParams;
 }
 
-export interface IWorkerInput extends ICreatePackage {
-  //footprint: Polygon | MultiPolygon;
+export interface ICallbackTarget {
+  url: string;
+  bbox: BBox2d;
+}
+
+export interface IWorkerInput {
+  dbId: string;
+  targetResolution: number;
+  priority?: number;
+  callbacks: ICallbackTarget[];
+  crs: string;
+  sanitizedBbox: BBox2d;
+  zoomLevel: number;
   version: string;
   cswProductId: string;
-  tilesPath: string;
-  //crs: string;
-  //productType: string;
-  //zoomLevel: number;
+  productType: string;
+  batches: ITileRange[];
+  sources: IMapSource[];
 }
 
 export interface IBasicResponse {
@@ -49,6 +57,7 @@ export interface IFindJob {
   version: string;
   status: string;
   isCleaned: string;
+  internalId?: string;
   type: string;
   shouldReturnTasks: string;
 }
@@ -79,34 +88,29 @@ export interface JobDuplicationParams {
 }
 
 export interface IJobParameters {
-  dbId: string;
   targetResolution: number;
   crs: string;
-  callbackURLs: string[];
-  bbox: BBox2d;
+  callbacks: ICallbackTarget[];
   sanitizedBbox: BBox2d;
-  footprint: Polygon | MultiPolygon;
-  version: string;
-  cswProductId: string;
-  tilesPath: string;
-  productType: string;
   zoomLevel: number;
   callbackParams?: ICallbackParams;
 }
 
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
+
+export interface IMapSource {
+  path: string;
+  type: MergerSourceType;
+  extent?: {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+  };
+}
 export interface ITaskParameters {
   batches: ITileRange[];
-  sources: {
-    path: string;
-    type: MergerSourceType;
-    extent?: {
-      minX: number;
-      minY: number;
-      maxX: number;
-      maxY: number;
-    };
-  }[];
+  sources: IMapSource[];
 }
 
 export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
