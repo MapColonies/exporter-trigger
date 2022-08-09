@@ -1,4 +1,4 @@
-import { ICreateJobBody, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { ICreateJobBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { Polygon, MultiPolygon } from '@turf/helpers';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 
@@ -104,4 +104,5 @@ export interface ITaskParameters {
 }
 
 export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
+export type TaskResponse = ITaskResponse<ITaskParameters>;
 export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;

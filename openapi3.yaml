@@ -44,6 +44,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/internalError'
+  /taskStatus/{jobId}:
+    get:
+      tags:
+        - tasks
+      summary: Get task status by job id
+      operationId: getTaskStatusByJobId
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getTaskStatusResponse'
+                discriminator:
+                  propertyName: response
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '404':
+          description: Could not find task with matched jobId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalError'
 components:
   requestBodies:
     ExportGetmapBody:
@@ -53,6 +93,21 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/exportGetMap'
+    getTasksByJobId:
+      description: get tasks by job id
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exportGetMap'
+  parameters:
+    jobId:
+      in: path
+      name: jobId
+      description: ID of Job
+      required: true
+      schema:
+        $ref: '#/components/schemas/jobId'
   schemas:
     CommonResponse:
       type: object
@@ -202,3 +257,23 @@ components:
       description: >-
         Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in
         crs units as array
+    jobId:
+      type: string
+      format: uuid
+    getTaskStatusResponse:
+      type: object
+      properties:
+        percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: percentage of task by job id
+        status:
+          type: string
+          enum:
+            - Completed
+            - In-Progress
+            - Pending
+            - Failed
+            - Expired
+            - Aborted

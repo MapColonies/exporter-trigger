@@ -14,6 +14,7 @@ import {
   IWorkerInput,
   JobDuplicationParams,
   JobResponse,
+  TaskResponse,
 } from '../common/interfaces';
 
 @injectable()
@@ -133,6 +134,11 @@ export class JobManagerWrapper extends JobManagerClient {
     }
 
     return undefined;
+  }
+
+  public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
+    const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);
+    return tasks;
   }
 
   private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
