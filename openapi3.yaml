@@ -93,21 +93,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/exportGetMap'
-    getTasksByJobId:
-      description: get tasks by job id
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/exportGetMap'
-  parameters:
-    jobId:
-      in: path
-      name: jobId
-      description: ID of Job
-      required: true
-      schema:
-        $ref: '#/components/schemas/jobId'
   schemas:
     CommonResponse:
       type: object
@@ -257,9 +242,6 @@ components:
       description: >-
         Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in
         crs units as array
-    jobId:
-      type: string
-      format: uuid
     getTaskStatusResponse:
       type: object
       properties:
