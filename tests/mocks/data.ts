@@ -30,11 +30,11 @@ const layerMetadata = {
     type: 'Polygon',
     coordinates: [
       [
-        [-180, -89.999],
-        [-180, 90],
+        [0, -89.999],
+        [0, 90],
         [180, 90],
         [180, -89.999],
-        [-180, -89.999],
+        [0, -89.999],
       ],
     ],
   },
@@ -77,7 +77,7 @@ const layerMetadata = {
       },
     ],
   },
-  productBoundingBox: '-180,-89.999,180,90',
+  productBoundingBox: '-180,-89.999,0,90',
 } as unknown as LayerMetadata;
 
 const layerFromCatalog = {
@@ -110,9 +110,14 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
   description: '',
   parameters: {
     crs: 'EPSG:4326',
-    bbox: [0, 0, 25, 41],
+    sanitizedBbox: [0, 0, 25, 41],
     zoomLevel: 4,
-    callbackURLs: ['http://localhost:1234'],
+    callbacks: [
+      {
+        url: 'http://localhost:1234',
+        bbox: [0, 0, 25, 41],
+      },
+    ],
     callbackParams: {
       bbox: [0, 0, 25, 41],
       dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
@@ -146,7 +151,10 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       id: '542ebbfd-f4d1-4c77-bd4d-97ca121f0de7',
       type: 'rasterTilesExporter',
       description: '',
-      parameters: {},
+      parameters: {
+        batches: [],
+        sources: [],
+      },
       status: OperationStatus.COMPLETED,
       reason: '',
       attempts: 0,
@@ -167,9 +175,9 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   description: '',
   parameters: {
     crs: 'EPSG:4326',
-    bbox: [0, 0, 25, 41],
+    sanitizedBbox: [0, 0, 25, 41],
     zoomLevel: 4,
-    callbackURLs: ['http://localhost:6969'],
+    callbacks: [{ url: 'http://localhost:6969', bbox: [0, 0, 25, 41] }],
     targetResolution: 0.0439453125,
   },
   status: OperationStatus.IN_PROGRESS,
@@ -191,7 +199,10 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
       id: '1f765695-338b-4752-b182-a8cbae3c610e',
       type: 'rasterTilesExporter',
       description: '',
-      parameters: {},
+      parameters: {
+        batches: [],
+        sources: [],
+      },
       status: OperationStatus.IN_PROGRESS,
       reason: '',
       attempts: 0,
@@ -205,11 +216,44 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
 };
 
 const workerInput: IWorkerInput = {
-  bbox: [0, 3, 25, 41],
+  sanitizedBbox: [0, 2.999267578125, 25.0048828125, 41.0009765625],
   targetResolution: 0.0000429153442382812,
   zoomLevel: 15,
   dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-  callbackURLs: ['http://localhost:6969'],
+  callbacks: [
+    {
+      bbox: [0, 3, 25, 41],
+      url: 'http://localhost:6969',
+    },
+  ],
+  sources: [
+    {
+      path: 'test.gpkg',
+      type: 'GPKG',
+      extent: {
+        minX: 0,
+        minY: 2.999267578125,
+        maxX: 25.0048828125,
+        maxY: 41.0009765625,
+      },
+    },
+  ],
+  batches: [
+    {
+      zoom: 15,
+      minX: 32768,
+      minY: 16930,
+      maxX: 20936,
+      maxY: 23848,
+    },
+    {
+      zoom: 14,
+      minX: 16384,
+      minY: 8465,
+      maxX: 10468,
+      maxY: 11924,
+    },
+  ],
   version: '1.0',
   cswProductId: 'string',
   priority: 0,
@@ -223,7 +267,7 @@ const userInput: ICreatePackage = {
   dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
   targetResolution: 0.0439453125,
   callbackURLs: ['http://callback-url.com'],
-  bbox: [0, 0, 25, 41],
+  bbox: [-5, 3, 25, 41],
   crs: 'EPSG:4326',
 };
 

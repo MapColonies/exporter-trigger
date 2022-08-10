@@ -70,7 +70,7 @@ describe('CreatePackageManager', () => {
         version: layerFromCatalog.metadata.productVersion as string,
         dbId: layerFromCatalog.id,
         zoomLevel: 4,
-        bbox: userInput.bbox,
+        sanitizedBbox: userInput.bbox,
         crs: userInput.crs as string,
       };
 
