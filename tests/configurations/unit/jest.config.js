@@ -30,10 +30,10 @@ module.exports = {
   testEnvironment: 'node',
   coverageThreshold: {
     global: {
-      branches: 75,
+      branches: 73,
       functions: 80,
       lines: 80,
-      statements: -10,
+      statements: 80,
     },
   },
 };

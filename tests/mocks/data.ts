@@ -22,7 +22,7 @@ const layerMetadata = {
   productVersion: '1.0',
   productType: 'OrthophotoHistory',
   srsName: 'string',
-  maxResolutionDeg: 0.072,
+  maxResolutionDeg: 0.000004,
   maxResolutionMeter: 8000,
   rms: 0,
   scale: 1,
