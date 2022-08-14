@@ -30,7 +30,7 @@ describe('TasksManager', () => {
 
       const action = async () => tasksManager.getTaskStatusByJobId('09e29fa8-7283-4334-b3a4-99f75922de59');
 
-      expect(action).rejects.toThrow(NotFoundError);
+      await expect(action).rejects.toThrow(NotFoundError);
       expect(getTasksByJobIdStub).toHaveBeenCalledTimes(1);
     });
 
