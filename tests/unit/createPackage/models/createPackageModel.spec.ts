@@ -21,7 +21,7 @@ describe('CreatePackageManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     rasterCatalogManagerClientMock = {
-      findLayer: findLayerStub
+      findLayer: findLayerStub,
     } as unknown as RasterCatalogManagerClient;
     jobManagerWrapperMock = {
       create: createJobStub,
@@ -42,8 +42,8 @@ describe('CreatePackageManager', () => {
     it('should create job and return its job and task ids', async () => {
       const req: ICreatePackage = {
         dbId: layerFromCatalog.id,
-        bbox: [0,1,3,5],
-        callbackURLs:['testUrl'],
+        bbox: [0, 1, 3, 5],
+        callbackURLs: ['testUrl'],
         targetResolution: 0.0439453125,
         crs: 'EPSG:4326',
       };
@@ -60,7 +60,7 @@ describe('CreatePackageManager', () => {
       createJobStub.mockResolvedValue({
         jobId: '09e29fa8-7283-4334-b3a4-99f75922de59',
         taskIds: ['66aa1e2e-784c-4178-b5a0-af962937d561'],
-        status: OperationStatus.IN_PROGRESS
+        status: OperationStatus.IN_PROGRESS,
       });
 
       findCompletedJobMock.mockResolvedValue(undefined);
@@ -97,7 +97,6 @@ describe('CreatePackageManager', () => {
       findInProgressJobMock.mockResolvedValue(undefined);
       findPendingJobMock.mockResolvedValue(inProgressJob);
 
-
       // eslint-disable-next-line
       const checkForDuplicateResponse = await (createPackageManager as unknown as { checkForDuplicate: any }).checkForDuplicate(jobDupParams, []);
 
@@ -112,9 +111,9 @@ describe('CreatePackageManager', () => {
       expect(createJobStub).toHaveBeenCalledTimes(0);
       expect(checkForDuplicateResponse).toEqual(expectedReturn);
 
-     expect(findCompletedJobMock).toHaveBeenCalledTimes(4);
-     expect(findInProgressJobMock).toHaveBeenCalledTimes(2);
-     expect(findPendingJobMock).toHaveBeenCalledTimes(2);
+      expect(findCompletedJobMock).toHaveBeenCalledTimes(4);
+      expect(findInProgressJobMock).toHaveBeenCalledTimes(2);
+      expect(findPendingJobMock).toHaveBeenCalledTimes(2);
     });
 
     it('should return job and task-ids of existing in progress job', async () => {
@@ -134,7 +133,6 @@ describe('CreatePackageManager', () => {
       findCompletedJobMock.mockResolvedValue(undefined);
       findInProgressJobMock.mockResolvedValue(inProgressJob);
 
-
       // eslint-disable-next-line
       const checkForDuplicateResponse = await (createPackageManager as unknown as { checkForDuplicate: any }).checkForDuplicate(jobDupParams, []);
 
@@ -149,18 +147,18 @@ describe('CreatePackageManager', () => {
       expect(createJobStub).toHaveBeenCalledTimes(0);
       expect(checkForDuplicateResponse).toEqual(expectedReturn);
 
-     expect(findCompletedJobMock).toHaveBeenCalledTimes(4);
-     expect(findInProgressJobMock).toHaveBeenCalledTimes(2);
-     expect(findPendingJobMock).toHaveBeenCalledTimes(0);
+      expect(findCompletedJobMock).toHaveBeenCalledTimes(4);
+      expect(findInProgressJobMock).toHaveBeenCalledTimes(2);
+      expect(findPendingJobMock).toHaveBeenCalledTimes(0);
     });
 
-    it('should throw bad request error when requested resolution is higher then the layer resolution', async ()=>{
-      const layer = {...layerFromCatalog, metadata: {...layerFromCatalog.metadata,maxResolutionDeg:0.072}}
+    it('should throw bad request error when requested resolution is higher then the layer resolution', async () => {
+      const layer = { ...layerFromCatalog, metadata: { ...layerFromCatalog.metadata, maxResolutionDeg: 0.072 } };
       findLayerStub.mockResolvedValue(layer);
 
       const action = async () => createPackageManager.createPackage(userInput);
 
       await expect(action).rejects.toThrow(BadRequestError);
-    })
+    });
   });
 });
