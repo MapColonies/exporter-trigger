@@ -3,9 +3,9 @@ import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
-import { TaskStatusResponse, TasksManager } from '../models/tasksManager';
+import { ITaskStatusResponse, TasksManager } from '../models/tasksManager';
 
-type GetTaskByJobIdHandler = RequestHandler<{ jobId: string }, TaskStatusResponse, string>;
+type GetTaskByJobIdHandler = RequestHandler<{ jobId: string }, ITaskStatusResponse, string>;
 
 @injectable()
 export class TasksController {

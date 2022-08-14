@@ -5,7 +5,7 @@ import { NotFoundError } from '@map-colonies/error-types';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
-export interface TaskStatusResponse {
+export interface ITaskStatusResponse {
   percentage: number | undefined;
   status: OperationStatus;
 }
@@ -17,7 +17,7 @@ export class TasksManager {
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper
   ) {}
 
-  public async getTaskStatusByJobId(jobId: string): Promise<TaskStatusResponse> {
+  public async getTaskStatusByJobId(jobId: string): Promise<ITaskStatusResponse> {
     this.logger.info(`Getting task status by jobId: ${jobId}`);
     const tasks = await this.jobManagerClient.getTasksByJobId(jobId);
 
@@ -25,7 +25,7 @@ export class TasksManager {
       throw new NotFoundError(`jobId: ${jobId} is not exists`);
     }
     const task = tasks[0];
-    const statusResponse: TaskStatusResponse = {
+    const statusResponse: ITaskStatusResponse = {
       percentage: task.percentage,
       status: task.status,
     };
