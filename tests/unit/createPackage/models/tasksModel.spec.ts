@@ -21,7 +21,7 @@ describe('TasksManager', () => {
     jest.restoreAllMocks();
   });
 
-  describe('#getTaskStatusByJobId', async () => {
+  describe('#getTaskStatusByJobId', () => {
     it('should throw NotFoundError when jobId is not exists', async () => {
       const emptyTasksResponse: TaskResponse[] = [];
 
