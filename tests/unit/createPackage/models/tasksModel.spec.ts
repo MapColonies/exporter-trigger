@@ -5,7 +5,6 @@ import { JobManagerWrapper } from '../../../../src/clients/jobManagerWrapper';
 import { ITaskStatusResponse, TasksManager } from '../../../../src/createPackage/models/tasksManager';
 import { ITaskParameters, TaskResponse } from '../../../../src/common/interfaces';
 
-
 let jobManagerWrapper: JobManagerWrapper;
 let tasksManager: TasksManager;
 let getTasksByJobIdStub: jest.Mock;
