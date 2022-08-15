@@ -10,6 +10,7 @@ import httpLogger from '@map-colonies/express-access-log-middleware';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
 import { CREATE_PACKAGE_ROUTER_SYMBOL } from './createPackage/routes/createPackageRouter';
+import { TASKS_ROUTER_SYMBOL } from './createPackage/routes/tasksRouter';
 
 @injectable()
 export class ServerBuilder {
@@ -18,7 +19,8 @@ export class ServerBuilder {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(CREATE_PACKAGE_ROUTER_SYMBOL) private readonly createPackageRouter: Router
+    @inject(CREATE_PACKAGE_ROUTER_SYMBOL) private readonly createPackageRouter: Router,
+    @inject(TASKS_ROUTER_SYMBOL) private readonly tasksRouter: Router
   ) {
     this.serverInstance = express();
   }
@@ -39,6 +41,7 @@ export class ServerBuilder {
 
   private buildRoutes(): void {
     this.serverInstance.use('/create', this.createPackageRouter);
+    this.serverInstance.use('/', this.tasksRouter);
     this.buildDocsRoutes();
   }
 
