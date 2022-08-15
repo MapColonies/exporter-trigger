@@ -27,4 +27,5 @@ data:
   HTTP_RETRY_ATTEMPTS: {{ .Values.env.httpRetry.attempts | quote }}
   HTTP_RETRY_DELAY: {{ .Values.env.httpRetry.delay | quote }}
   HTTP_RETRY_SHOULD_RESET_TIMEOUT: {{ .Values.env.httpRetry.shouldResetTimeout | quote }}
+  TILES_PROVIDER: {{ .Values.rasterCommon.storage.tilesStorageProvider }}
 {{- end }}

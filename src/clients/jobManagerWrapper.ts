@@ -36,36 +36,32 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   public async create(data: IWorkerInput): Promise<ICreateJobResponse> {
-    const { cswProductId: resourceId, version } = data;
-
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationTime);
 
     const createJobRequest: CreateJobBody = {
-      resourceId: resourceId,
-      version: version,
+      resourceId: data.cswProductId,
+      version: data.version,
       type: this.tilesJobType,
       expirationDate,
       parameters: {
-        ...data,
+        sanitizedBbox: data.sanitizedBbox,
+        targetResolution: data.targetResolution,
+        zoomLevel: data.zoomLevel,
+        callbacks: data.callbacks,
+        crs: data.crs,
       },
       internalId: data.dbId,
       productType: data.productType,
       productName: data.cswProductId,
       priority: data.priority,
-      additionalIdentifiers: data.bbox.toString() + String(data.zoomLevel),
+      additionalIdentifiers: data.sanitizedBbox.toString() + String(data.zoomLevel),
       tasks: [
         {
           type: this.tilesTaskType,
           parameters: {
-            dbId: data.dbId,
-            crs: data.crs,
-            zoomLevel: data.zoomLevel,
-            callbackURLs: data.callbackURLs,
-            bbox: data.bbox,
-            tilesPath: data.tilesPath,
-            footprint: data.footprint,
-            productType: data.productType,
+            batches: data.batches,
+            sources: data.sources,
           },
         },
       ],
@@ -122,6 +118,7 @@ export class JobManagerWrapper extends JobManagerClient {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
       isCleaned: 'false',
+      internalId: jobParams.dbId,
       type: this.tilesJobType,
       shouldReturnTasks: 'true',
       status: OperationStatus.PENDING,
@@ -150,10 +147,11 @@ export class JobManagerWrapper extends JobManagerClient {
   private findJobWithMatchingParams(jobs: JobResponse[], jobParams: JobDuplicationParams): JobResponse | undefined {
     const matchingJob = jobs.find(
       (job) =>
-        job.parameters.dbId === jobParams.dbId &&
+        job.internalId === jobParams.dbId &&
+        job.version === jobParams.version &&
         job.parameters.zoomLevel === jobParams.zoomLevel &&
         job.parameters.crs === jobParams.crs &&
-        booleanEqual(bboxPolygon(job.parameters.bbox), bboxPolygon(jobParams.bbox))
+        booleanEqual(bboxPolygon(job.parameters.sanitizedBbox), bboxPolygon(jobParams.sanitizedBbox))
     );
     return matchingJob;
   }
