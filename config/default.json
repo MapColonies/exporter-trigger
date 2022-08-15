@@ -42,5 +42,6 @@
       "jobType": "rasterTilesExporter",
       "taskType": "rasterTilesExporter"
     }
-  }
+  },
+  "tilesProvider": "S3"
 }
