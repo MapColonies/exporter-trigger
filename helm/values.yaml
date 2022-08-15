@@ -16,6 +16,8 @@ rasterCommon:
     opa:
       enabled: false
       customHeaderName: ""
+  storage:
+    tilesStorageProvider: 'FS'
 
 enabled: true
 environment: development
