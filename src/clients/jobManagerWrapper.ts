@@ -141,6 +141,8 @@ export class JobManagerWrapper extends JobManagerClient {
   private findJobWithMatchingParams(jobs: JobResponse[], jobParams: JobDuplicationParams): JobResponse | undefined {
     const matchingJob = jobs.find(
       (job) =>
+        job.internalId === jobParams.dbId &&
+        job.version === jobParams.version &&
         job.parameters.zoomLevel === jobParams.zoomLevel &&
         job.parameters.crs === jobParams.crs &&
         booleanEqual(bboxPolygon(job.parameters.sanitizedBbox), bboxPolygon(jobParams.sanitizedBbox))
