@@ -265,7 +265,7 @@ const jobs = [inProgressJob, completedJob];
 
 const userInput: ICreatePackage = {
   dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-  targetResolution: 0.0439453125,
+  targetResolution: 0.00439453125,
   callbackURLs: ['http://callback-url.com'],
   bbox: [-5, 3, 25, 41],
   crs: 'EPSG:4326',

@@ -52,15 +52,7 @@ export interface ICreateJobResponse {
   taskIds: string[];
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
-export interface IFindJob {
-  resourceId: string;
-  version: string;
-  status: string;
-  isCleaned: string;
-  internalId?: string;
-  type: string;
-  shouldReturnTasks: string;
-}
+
 export interface ICallbackParams {
   fileUri: string;
   expirationTime: Date;
