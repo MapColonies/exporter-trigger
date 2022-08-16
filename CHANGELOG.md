@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.4.1](https://github.com/MapColonies/exporter-trigger/compare/v2.4.0...v2.4.1) (2022-08-16)
+
+
+### Bug Fixes
+
+* new azure token ([#30](https://github.com/MapColonies/exporter-trigger/issues/30)) ([e2986bf](https://github.com/MapColonies/exporter-trigger/commit/e2986bfd3405f45286d08e018ec677cf74ee2f53))
+
 ## [2.4.0](https://github.com/MapColonies/exporter-trigger/compare/v2.3.0...v2.4.0) (2022-08-16)
 
 
