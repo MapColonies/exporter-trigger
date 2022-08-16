@@ -8,7 +8,6 @@ import { SERVICES } from '../common/constants';
 import {
   CreateJobBody,
   ICreateJobResponse,
-  IFindJob,
   IJobParameters,
   ITaskParameters,
   IWorkerInput,
@@ -16,6 +15,19 @@ import {
   JobResponse,
   TaskResponse,
 } from '../common/interfaces';
+
+//this is the job manager api for find job DO NOT MODIFY
+interface IFindJob {
+  resourceId?: string;
+  version?: string;
+  isCleaned?: string;
+  status?: string;
+  type?: string;
+  shouldReturnTasks?: string;
+  fromDate?: Date;
+  tillData?: Date;
+  productType?: string;
+}
 
 @injectable()
 export class JobManagerWrapper extends JobManagerClient {
@@ -118,7 +130,6 @@ export class JobManagerWrapper extends JobManagerClient {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
       isCleaned: 'false',
-      internalId: jobParams.dbId,
       type: this.tilesJobType,
       shouldReturnTasks: 'true',
       status: OperationStatus.PENDING,
