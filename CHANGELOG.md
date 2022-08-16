@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.4.0](https://github.com/MapColonies/exporter-trigger/compare/v2.3.0...v2.4.0) (2022-08-16)
+
+
+### Features
+
+* added task status api ([#28](https://github.com/MapColonies/exporter-trigger/issues/28)) ([aa0640d](https://github.com/MapColonies/exporter-trigger/commit/aa0640d05160c52cc087440aa90e04e04735d86b))
+
+
+### Bug Fixes
+
+* find job parameters ([#29](https://github.com/MapColonies/exporter-trigger/issues/29)) ([f1ffc8e](https://github.com/MapColonies/exporter-trigger/commit/f1ffc8edaff10f99d6aff8d4ec40ee2a8a8b6982))
+
 ## [2.3.0](https://github.com/MapColonies/exporter-trigger/compare/v2.2.0...v2.3.0) (2022-08-15)
 
 
