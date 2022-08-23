@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { FactoryFunction } from 'tsyringe';
-import { TasksController } from '../controllers/tasksController';
+import { TasksController } from '../../tasks/controllers/tasksController';
 
 const tasksRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const router = Router();

@@ -66,5 +66,11 @@
       "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
     }
   },
-  "tilesProvider": "TILES_PROVIDER"
+  "tilesProvider": "TILES_PROVIDER",
+  "gpkgsLocation": "GPKGS_LOCATION",
+  "downloadServerUrl": "DOWNLOAD_SERVER_URL",
+  "pollingTimeoutMS": {
+    "__name": "POLLING_TIMEOUT_MS",
+    "__format": "number"
+  }
 }

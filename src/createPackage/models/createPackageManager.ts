@@ -1,4 +1,6 @@
-import { sep } from 'path';
+import { promises as fsPromise } from 'fs';
+import { generatePackageName, getGpkgFilePath } from '../../common/utils';
+import { sep, join, dirname } from 'path';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon } from '@turf/turf';
@@ -27,11 +29,13 @@ import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 @injectable()
 export class CreatePackageManager {
   private readonly tilesProvider: MergerSourceType;
+  private readonly gpkgsLocation: string;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
+    this.gpkgsLocation = config.get<string>('gpkgsLocation');
     this.tilesProvider = config.get('tilesProvider');
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
   }
@@ -71,9 +75,11 @@ export class CreatePackageManager {
         batches.push(bboxToTileRange(sanitizedBbox, i));
       }
       const separator = this.getSeparator();
+      const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
+      const packageFullPath = getGpkgFilePath(this.gpkgsLocation, packageName);
       const sources: IMapSource[] = [
         {
-          path: this.generatePackageName(dbId, zoomLevel, sanitizedBbox), //gpkg path
+          path: packageFullPath,
           type: 'GPKG',
           extent: {
             minX: bbox[0],
@@ -90,6 +96,7 @@ export class CreatePackageManager {
       const workerInput: IWorkerInput = {
         sanitizedBbox,
         targetResolution,
+        fileName: packageName,
         zoomLevel,
         dbId,
         version: version as string,
@@ -122,10 +129,12 @@ export class CreatePackageManager {
     return bbox;
   }
 
-  private generatePackageName(cswId: string, zoomLevel: number, bbox: BBox): string {
-    const numberOfDecimals = 5;
-    const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_').replace(/-/g, 'm')).join('');
-    return `gm_${cswId.replace(/-/g, '_')}_${zoomLevel}_${bboxToString}.gpkg`;
+  public async createJsonMetadata(filePath: string, dbId: string): Promise<void> {
+    const fileName = 'metadata.json';
+    const metadataFilePath = join(dirname(filePath), fileName);
+    const record = await this.rasterCatalogManager.findLayer(dbId);
+    const recordMetadata = JSON.stringify(record.metadata);
+    await fsPromise.writeFile(metadataFilePath, recordMetadata);
   }
 
   private async checkForDuplicate(

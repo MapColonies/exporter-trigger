@@ -1,4 +1,4 @@
-import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
+import { BBox, BBox2d, MultiPolygon, Polygon } from '@turf/helpers/dist/js/lib/geojson';
 import { ICreateJobBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { ITileRange } from '@map-colonies/mc-utils';
 
@@ -31,6 +31,7 @@ export interface ICallbackTarget {
 export interface IWorkerInput {
   dbId: string;
   targetResolution: number;
+  fileName: string;
   priority?: number;
   callbacks: ICallbackTarget[];
   crs: string;
@@ -53,20 +54,21 @@ export interface ICreateJobResponse {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
-export interface ICallbackParams {
+export interface ICallbackDataBase {
   fileUri: string;
   expirationTime: Date;
   fileSize: number;
   dbId: string;
   packageName: string;
-  bbox: BBox2d | true;
   targetResolution: number;
   requestId: string;
   success: boolean;
   errorReason?: string;
 }
-
-export interface ICallbackResposne extends ICallbackParams {
+export interface ICallbackData extends ICallbackDataBase {
+  bbox: BBox;
+}
+export interface ICallbackResposne extends ICallbackData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
@@ -85,7 +87,8 @@ export interface IJobParameters {
   callbacks: ICallbackTarget[];
   sanitizedBbox: BBox2d;
   zoomLevel: number;
-  callbackParams?: ICallbackParams;
+  callbackParams?: ICallbackDataBase;
+  fileName?: string;
 }
 
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
@@ -103,6 +106,21 @@ export interface IMapSource {
 export interface ITaskParameters {
   batches: ITileRange[];
   sources: IMapSource[];
+}
+
+export interface IInput {
+  jobId: string;
+  footprint?: Polygon | MultiPolygon;
+  bbox: BBox | true;
+  zoomLevel: number;
+  packageName: string;
+  callbackURLs: string[];
+  dbId: string;
+}
+
+export interface IJobStatusResponse {
+  completed: JobResponse[] | undefined;
+  failed: JobResponse[] | undefined;
 }
 
 export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
