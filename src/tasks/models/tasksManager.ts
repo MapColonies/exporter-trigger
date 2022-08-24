@@ -1,23 +1,12 @@
-import { join } from 'path';
-import { generatePackageName, getGpkgFilePath } from '../../common/utils';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import config from 'config';
-import { IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
+import { getGpkgFilePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
-import { ICompletedTasks } from '../interfaces';
-import {
-  ICallbackData,
-  ICallbackDataBase,
-  ICallbackResposne,
-  ICallbackTarget,
-  IInput,
-  IJobParameters,
-  IJobStatusResponse,
-  JobResponse,
-} from '../../common/interfaces';
+import { ICallbackData, ICallbackDataBase, IJobParameters, IJobStatusResponse, JobResponse } from '../../common/interfaces';
 import { CallbackClient } from '../../clients/callbackClient';
 import { getFileSize } from '../../common/utils';
 import { CreatePackageManager } from '../../createPackage/models/createPackageManager';
@@ -49,7 +38,7 @@ export class TasksManager {
       completed: completedJobs,
       failed: failedJobs,
     };
-    return jobsStatus!;
+    return jobsStatus;
   }
 
   // public async getJobsByCompletedTasks(): Promise<JobResponse[]> {

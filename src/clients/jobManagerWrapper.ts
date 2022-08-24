@@ -61,7 +61,7 @@ export class JobManagerWrapper extends JobManagerClient {
         zoomLevel: data.zoomLevel,
         callbacks: data.callbacks,
         crs: data.crs,
-        fileName: data.fileName
+        fileName: data.fileName,
       },
       internalId: data.dbId,
       productType: data.productType,

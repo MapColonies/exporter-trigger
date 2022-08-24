@@ -13,7 +13,7 @@ export class PollingManager {
     this.expirationDate = config.get<number>('jobManager.expirationTime');
   }
 
-  public async jobStatusPoll() {
+  public async jobStatusPoll(): Promise<void> {
     const jobs = await this.taskManager.getJobsByTaskStatus();
     console.log(jobs);
     const expirationDate = new Date();

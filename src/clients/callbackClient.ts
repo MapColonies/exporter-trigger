@@ -1,7 +1,6 @@
 import { inject, singleton } from 'tsyringe';
 import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { Logger } from '@map-colonies/js-logger';
-import { BBox } from '@turf/helpers';
 import { SERVICES } from '../common/constants';
 import { ICallbackData, IConfig } from '../common/interfaces';
 

@@ -1,5 +1,4 @@
 import { promises as fsPromise } from 'fs';
-import { generatePackageName, getGpkgFilePath } from '../../common/utils';
 import { sep, join, dirname } from 'path';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
@@ -10,6 +9,7 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
+import { generatePackageName, getGpkgFilePath } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
 import {
@@ -116,6 +116,14 @@ export class CreatePackageManager {
     return duplicationExist;
   }
 
+  public async createJsonMetadata(filePath: string, dbId: string): Promise<void> {
+    const fileName = 'metadata.json';
+    const metadataFilePath = join(dirname(filePath), fileName);
+    const record = await this.rasterCatalogManager.findLayer(dbId);
+    const recordMetadata = JSON.stringify(record.metadata);
+    await fsPromise.writeFile(metadataFilePath, recordMetadata);
+  }
+
   private getSeparator(): string {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
@@ -127,14 +135,6 @@ export class CreatePackageManager {
     }
     bbox = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
     return bbox;
-  }
-
-  public async createJsonMetadata(filePath: string, dbId: string): Promise<void> {
-    const fileName = 'metadata.json';
-    const metadataFilePath = join(dirname(filePath), fileName);
-    const record = await this.rasterCatalogManager.findLayer(dbId);
-    const recordMetadata = JSON.stringify(record.metadata);
-    await fsPromise.writeFile(metadataFilePath, recordMetadata);
   }
 
   private async checkForDuplicate(
