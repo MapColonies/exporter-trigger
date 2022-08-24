@@ -35,9 +35,9 @@ const mainPollLoop = async (): Promise<void> => {
   while (isRunning) {
     try {
       await pollingManager.jobStatusPoll();
-      await new Promise((resolve) => setTimeout(resolve, pollingTimout));
     } catch (error) {
       logger.error(`mainPollLoop: Error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+    } finally {
       await new Promise((resolve) => setTimeout(resolve, pollingTimout));
     }
   }
