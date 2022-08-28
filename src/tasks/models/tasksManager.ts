@@ -3,7 +3,7 @@ import { inject, injectable } from 'tsyringe';
 import config from 'config';
 import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
-import { getGpkgFilePath } from '../../common/utils';
+import { getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import { ICallbackData, ICallbackDataBase, IJobParameters, IJobStatusResponse, JobResponse } from '../../common/interfaces';
@@ -19,7 +19,7 @@ export interface ITaskStatusResponse {
 @injectable()
 export class TasksManager {
   private readonly gpkgsLocation: string;
-  private readonly expirationDate: number;
+  private readonly downloadServerUrl: string;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
@@ -27,7 +27,7 @@ export class TasksManager {
     @inject(CreatePackageManager) private readonly packageManager: CreatePackageManager
   ) {
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
-    this.expirationDate = config.get<number>('jobManager.expirationTime');
+    this.downloadServerUrl = config.get<string>('downloadServerUrl');
   }
 
   public async getJobsByTaskStatus(): Promise<IJobStatusResponse> {
@@ -35,24 +35,17 @@ export class TasksManager {
     const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
     const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
     const jobsStatus = {
-      completed: completedJobs,
-      failed: failedJobs,
+      completedJobs: completedJobs,
+      failedJobs: failedJobs,
     };
     return jobsStatus;
   }
 
-  // public async getJobsByCompletedTasks(): Promise<JobResponse[]> {
-  //   const jobs = await this.jobManagerClient.getJobsStatus();
-  //   const completedJobs = jobs?.filter((job) => (job.completedTasks === job.taskCount) || (job.failedTasks === job.taskCount));
-  //   return completedJobs!;
-  // }
-
   public async getTaskStatusByJobId(jobId: string): Promise<ITaskStatusResponse> {
-    this.logger.info(`Getting task status by jobId: ${jobId}`);
     const tasks = await this.jobManagerClient.getTasksByJobId(jobId);
 
     if (tasks.length === 0) {
-      throw new NotFoundError(`jobId: ${jobId} is not exists`);
+      throw new NotFoundError(`No tasks were found for jobId: ${jobId}`);
     }
     const task = tasks[0];
     const statusResponse: ITaskStatusResponse = {
@@ -64,10 +57,11 @@ export class TasksManager {
 
   public async sendCallbacks(job: JobResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataBase | undefined> {
     try {
-      const downloadServerUrl = config.get('downloadServerUrl');
-      const packageName = job.parameters.fileName as string;
-      const fileUri = `${downloadServerUrl}/downloads/${packageName}`;
-      const packageFullPath = getGpkgFilePath(this.gpkgsLocation, packageName);
+      this.logger.info(`Sending callback for job: ${job.id}`);
+      const packageName = job.parameters.fileName;
+      const fileRelativePath = getGpkgRelativePath(packageName);
+      const fileUri = `${this.downloadServerUrl}/downloads/${fileRelativePath}`;
+      const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
       const success = errorReason === undefined;
       let fileSize = 0;
       if (success) {
@@ -78,7 +72,7 @@ export class TasksManager {
         expirationTime: expirationDate,
         fileSize,
         dbId: job.internalId as string,
-        packageName: packageName,
+        packageName: fileRelativePath,
         requestId: job.id,
         targetResolution: job.parameters.targetResolution,
         success,
@@ -100,7 +94,7 @@ export class TasksManager {
       });
       return callbackParams;
     } catch (error) {
-      this.logger.error(`Sending callbacks has failed with error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+      this.logger.error(`Sending callback has failed with error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
     }
   }
 
@@ -108,21 +102,24 @@ export class TasksManager {
     let updateJobParams: IUpdateJobBody<IJobParameters> = {
       status: isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED,
       reason,
+      /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
       percentage: isSuccess ? 100 : undefined,
       expirationDate: expirationDate,
     };
     try {
+      this.logger.info(`Finzaling Job: ${job.id}`);
+      const packageName = job.parameters.fileName;
       if (isSuccess) {
-        const packageName = job.parameters.fileName as string;
-        const packageFullPath = getGpkgFilePath(this.gpkgsLocation, packageName);
+        const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
         await this.packageManager.createJsonMetadata(packageFullPath.substr(0, packageFullPath.lastIndexOf('.')), job.internalId as string);
-        const callbackParams = await this.sendCallbacks(job, expirationDate);
-        updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
       }
+      const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
+      updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
+
       this.logger.info(`Update Job status to success=${String(isSuccess)} jobId=${job.id}`);
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     } catch (error) {
-      this.logger.error(`Could not finalize job: ${job.id} updating failed job status, error: ${error}`);
+      this.logger.error(`Could not finalize job: ${job.id} updating failed job status, error: ${(error as Error).message}`);
       updateJobParams.status = OperationStatus.FAILED;
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     }

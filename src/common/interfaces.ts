@@ -1,4 +1,5 @@
-import { BBox, BBox2d, MultiPolygon, Polygon } from '@turf/helpers/dist/js/lib/geojson';
+import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
+import { MultiPolygon, Polygon, BBox } from '@turf/turf';
 import { ICreateJobBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { ITileRange } from '@map-colonies/mc-utils';
 
@@ -65,9 +66,11 @@ export interface ICallbackDataBase {
   success: boolean;
   errorReason?: string;
 }
+
 export interface ICallbackData extends ICallbackDataBase {
   bbox: BBox;
 }
+
 export interface ICallbackResposne extends ICallbackData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
@@ -88,7 +91,7 @@ export interface IJobParameters {
   sanitizedBbox: BBox2d;
   zoomLevel: number;
   callbackParams?: ICallbackDataBase;
-  fileName?: string;
+  fileName: string;
 }
 
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
@@ -119,8 +122,8 @@ export interface IInput {
 }
 
 export interface IJobStatusResponse {
-  completed: JobResponse[] | undefined;
-  failed: JobResponse[] | undefined;
+  completedJobs: JobResponse[] | undefined;
+  failedJobs: JobResponse[] | undefined;
 }
 
 export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;

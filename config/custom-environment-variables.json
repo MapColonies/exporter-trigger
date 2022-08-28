@@ -52,8 +52,8 @@
   },
   "jobManager": {
     "url": "JOB_MANAGER_URL",
-    "expirationTime": {
-      "__name": "JOB_MANAGER_EXPIRATION_TIME",
+    "expirationDays": {
+      "__name": "JOB_MANAGER_EXPIRATION_DAYS",
       "__format": "number"
     }
   },

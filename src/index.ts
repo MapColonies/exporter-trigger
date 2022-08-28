@@ -30,15 +30,18 @@ server.listen(port, () => {
 const mainPollLoop = async (): Promise<void> => {
   const pollingTimout = config.get<number>('pollingTimeoutMS');
   const isRunning = true;
-  logger.debug('running job status poll');
+  logger.info('running job status poll');
   //eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (isRunning) {
+    let polledData = false;
     try {
-      await pollingManager.jobStatusPoll();
+      polledData = await pollingManager.jobStatusPoll();
     } catch (error) {
       logger.error(`mainPollLoop: Error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
     } finally {
-      await new Promise((resolve) => setTimeout(resolve, pollingTimout));
+      if (!polledData) {
+        await new Promise((resolve) => setTimeout(resolve, pollingTimout));
+      }
     }
   }
 };

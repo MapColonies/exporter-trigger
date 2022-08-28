@@ -9,7 +9,7 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { generatePackageName, getGpkgFilePath } from '../../common/utils';
+import { generatePackageName, getGpkgRelativePath } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
 import {
@@ -29,15 +29,15 @@ import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 @injectable()
 export class CreatePackageManager {
   private readonly tilesProvider: MergerSourceType;
-  private readonly gpkgsLocation: string;
+  private readonly metadataFileName: string;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
-    this.gpkgsLocation = config.get<string>('gpkgsLocation');
     this.tilesProvider = config.get('tilesProvider');
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
+    this.metadataFileName = 'metadata.json';
   }
 
   public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
@@ -76,10 +76,10 @@ export class CreatePackageManager {
       }
       const separator = this.getSeparator();
       const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
-      const packageFullPath = getGpkgFilePath(this.gpkgsLocation, packageName);
+      const packageRelativePath = getGpkgRelativePath(packageName);
       const sources: IMapSource[] = [
         {
-          path: packageFullPath,
+          path: packageRelativePath,
           type: 'GPKG',
           extent: {
             minX: bbox[0],
@@ -117,8 +117,7 @@ export class CreatePackageManager {
   }
 
   public async createJsonMetadata(filePath: string, dbId: string): Promise<void> {
-    const fileName = 'metadata.json';
-    const metadataFilePath = join(dirname(filePath), fileName);
+    const metadataFilePath = join(dirname(filePath), this.metadataFileName);
     const record = await this.rasterCatalogManager.findLayer(dbId);
     const recordMetadata = JSON.stringify(record.metadata);
     await fsPromise.writeFile(metadataFilePath, recordMetadata);

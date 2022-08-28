@@ -32,7 +32,7 @@ interface IFindJob {
 export class JobManagerWrapper extends JobManagerClient {
   private readonly tilesJobType: string;
   private readonly tilesTaskType: string;
-  private readonly expirationTime: number;
+  private readonly expirationDays: number;
 
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
     super(
@@ -41,14 +41,14 @@ export class JobManagerWrapper extends JobManagerClient {
       config.get<string>('workerTypes.tiles.taskType'),
       config.get<string>('jobManager.url')
     );
-    this.expirationTime = config.get<number>('jobManager.expirationTime');
+    this.expirationDays = config.get<number>('jobManager.expirationDays');
     this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
     this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
   }
 
   public async create(data: IWorkerInput): Promise<ICreateJobResponse> {
     const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + this.expirationTime);
+    expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
 
     const createJobRequest: CreateJobBody = {
       resourceId: data.cswProductId,

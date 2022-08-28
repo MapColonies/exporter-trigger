@@ -20,7 +20,7 @@ data:
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   {{ end }}
   JOB_MANAGER_URL: {{ .Values.rasterCommon.serviceUrls.jobManager | quote }}
-  JOB_MANAGER_EXPIRATION_TIME: {{ .Values.env.jobManager.expirationTime | quote }}
+  JOB_MANAGER_EXPIRATION_DAYS: {{ .Values.env.jobManager.expirationDays | quote }}
   RASTER_CATALOG_MANAGER_URL: {{ .Values.rasterCommon.serviceUrls.catalogManager | quote }}
   WORKER_TYPES_TILES_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.jobType | quote }}
   WORKER_TYPES_TILES_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.taskType | quote }}

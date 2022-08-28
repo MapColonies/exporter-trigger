@@ -1,9 +1,11 @@
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
+import { container } from 'tsyringe';
 import { JobManagerWrapper } from '../../../../src/clients/jobManagerWrapper';
-import { ITaskStatusResponse, TasksManager } from '../../../../src/createPackage/models/tasksManager';
+import { ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
 import { ITaskParameters, TaskResponse } from '../../../../src/common/interfaces';
+import { SERVICES } from '../../../../src/common/constants';
 
 let jobManagerWrapper: JobManagerWrapper;
 let tasksManager: TasksManager;
@@ -13,7 +15,7 @@ describe('TasksManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     jobManagerWrapper = new JobManagerWrapper(logger);
-    tasksManager = new TasksManager(logger, jobManagerWrapper);
+    tasksManager = container.resolve<TasksManager>(SERVICES.TASKS_ROUTER_SYMBOL);
   });
 
   afterEach(() => {
