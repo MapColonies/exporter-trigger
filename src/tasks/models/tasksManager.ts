@@ -32,6 +32,7 @@ export class TasksManager {
 
   public async getJobsByTaskStatus(): Promise<IJobStatusResponse> {
     const jobs = await this.jobManagerClient.getJobsStatus();
+
     const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
     const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
     const jobsStatus = {
@@ -94,6 +95,7 @@ export class TasksManager {
           this.logger.error(`Did not send callback to ${targetCallbacks[index].url}, got error: ${JSON.stringify(response.reason)}`);
         }
       });
+
       return callbackParams;
     } catch (error) {
       this.logger.error(`Sending callback has failed with error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);

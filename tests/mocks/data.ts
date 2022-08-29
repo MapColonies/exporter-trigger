@@ -111,6 +111,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
   parameters: {
     crs: 'EPSG:4326',
     sanitizedBbox: [0, 0, 25, 41],
+    fileName: 'test.gpkg',
     zoomLevel: 4,
     callbacks: [
       {
@@ -119,7 +120,6 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       },
     ],
     callbackParams: {
-      bbox: [0, 0, 25, 41],
       dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
       fileUri: 'http://localhost:4515/downloads/gm_0c3e455f_4aeb_4258_982d_f7773469a92d_4_0_000000_0000025_0000041_00000.gpkg',
       success: true,
@@ -129,8 +129,10 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       expirationTime: new Date(),
       targetResolution: 0.0439453125,
     },
+    
     targetResolution: 0.0439453125,
   },
+  
   status: OperationStatus.COMPLETED,
   percentage: 100,
   reason: '',
@@ -146,6 +148,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
   expiredTasks: 0,
   pendingTasks: 0,
   inProgressTasks: 0,
+  abortedTasks: 0,
   tasks: [
     {
       id: '542ebbfd-f4d1-4c77-bd4d-97ca121f0de7',
@@ -174,6 +177,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   type: 'rasterTilesExporter',
   description: '',
   parameters: {
+    fileName: 'test.gpkg',
     crs: 'EPSG:4326',
     sanitizedBbox: [0, 0, 25, 41],
     zoomLevel: 4,
@@ -193,6 +197,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   failedTasks: 0,
   expiredTasks: 0,
   pendingTasks: 0,
+  abortedTasks: 0,
   inProgressTasks: 1,
   tasks: [
     {
@@ -216,6 +221,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
 };
 
 const workerInput: IWorkerInput = {
+  fileName: 'tes.gpkg',
   sanitizedBbox: [0, 2.999267578125, 25.0048828125, 41.0009765625],
   targetResolution: 0.0000429153442382812,
   zoomLevel: 15,

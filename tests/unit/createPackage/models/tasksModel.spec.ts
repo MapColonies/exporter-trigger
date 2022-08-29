@@ -2,20 +2,24 @@ import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { container } from 'tsyringe';
-import { JobManagerWrapper } from '../../../../src/clients/jobManagerWrapper';
 import { ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
-import { ITaskParameters, TaskResponse } from '../../../../src/common/interfaces';
-import { SERVICES } from '../../../../src/common/constants';
+import { ICallbackData, ICallbackDataBase, ITaskParameters, JobResponse, TaskResponse } from '../../../../src/common/interfaces';
+import { configMock, getMock, registerDefaultConfig } from '../../../mocks/config';
+import { callbackClientMock, sendMock } from '../../../mocks/clients/callbackClient';
+import { packageManagerMock } from '../../../mocks/clients/packageManager';
+import { catalogManagerMock } from '../../../mocks/clients/catalogManagerClient';
+import { jobManagerWrapperMock, getJobsStatusMock } from '../../../mocks/clients/jobManagerWrapper';
+import { mockJob } from '../../../mocks/data/mockJob';
+import * as utils from '../../../../src/common/utils';
 
-let jobManagerWrapper: JobManagerWrapper;
 let tasksManager: TasksManager;
 let getTasksByJobIdStub: jest.Mock;
 
 describe('TasksManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
-    jobManagerWrapper = new JobManagerWrapper(logger);
-    tasksManager = container.resolve<TasksManager>(SERVICES.TASKS_ROUTER_SYMBOL);
+    registerDefaultConfig();
+    tasksManager = new TasksManager(logger, jobManagerWrapperMock, callbackClientMock, packageManagerMock);
   });
 
   afterEach(() => {
@@ -28,7 +32,7 @@ describe('TasksManager', () => {
       const emptyTasksResponse: TaskResponse[] = [];
 
       getTasksByJobIdStub = jest.fn();
-      jobManagerWrapper.getTasksByJobId = getTasksByJobIdStub.mockResolvedValue(emptyTasksResponse);
+      jobManagerWrapperMock.getTasksByJobId = getTasksByJobIdStub.mockResolvedValue(emptyTasksResponse);
 
       const action = async () => tasksManager.getTaskStatusByJobId('09e29fa8-7283-4334-b3a4-99f75922de59');
 
@@ -55,7 +59,7 @@ describe('TasksManager', () => {
       ];
 
       getTasksByJobIdStub = jest.fn();
-      jobManagerWrapper.getTasksByJobId = getTasksByJobIdStub.mockResolvedValue(tasksResponse);
+      jobManagerWrapperMock.getTasksByJobId = getTasksByJobIdStub.mockResolvedValue(tasksResponse);
 
       const result = tasksManager.getTaskStatusByJobId('0a5552f7-01eb-40af-a912-eed8fa9e1568');
       const expectedResult: ITaskStatusResponse = {
@@ -65,6 +69,158 @@ describe('TasksManager', () => {
       await expect(result).resolves.not.toThrow();
       await expect(result).resolves.toEqual(expectedResult);
       expect(getTasksByJobIdStub).toHaveBeenCalledTimes(1);
+    });
+  });
+  describe('#getJobsByTaskStatus', () => {
+    it('should return completed job with no failed jobs', async () => {
+      const jobs: JobResponse[] = [];
+      const completedMockJob = { ...mockJob, completedTasks: 1 };
+      jobs.push(completedMockJob);
+      getJobsStatusMock.mockResolvedValue(jobs);
+
+      const jobsStatus = await tasksManager.getJobsByTaskStatus();
+
+      await expect(jobsStatus.completedJobs?.length).toBe(1);
+      await expect(jobsStatus.failedJobs?.length).toBe(0);
+      await expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return failed job with no completed jobs', async () => {
+      const jobs: JobResponse[] = [];
+      const failedMockJob = { ...mockJob, failedTasks: 1 };
+      jobs.push(failedMockJob);
+      getJobsStatusMock.mockResolvedValue(jobs);
+
+      const jobsStatus = await tasksManager.getJobsByTaskStatus();
+
+      await expect(jobsStatus.completedJobs?.length).toBe(0);
+      await expect(jobsStatus.failedJobs?.length).toBe(1);
+      await expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return completed job and failed job', async () => {
+      const jobs: JobResponse[] = [];
+      const completedMockJob = { ...mockJob, completedTasks: 1 };
+      const failedMockJob = { ...mockJob, failedTasks: 1 };
+      jobs.push(completedMockJob, failedMockJob);
+      getJobsStatusMock.mockResolvedValue(jobs);
+
+      const jobsStatus = await tasksManager.getJobsByTaskStatus();
+
+      await expect(jobsStatus.completedJobs?.length).toBe(1);
+      await expect(jobsStatus.failedJobs?.length).toBe(1);
+      await expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return an empty jobs response if task is in progress', async () => {
+      const jobs: JobResponse[] = [];
+
+      const inProgressMockJob = { ...mockJob, inProgressTasks: 1 };
+      jobs.push(inProgressMockJob);
+      getJobsStatusMock.mockResolvedValue(jobs);
+
+      const jobsStatus = await tasksManager.getJobsByTaskStatus();
+
+      await expect(jobsStatus.completedJobs?.length).toBe(0);
+      await expect(jobsStatus.failedJobs?.length).toBe(0);
+      await expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return an empty jobs response if task is in pending', async () => {
+      const jobs: JobResponse[] = [];
+      const pendingMockJob = { ...mockJob, pendingTasks: 1 };
+      jobs.push(pendingMockJob);
+      getJobsStatusMock.mockResolvedValue(jobs);
+
+      const jobsStatus = await tasksManager.getJobsByTaskStatus();
+
+      await expect(jobsStatus.completedJobs?.length).toBe(0);
+      await expect(jobsStatus.failedJobs?.length).toBe(0);
+      await expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return an empty jobs response if task is in expired', async () => {
+      const jobs: JobResponse[] = [];
+      const expiredMockJob = { ...mockJob, expiredTasks: 1 };
+      jobs.push(expiredMockJob);
+      getJobsStatusMock.mockResolvedValue(jobs);
+
+      const jobsStatus = await tasksManager.getJobsByTaskStatus();
+
+      await expect(jobsStatus.completedJobs?.length).toBe(0);
+      await expect(jobsStatus.failedJobs?.length).toBe(0);
+      await expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return an empty jobs response if task is in aborted', async () => {
+      const jobs: JobResponse[] = [];
+      const abortedMockJob = { ...mockJob, abortedTasks: 1 };
+      jobs.push(abortedMockJob);
+      getJobsStatusMock.mockResolvedValue(jobs);
+
+      const jobsStatus = await tasksManager.getJobsByTaskStatus();
+
+      await expect(jobsStatus.completedJobs?.length).toBe(0);
+      await expect(jobsStatus.failedJobs?.length).toBe(0);
+      await expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('#sendCallbacks', () => {
+    it('should return callback data with the expected params for success jobs', async () => {
+      sendMock.mockResolvedValue(200);
+      const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
+      getFileSizeSpy.mockResolvedValue(2000);
+      const expirationTime = new Date();
+      const expectedCallbackData: ICallbackDataBase = {
+        fileUri: 'http://download-service/downloads/test/test.gpkg',
+        expirationTime: expirationTime,
+        fileSize: 2000,
+        dbId: '880a9316-0f10-4874-92e2-a62d587a1169',
+        packageName: 'test.gpkg',
+        requestId: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
+        targetResolution: 0.072,
+        success: true,
+        errorReason: undefined,
+      };
+
+      const callbackData = await tasksManager.sendCallbacks(mockJob, expirationTime);
+      await expect(callbackData).toEqual(expectedCallbackData);
+    });
+
+    it('should return callback data with the expected params for failed jobs', async () => {
+      sendMock.mockResolvedValue(200);
+      const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
+      getFileSizeSpy.mockResolvedValue(2000);
+      const expirationTime = new Date();
+      const errMessage = 'gpkg failed to create';
+      const expectedCallbackData: ICallbackDataBase = {
+        fileUri: '',
+        expirationTime: expirationTime,
+        fileSize: 0,
+        dbId: '880a9316-0f10-4874-92e2-a62d587a1169',
+        packageName: 'test.gpkg',
+        requestId: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
+        targetResolution: 0.072,
+        success: false,
+        errorReason: errMessage,
+      };
+      const callbackData = await tasksManager.sendCallbacks(mockJob, expirationTime, errMessage);
+      await expect(callbackData).toEqual(expectedCallbackData);
+    });
+
+    it('should return callback data even if callback response got rejected', async () => {
+      sendMock.mockRejectedValue({});
+      const expirationTime = new Date();
+
+      const action = async () => await tasksManager.sendCallbacks(mockJob, expirationTime);
+      await expect(action()).resolves.not.toThrow();
+    });
+  });
+
+  describe('#finalizeJob', () => {
+    it('should ', async () => {
+      
     });
   });
 });
