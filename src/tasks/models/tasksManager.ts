@@ -56,15 +56,17 @@ export class TasksManager {
   }
 
   public async sendCallbacks(job: JobResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataBase | undefined> {
+    let fileUri = '';
+    let fileRelativePath = '';
     try {
       this.logger.info(`Sending callback for job: ${job.id}`);
       const packageName = job.parameters.fileName;
-      const fileRelativePath = getGpkgRelativePath(packageName);
-      const fileUri = `${this.downloadServerUrl}/downloads/${fileRelativePath}`;
-      const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
       const success = errorReason === undefined;
       let fileSize = 0;
       if (success) {
+        fileRelativePath = getGpkgRelativePath(packageName);
+        const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
+        fileUri = `${this.downloadServerUrl}/downloads/${fileRelativePath}`;
         fileSize = await getFileSize(packageFullPath);
       }
       const callbackParams: ICallbackDataBase = {
@@ -72,7 +74,7 @@ export class TasksManager {
         expirationTime: expirationDate,
         fileSize,
         dbId: job.internalId as string,
-        packageName: fileRelativePath,
+        packageName: packageName,
         requestId: job.id,
         targetResolution: job.parameters.targetResolution,
         success,

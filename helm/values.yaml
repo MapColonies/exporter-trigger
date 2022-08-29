@@ -78,7 +78,7 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  pollingTimeoutMS: 15000
+  pollingTimeoutMS: 2000
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
