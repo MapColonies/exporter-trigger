@@ -178,7 +178,7 @@ export class CreatePackageManager {
 
       return {
         id: processingJob.id,
-        taskIds: processingJob.tasks.map((t) => t.id),
+        taskIds: processingJob.tasks!.map((t) => t.id),
         status: OperationStatus.IN_PROGRESS,
       };
     }
