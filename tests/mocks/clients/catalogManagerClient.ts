@@ -6,4 +6,4 @@ const catalogManagerMock = {
   findLayer: findLayerMock,
 } as unknown as RasterCatalogManagerClient;
 
-export { catalogManagerMock, findLayerMock};
+export { catalogManagerMock, findLayerMock };

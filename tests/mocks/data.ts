@@ -129,10 +129,10 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       expirationTime: new Date(),
       targetResolution: 0.0439453125,
     },
-    
+
     targetResolution: 0.0439453125,
   },
-  
+
   status: OperationStatus.COMPLETED,
   percentage: 100,
   reason: '',
@@ -221,7 +221,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
 };
 
 const workerInput: IWorkerInput = {
-  fileName: 'tes.gpkg',
+  fileName: 'test.gpkg',
   sanitizedBbox: [0, 2.999267578125, 25.0048828125, 41.0009765625],
   targetResolution: 0.0000429153442382812,
   zoomLevel: 15,

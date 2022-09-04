@@ -21,54 +21,54 @@ const setConfigValues = (values: Record<string, unknown>): void => {
 const registerDefaultConfig = (): void => {
   const config = {
     openapiConfig: {
-      filePath: "./openapi3.yaml",
-      basePath: "/docs",
-      rawPath: "/api",
-      uiPath: "/api"
+      filePath: './openapi3.yaml',
+      basePath: '/docs',
+      rawPath: '/api',
+      uiPath: '/api',
     },
     telemetry: {
       logger: {
-        level: "info",
-        prettyPrint: false
-      }
+        level: 'info',
+        prettyPrint: false,
+      },
     },
     server: {
-      port: "8080",
+      port: '8080',
       request: {
         payload: {
-          limit: "1mb"
-        }
+          limit: '1mb',
+        },
       },
       response: {
         compression: {
           enabled: true,
-          options: null
-        }
-      }
+          options: null,
+        },
+      },
     },
     httpRetry: {
       attempts: 5,
-      delay: "exponential",
-      shouldResetTimeout: true
+      delay: 'exponential',
+      shouldResetTimeout: true,
     },
     jobManager: {
-      url: "http://job-manager-job-manager",
-      expirationDays: 30
+      url: 'http://job-manager-job-manager',
+      expirationDays: 30,
     },
     rasterCatalogManager: {
-      url: "http://raster-catalog-manager"
+      url: 'http://raster-catalog-manager',
     },
     workerTypes: {
       tiles: {
-        jobType: "rasterTilesExporter",
-        taskType: "rasterTilesExporter"
-      }
+        jobType: 'rasterTilesExporter',
+        taskType: 'rasterTilesExporter',
+      },
     },
-    tilesProvider: "S3",
-    gpkgsLocation: "/app/tiles_outputs/gpkgs",
-    downloadServerUrl: "http://download-service",
-    pollingTimeoutMS: 2000
-  }
+    tilesProvider: 'S3',
+    gpkgsLocation: '/app/tiles_outputs/gpkgs',
+    downloadServerUrl: 'http://download-service',
+    pollingTimeoutMS: 2000,
+  };
   setConfigValues(config);
 };
 

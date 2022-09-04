@@ -1,5 +1,6 @@
-import { OperationStatus } from "@map-colonies/mc-priority-queue";
-import { JobResponse } from "../../../src/common/interfaces";
+/* eslint-disable @typescript-eslint/no-magic-numbers */
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { JobResponse } from '../../../src/common/interfaces';
 
 export const mockJob: JobResponse = {
   id: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
@@ -13,26 +14,16 @@ export const mockJob: JobResponse = {
     callbacks: [
       {
         url: 'http://example.getmap.com/callback',
-        bbox: [
-          34.811938017107494,
-          31.95475033759175,
-          34.82237261707599,
-          31.96426962177354
-        ]
+        bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
       },
       {
         url: 'http://example.getmap.com/callback2',
-        bbox: [
-          34.811938017107494,
-          31.95475033759175,
-          34.82237261707599,
-          31.96426962177354
-        ]
-      }
+        bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
+      },
     ],
     zoomLevel: 3,
-    sanitizedBbox: [ 0, -90, 180, 90 ],
-    targetResolution: 0.072
+    sanitizedBbox: [0, -90, 180, 90],
+    targetResolution: 0.072,
   },
   status: OperationStatus.IN_PROGRESS,
   percentage: 100,
@@ -54,5 +45,5 @@ export const mockJob: JobResponse = {
   abortedTasks: 0,
   tasks: [],
   created: '2022-08-29T07:06:05.043Z',
-  updated: '2022-08-29T07:13:05.206Z'
-}
+  updated: '2022-08-29T07:13:05.206Z',
+};

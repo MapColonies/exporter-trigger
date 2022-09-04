@@ -124,7 +124,8 @@ export class TasksManager {
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     } catch (error) {
       this.logger.error(`Could not finalize job: ${job.id} updating failed job status, error: ${(error as Error).message}`);
-      updateJobParams.status = OperationStatus.FAILED;
+      const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
+      updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams } };
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     }
   }
