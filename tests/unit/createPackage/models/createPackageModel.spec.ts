@@ -1,6 +1,6 @@
 import { BadRequestError } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import {
   jobManagerWrapperMock,
@@ -11,7 +11,7 @@ import {
   createMock,
 } from '../../../mocks/clients/jobManagerWrapper';
 import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalogManagerClient';
-import { ICreateJobResponse, ICreatePackage, JobDuplicationParams } from '../../../../src/common/interfaces';
+import { ICreateJobResponse, ICreatePackage, IJobParameters, ITaskParameters, JobDuplicationParams } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
 import { inProgressJob, layerFromCatalog, userInput } from '../../../mocks/data';
 
@@ -29,7 +29,7 @@ describe('CreatePackageManager', () => {
   });
 
   describe('#create', () => {
-    it('should create job and return his job and task ids', async () => {
+    it('should create job and return its job and task ids', async () => {
       const req: ICreatePackage = {
         dbId: layerFromCatalog.id,
         bbox: [0, 1, 3, 5],
@@ -124,7 +124,7 @@ describe('CreatePackageManager', () => {
       const res = await createPackageManager.createPackage(userInput);
       const expectedReturn: ICreateJobResponse = {
         id: inProgressJob.id,
-        taskIds: [inProgressJob.tasks![0].id],
+        taskIds: [(inProgressJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[])[0].id],
         status: OperationStatus.IN_PROGRESS,
       };
 

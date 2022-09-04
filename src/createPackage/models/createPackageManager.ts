@@ -5,7 +5,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
@@ -23,6 +23,7 @@ import {
   MergerSourceType,
   IMapSource,
   ICallbackTarget,
+  ITaskParameters,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
@@ -178,7 +179,7 @@ export class CreatePackageManager {
 
       return {
         id: processingJob.id,
-        taskIds: processingJob.tasks!.map((t) => t.id),
+        taskIds: (processingJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[]).map((t) => t.id),
         status: OperationStatus.IN_PROGRESS,
       };
     }
