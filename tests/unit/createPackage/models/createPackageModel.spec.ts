@@ -124,7 +124,7 @@ describe('CreatePackageManager', () => {
       const res = await createPackageManager.createPackage(userInput);
       const expectedReturn: ICreateJobResponse = {
         id: inProgressJob.id,
-        taskIds: [inProgressJob.tasks[0].id],
+        taskIds: [inProgressJob.tasks![0].id],
         status: OperationStatus.IN_PROGRESS,
       };
 

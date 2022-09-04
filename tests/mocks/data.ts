@@ -175,6 +175,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   resourceId: 'string',
   version: '1.0',
   type: 'rasterTilesExporter',
+  percentage: 0,
   description: '',
   parameters: {
     fileName: 'test.gpkg',
