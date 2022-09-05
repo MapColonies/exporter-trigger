@@ -1,7 +1,8 @@
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
-import { jobs, workerInput } from '../../mocks/data';
+import { JobResponse } from '../../../src/common/interfaces';
+import { inProgressJob, jobs, workerInput } from '../../mocks/data';
 
 let jobManagerClient: JobManagerWrapper;
 let postFun: jest.Mock;
@@ -72,6 +73,20 @@ describe('JobManagerClient', () => {
 
       expect(getJobs).toHaveBeenCalledTimes(1);
       expect(completedJobs).toBeDefined();
+    });
+
+    it('should get In-Progress jobs status successfully', async () => {
+      getJobs = jest.fn();
+      const jobs: JobResponse[] = [];
+      jobs.push(inProgressJob);
+      const jobManager = jobManagerClient as unknown as { getJobs: unknown };
+      jobManager.getJobs = getJobs.mockResolvedValue(jobs);
+
+      const result = await jobManagerClient.getJobsStatus();
+
+      expect(getJobs).toHaveBeenCalledTimes(1);
+      expect(result).toBeDefined();
+      expect(result).toEqual(jobs);
     });
   });
 });

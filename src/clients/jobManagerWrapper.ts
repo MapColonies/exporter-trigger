@@ -15,7 +15,6 @@ import {
   JobResponse,
   TaskResponse,
 } from '../common/interfaces';
-
 //this is the job manager api for find job DO NOT MODIFY
 interface IFindJob {
   resourceId?: string;
@@ -33,7 +32,7 @@ interface IFindJob {
 export class JobManagerWrapper extends JobManagerClient {
   private readonly tilesJobType: string;
   private readonly tilesTaskType: string;
-  private readonly expirationTime: number;
+  private readonly expirationDays: number;
 
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
     super(
@@ -42,14 +41,14 @@ export class JobManagerWrapper extends JobManagerClient {
       config.get<string>('workerTypes.tiles.taskType'),
       config.get<string>('jobManager.url')
     );
-    this.expirationTime = config.get<number>('jobManager.expirationTime');
+    this.expirationDays = config.get<number>('jobManager.expirationDays');
     this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
     this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
   }
 
   public async create(data: IWorkerInput): Promise<ICreateJobResponse> {
     const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + this.expirationTime);
+    expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
 
     const createJobRequest: CreateJobBody = {
       resourceId: data.cswProductId,
@@ -62,6 +61,7 @@ export class JobManagerWrapper extends JobManagerClient {
         zoomLevel: data.zoomLevel,
         callbacks: data.callbacks,
         crs: data.crs,
+        fileName: data.fileName,
       },
       internalId: data.dbId,
       productType: data.productType,
@@ -147,6 +147,27 @@ export class JobManagerWrapper extends JobManagerClient {
   public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
     const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);
     return tasks;
+  }
+
+  public async getJobsStatus(): Promise<JobResponse[] | undefined> {
+    const queryParams: IFindJob = {
+      isCleaned: 'false',
+      type: this.tilesJobType,
+      shouldReturnTasks: 'false',
+      status: OperationStatus.IN_PROGRESS,
+    };
+
+    const jobs = await this.getJobs(queryParams);
+    return jobs;
+  }
+
+  public async updateJobStatus(jobId: string, status: OperationStatus, reason?: string, catalogId?: string): Promise<void> {
+    const updateJobUrl = `/jobs/${jobId}`;
+    await this.put(updateJobUrl, {
+      status: status,
+      reason: reason,
+      internalId: catalogId,
+    });
   }
 
   private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {

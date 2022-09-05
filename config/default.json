@@ -32,7 +32,7 @@
   },
   "jobManager": {
     "url": "http://job-manager-job-manager",
-    "expirationTime": 30
+    "expirationDays": 30
   },
   "rasterCatalogManager": {
     "url": "http://raster-catalog-manager"
@@ -43,5 +43,8 @@
       "taskType": "rasterTilesExporter"
     }
   },
-  "tilesProvider": "S3"
+  "tilesProvider": "S3",
+  "gpkgsLocation": "/app/tiles_outputs/gpkgs",
+  "downloadServerUrl": "http://download-service",
+  "pollingTimeoutMS": 2000
 }

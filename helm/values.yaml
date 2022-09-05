@@ -8,6 +8,7 @@ rasterCommon:
   serviceUrls:
     catalogManager: "http://catalog-raster-dev-raster-catalog-manager"
     jobManager: "http://job-manager-raster-dev-discrete-ingestion-db"
+    downloadServer: "http://files-server-raster-dev-files-server"
   jobManagement:
     exporter:
       jobType: tilesExport
@@ -18,7 +19,11 @@ rasterCommon:
       customHeaderName: ""
   storage:
     tilesStorageProvider: 'FS'
-
+    fs:
+      internalPvc:
+        enabled: true
+        name: internal-pvc
+        gpkgSubPath: gpkgs
 enabled: true
 environment: development
 replicaCount: 1
@@ -73,6 +78,7 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
+  pollingTimeoutMS: 2000
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
@@ -80,7 +86,7 @@ env:
     enabled: false
     url: http://localhost:55681/v1/metrics
   jobManager:
-    expirationTime: 30
+    expirationDays: 30
   httpRetry:
     attempts: 5
     delay: exponential

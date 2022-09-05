@@ -1,13 +1,15 @@
-import { sep } from 'path';
+import { promises as fsPromise } from 'fs';
+import { sep, join, dirname } from 'path';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
+import { generatePackageName, getGpkgRelativePath } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
 import {
@@ -21,12 +23,14 @@ import {
   MergerSourceType,
   IMapSource,
   ICallbackTarget,
+  ITaskParameters,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
 @injectable()
 export class CreatePackageManager {
   private readonly tilesProvider: MergerSourceType;
+  private readonly metadataFileName: string;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
@@ -34,6 +38,7 @@ export class CreatePackageManager {
   ) {
     this.tilesProvider = config.get('tilesProvider');
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
+    this.metadataFileName = 'metadata.json';
   }
 
   public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
@@ -71,9 +76,11 @@ export class CreatePackageManager {
         batches.push(bboxToTileRange(sanitizedBbox, i));
       }
       const separator = this.getSeparator();
+      const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
+      const packageRelativePath = getGpkgRelativePath(packageName);
       const sources: IMapSource[] = [
         {
-          path: this.generatePackageName(dbId, zoomLevel, sanitizedBbox), //gpkg path
+          path: packageRelativePath,
           type: 'GPKG',
           extent: {
             minX: bbox[0],
@@ -90,6 +97,7 @@ export class CreatePackageManager {
       const workerInput: IWorkerInput = {
         sanitizedBbox,
         targetResolution,
+        fileName: packageName,
         zoomLevel,
         dbId,
         version: version as string,
@@ -109,6 +117,13 @@ export class CreatePackageManager {
     return duplicationExist;
   }
 
+  public async createJsonMetadata(filePath: string, dbId: string): Promise<void> {
+    const metadataFilePath = join(dirname(filePath), this.metadataFileName);
+    const record = await this.rasterCatalogManager.findLayer(dbId);
+    const recordMetadata = JSON.stringify(record.metadata);
+    await fsPromise.writeFile(metadataFilePath, recordMetadata);
+  }
+
   private getSeparator(): string {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
@@ -120,12 +135,6 @@ export class CreatePackageManager {
     }
     bbox = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
     return bbox;
-  }
-
-  private generatePackageName(cswId: string, zoomLevel: number, bbox: BBox): string {
-    const numberOfDecimals = 5;
-    const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_').replace(/-/g, 'm')).join('');
-    return `gm_${cswId.replace(/-/g, '_')}_${zoomLevel}_${bboxToString}.gpkg`;
   }
 
   private async checkForDuplicate(
@@ -170,7 +179,7 @@ export class CreatePackageManager {
 
       return {
         id: processingJob.id,
-        taskIds: processingJob.tasks.map((t) => t.id),
+        taskIds: (processingJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[]).map((t) => t.id),
         status: OperationStatus.IN_PROGRESS,
       };
     }

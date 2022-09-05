@@ -8,7 +8,8 @@ import { SERVICES, SERVICE_NAME } from './common/constants';
 import { tracing } from './common/tracing';
 import { createPackageRouterFactory, CREATE_PACKAGE_ROUTER_SYMBOL } from './createPackage/routes/createPackageRouter';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
-import { tasksRouterFactory, TASKS_ROUTER_SYMBOL } from './createPackage/routes/tasksRouter';
+import { tasksRouterFactory, TASKS_ROUTER_SYMBOL } from './tasks/routes/tasksRouter';
+import { PollingManager, POLLING_MANGER_SYMBOL } from './pollingManager';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -33,6 +34,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.METER, provider: { useValue: meter } },
     { token: CREATE_PACKAGE_ROUTER_SYMBOL, provider: { useFactory: createPackageRouterFactory } },
     { token: TASKS_ROUTER_SYMBOL, provider: { useFactory: tasksRouterFactory } },
+    { token: POLLING_MANGER_SYMBOL, provider: { useClass: PollingManager } },
     {
       token: 'onSignal',
       provider: {

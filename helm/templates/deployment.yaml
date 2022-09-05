@@ -5,6 +5,9 @@
 {{- $cloudProviderImagePullSecretName := include "exporter-trigger.cloudProviderImagePullSecretName" . -}}
 {{- $imageTag := include "exporter-trigger.tag" . -}}
 {{- if .Values.enabled -}}
+
+{{ $gpkgPath := (printf "%s%s" "/app/tiles_outputs/" .Values.rasterCommon.storage.fs.internalPvc.gpkgSubPath) }}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -48,18 +51,23 @@ spec:
           env:
             - name: SERVER_PORT
               value: {{ .Values.env.targetPort | quote }}
+            - name: GPKGS_LOCATION
+              value: {{ $gpkgPath }}
           envFrom:
             - configMapRef:
                 name: {{ $releaseName }}-{{ $chartName }}-configmap
           ports:
             - name: http
               containerPort: {{ .Values.env.targetPort }}
-              protocol: {{ .Values.env.protocol }}
+              protocol: TCP
           livenessProbe:
             initialDelaySeconds: {{ .Values.initialDelaySeconds }}
             httpGet:
               path: /liveness
               port: http
+          volumeMounts:
+            - name: internal-storage
+              mountPath: /app/tiles_outputs
           {{- if .Values.resources.enabled }}
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
@@ -126,4 +134,7 @@ spec:
           configMap:
             name: {{ .Release.Name }}-{{ $chartName }}-envoy
         {{- end }}
+        - name: internal-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.rasterCommon.storage.fs.internalPvc.name }}
 {{- end -}}
