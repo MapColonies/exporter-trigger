@@ -2,6 +2,7 @@ package envoy.authz
 
 import input.attributes.metadataContext.filterMetadata["envoy.filters.http.jwt_authn"].map_colonies_token_payload as payload
 import input.attributes.metadataContext.filterMetadata.map_colonies as map_colonies 
+import input.attributes.request.http as http_request
 
 default allow = false
 
