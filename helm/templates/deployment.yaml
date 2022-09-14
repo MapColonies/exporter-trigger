@@ -79,6 +79,10 @@ spec:
           - readOnly: true
             mountPath: /config
             name: proxy-config
+          - name: jwt-public-keys
+            readOnly: true
+            mountPath: /keys/mapColonies.jwks
+            subPath: mapColonies.jwks
           args:
           - "envoy"
           - "--config-path"
@@ -133,6 +137,9 @@ spec:
         - name: proxy-config
           configMap:
             name: {{ .Release.Name }}-{{ $chartName }}-envoy
+        - name: jwt-public-keys
+          secret:
+            secretName: {{ .Values.global.authentication.jwtPublicKeySecretName }}
         {{- end }}
         - name: internal-storage
           persistentVolumeClaim:
