@@ -3,6 +3,8 @@ global:
   tracing: {}
   metrics: {}
   environment: {}
+  authentication:
+    jwtPublicKeySecretName: map-colonies-jwks
 
 rasterCommon:
   serviceUrls:
