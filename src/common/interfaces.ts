@@ -17,10 +17,10 @@ export interface OpenApiConfig {
 
 export interface ICreatePackage {
   dbId: string;
-  targetResolution: number;
+  targetResolution?: number;
   crs?: string;
   callbackURLs: string[];
-  bbox: BBox2d;
+  bbox?: BBox2d;
   priority?: number;
 }
 

@@ -72,6 +72,38 @@ describe('CreatePackageManager', () => {
       expect(findInProgressJobMock).toHaveBeenCalledTimes(1);
     });
 
+    it(`should create job and take original layer's resolution and sanitized bbox`, async () => {
+      const req: ICreatePackage = {
+        dbId: layerFromCatalog.id,
+        callbackURLs: ['testUrl'],
+        crs: 'EPSG:4326',
+      };
+
+      const expectedCreateJobResponse = {
+        jobId: '09e29fa8-7283-4334-b3a4-99f75922de59',
+        taskIds: ['66aa1e2e-784c-4178-b5a0-af962937d561'],
+        status: OperationStatus.IN_PROGRESS,
+      };
+
+      const expectedsanitizedBbox: BBox2d = [0, -90, 180, 90];
+      const expectedTargetResolution = layerFromCatalog.metadata.maxResolutionDeg;
+
+      findLayerMock.mockResolvedValue(layerFromCatalog);
+      createMock.mockResolvedValue(expectedCreateJobResponse);
+      findCompletedJobMock.mockResolvedValue(undefined);
+      findInProgressJobMock.mockResolvedValue(undefined);
+      findPendingJobMock.mockResolvedValue(undefined);
+
+      const res = await createPackageManager.createPackage(req);
+
+      expect(res).toEqual(expectedCreateJobResponse);
+      expect(findLayerMock).toHaveBeenCalledWith(req.dbId);
+      expect(findLayerMock).toHaveBeenCalledTimes(1);
+      expect(createMock).toHaveBeenCalledTimes(1);
+      expect(createMock.mock.calls[0][0]['targetResolution']).toEqual(expectedTargetResolution);
+      expect(createMock.mock.calls[0][0]['sanitizedBbox']).toEqual(expectedsanitizedBbox);
+    });
+
     it('should return job and task-ids of existing in pending job', async () => {
       const expectedsanitizedBbox: BBox2d = [0, 2.8125, 25.3125, 42.1875];
       const jobDupParams: JobDuplicationParams = {

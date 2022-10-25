@@ -45,7 +45,8 @@ export class CreatePackageManager {
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
-    const { bbox, dbId, targetResolution, crs, priority, callbackURLs } = userInput;
+    const { dbId, crs, priority, bbox, callbackURLs } = userInput;
+    const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
 
     const srcRes = layerMetadata.maxResolutionDeg as number;
@@ -54,7 +55,7 @@ export class CreatePackageManager {
       throw new BadRequestError(`the requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
     }
 
-    const sanitizedBbox = this.sanitizeBbox(bbox, footprint as Polygon | MultiPolygon, zoomLevel);
+    const sanitizedBbox = this.sanitizeBbox(footprint as Polygon | MultiPolygon, zoomLevel, bbox);
     if (sanitizedBbox === null) {
       throw new BadRequestError(`requested bbox has no intersection with requested layer`);
     }
@@ -67,8 +68,8 @@ export class CreatePackageManager {
       sanitizedBbox,
       crs: crs ?? DEFAULT_CRS,
     };
-    const callbacks = callbackURLs.map((url) => ({ url, bbox }));
-
+    // If bbox isn't supplied, return sanitizedBbox
+    const callbacks = callbackURLs.map((url) => ({ url, bbox: bbox ?? sanitizedBbox }));
     const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
     if (!duplicationExist) {
       const batches: ITileRange[] = [];
@@ -83,10 +84,10 @@ export class CreatePackageManager {
           path: packageRelativePath,
           type: 'GPKG',
           extent: {
-            minX: bbox[0],
-            minY: bbox[1],
-            maxX: bbox[2],
-            maxY: bbox[3],
+            minX: sanitizedBbox[0],
+            minY: sanitizedBbox[1],
+            maxX: sanitizedBbox[2],
+            maxY: sanitizedBbox[3],
           },
         },
         {
@@ -128,8 +129,9 @@ export class CreatePackageManager {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
 
-  private sanitizeBbox(bbox: BBox, footprint: Polygon | MultiPolygon, zoom: number): BBox2d | null {
-    const intersaction = intersect(bboxPolygon(bbox), footprint);
+  private sanitizeBbox(footprint: Polygon | MultiPolygon, zoom: number, bbox?: BBox): BBox2d | null {
+    // If bbox isn't supplied - take entire layer's footprint
+    const intersaction = bbox ? intersect(bboxPolygon(bbox), footprint) : footprint;
     if (intersaction === null) {
       return null;
     }
