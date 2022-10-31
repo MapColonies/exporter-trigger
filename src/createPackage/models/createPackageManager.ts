@@ -9,7 +9,7 @@ import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { generatePackageName, getGpkgRelativePath } from '../../common/utils';
+import { generatePackageName, getGpkgRelativePath, getStorageStatus } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
 import {
@@ -24,6 +24,7 @@ import {
   IMapSource,
   ICallbackTarget,
   ITaskParameters,
+  IStorageStatusResponse,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
@@ -42,6 +43,7 @@ export class CreatePackageManager {
   }
 
   public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
+    const isFreeSpace = await this.validateFreeStorage();
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
@@ -122,6 +124,12 @@ export class CreatePackageManager {
     const record = await this.rasterCatalogManager.findLayer(dbId);
     const recordMetadata = JSON.stringify(record.metadata);
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
+  }
+
+  public async validateFreeStorage(): Promise<void> {
+    const gpkgsLocation: string = config.get('gpkgsLocation');
+    const storageStatus: IStorageStatusResponse = await getStorageStatus(gpkgsLocation);
+    this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({free: storageStatus.free, total: storageStatus.size})}`);
   }
 
   private getSeparator(): string {

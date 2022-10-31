@@ -126,6 +126,11 @@ export interface IJobStatusResponse {
   failedJobs: JobResponse[] | undefined;
 }
 
+export interface IStorageStatusResponse {
+  free: number;
+  size: number
+}
+
 export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
 export type TaskResponse = ITaskResponse<ITaskParameters>;
 export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;

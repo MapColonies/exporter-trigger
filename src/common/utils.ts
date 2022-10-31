@@ -1,6 +1,8 @@
 import { promises as fsPromise } from 'fs';
 import { join } from 'path';
 import { BBox } from '@turf/turf';
+import checkDiskSpace from 'check-disk-space'
+import { IStorageStatusResponse } from './interfaces';
 
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;
@@ -23,4 +25,9 @@ export const getGpkgFullPath = (gpkgsLocation: string, packageName: string): str
   const packageDirectoryName = packageName.substr(0, packageName.lastIndexOf('.'));
   const packageFullPath = join(gpkgsLocation, packageDirectoryName, packageName);
   return packageFullPath;
+};
+
+export const getStorageStatus = async (gpkgsLocation: string ): Promise<IStorageStatusResponse> => {
+  const storageStatus: IStorageStatusResponse = await checkDiskSpace(gpkgsLocation);
+  return storageStatus;
 };
