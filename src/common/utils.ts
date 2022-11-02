@@ -1,8 +1,11 @@
 import { promises as fsPromise } from 'fs';
 import { join } from 'path';
 import { BBox } from '@turf/turf';
-import checkDiskSpace from 'check-disk-space'
+import config from 'config';
+import checkDiskSpace from 'check-disk-space';
+import { ITileRange } from '@map-colonies/mc-utils';
 import { IStorageStatusResponse } from './interfaces';
+
 
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;
@@ -27,7 +30,19 @@ export const getGpkgFullPath = (gpkgsLocation: string, packageName: string): str
   return packageFullPath;
 };
 
-export const getStorageStatus = async (gpkgsLocation: string ): Promise<IStorageStatusResponse> => {
-  const storageStatus: IStorageStatusResponse = await checkDiskSpace(gpkgsLocation);
-  return storageStatus;
+export const getStorageStatus = async (gpkgsLocation: string): Promise<IStorageStatusResponse> => {
+  return checkDiskSpace(gpkgsLocation);
 };
+
+export const calculateEstimateGpkgSize =(batches: ITileRange[]): number =>{
+  let totalTilesCount = 0;
+  batches.forEach((batch) => {
+    const width = batch.maxX - batch.minX;
+    const height = batch.maxY - batch.minY;
+    const area = width*height;
+    totalTilesCount += area;
+  });
+  const imageEstimatedSize = config.get('jpegTileEstimatedSize'); // todo - should be calculated on future param from request
+  const gpkgEstimatedSize = totalTilesCount*(imageEstimatedSize as number);
+  return gpkgEstimatedSize;
+}

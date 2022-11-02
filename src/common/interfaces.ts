@@ -128,7 +128,7 @@ export interface IJobStatusResponse {
 
 export interface IStorageStatusResponse {
   free: number;
-  size: number
+  size: number;
 }
 
 export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;

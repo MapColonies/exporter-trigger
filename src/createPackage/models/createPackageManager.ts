@@ -9,7 +9,7 @@ import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { generatePackageName, getGpkgRelativePath, getStorageStatus } from '../../common/utils';
+import { calculateEstimateGpkgSize, generatePackageName, getGpkgRelativePath, getStorageStatus } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
 import {
@@ -43,19 +43,18 @@ export class CreatePackageManager {
   }
 
   public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
-    const isFreeSpace = await this.validateFreeStorage();
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
     const { bbox, dbId, targetResolution, crs, priority, callbackURLs } = userInput;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
-
+    
     const srcRes = layerMetadata.maxResolutionDeg as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
     if (zoomLevel > maxZoom) {
       throw new BadRequestError(`the requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
     }
-
+    
     const sanitizedBbox = this.sanitizeBbox(bbox, footprint as Polygon | MultiPolygon, zoomLevel);
     if (sanitizedBbox === null) {
       throw new BadRequestError(`requested bbox has no intersection with requested layer`);
@@ -70,13 +69,15 @@ export class CreatePackageManager {
       crs: crs ?? DEFAULT_CRS,
     };
     const callbacks = callbackURLs.map((url) => ({ url, bbox }));
-
+    
     const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
     if (!duplicationExist) {
       const batches: ITileRange[] = [];
       for (let i = 0; i <= zoomLevel; i++) {
         batches.push(bboxToTileRange(sanitizedBbox, i));
       }
+      const estimatesGpkgSize = calculateEstimateGpkgSize(batches);
+      const isFreeSpace = await this.validateFreeStorage();
       const separator = this.getSeparator();
       const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
       const packageRelativePath = getGpkgRelativePath(packageName);
@@ -129,7 +130,7 @@ export class CreatePackageManager {
   public async validateFreeStorage(): Promise<void> {
     const gpkgsLocation: string = config.get('gpkgsLocation');
     const storageStatus: IStorageStatusResponse = await getStorageStatus(gpkgsLocation);
-    this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({free: storageStatus.free, total: storageStatus.size})}`);
+    this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({ free: storageStatus.free, total: storageStatus.size })}`);
   }
 
   private getSeparator(): string {
