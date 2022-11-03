@@ -1,7 +1,6 @@
 import { promises as fsPromise } from 'fs';
 import { join } from 'path';
 import { BBox } from '@turf/turf';
-import config from 'config';
 import checkDiskSpace from 'check-disk-space';
 import { ITileRange } from '@map-colonies/mc-utils';
 import { IStorageStatusResponse } from './interfaces';
@@ -34,7 +33,7 @@ export const getStorageStatus = async (gpkgsLocation: string): Promise<IStorageS
   return checkDiskSpace(gpkgsLocation);
 };
 
-export const calculateEstimateGpkgSize =(batches: ITileRange[]): number =>{
+export const calculateEstimateGpkgSize =(batches: ITileRange[], tileEstimatedSize: number): number =>{
   let totalTilesCount = 0;
   batches.forEach((batch) => {
     const width = batch.maxX - batch.minX;
@@ -42,7 +41,6 @@ export const calculateEstimateGpkgSize =(batches: ITileRange[]): number =>{
     const area = width*height;
     totalTilesCount += area;
   });
-  const imageEstimatedSize = config.get('jpegTileEstimatedSize'); // todo - should be calculated on future param from request
-  const gpkgEstimatedSize = totalTilesCount*(imageEstimatedSize as number);
+  const gpkgEstimatedSize = totalTilesCount*(tileEstimatedSize);
   return gpkgEstimatedSize;
 }

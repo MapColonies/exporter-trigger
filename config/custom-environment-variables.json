@@ -66,8 +66,12 @@
       "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
     }
   },
-  "jpegTileEstimatedSize":{
-    "__name": "JPEG_TILE_ESTIMATED_SIZE",
+  "jpegTileEstimatedSizeInBytes":{
+    "__name": "JPEG_TILE_ESTIMATED_SIZE_IN_BYTES",
+    "__format": "number"
+  },
+  "storageFactorBuffer":{
+    "__name": "STORAGE_FACTOR_BUFFER",
     "__format": "number"
   },
   "tilesProvider": "TILES_PROVIDER",

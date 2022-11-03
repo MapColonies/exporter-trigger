@@ -7,7 +7,7 @@ import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
-import { BadRequestError } from '@map-colonies/error-types';
+import { BadRequestError, InsufficientStorage} from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { calculateEstimateGpkgSize, generatePackageName, getGpkgRelativePath, getStorageStatus } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
@@ -25,12 +25,13 @@ import {
   ICallbackTarget,
   ITaskParameters,
   IStorageStatusResponse,
-} from '../../common/interfaces';
+  } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
 @injectable()
 export class CreatePackageManager {
   private readonly tilesProvider: MergerSourceType;
+  private readonly tIleEstimatedSize: number;
   private readonly metadataFileName: string;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -38,6 +39,7 @@ export class CreatePackageManager {
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
     this.tilesProvider = config.get('tilesProvider');
+    this.tIleEstimatedSize = config.get('jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
     this.metadataFileName = 'metadata.json';
   }
@@ -48,13 +50,13 @@ export class CreatePackageManager {
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
     const { bbox, dbId, targetResolution, crs, priority, callbackURLs } = userInput;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
-    
+
     const srcRes = layerMetadata.maxResolutionDeg as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
     if (zoomLevel > maxZoom) {
       throw new BadRequestError(`the requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
     }
-    
+
     const sanitizedBbox = this.sanitizeBbox(bbox, footprint as Polygon | MultiPolygon, zoomLevel);
     if (sanitizedBbox === null) {
       throw new BadRequestError(`requested bbox has no intersection with requested layer`);
@@ -69,15 +71,19 @@ export class CreatePackageManager {
       crs: crs ?? DEFAULT_CRS,
     };
     const callbacks = callbackURLs.map((url) => ({ url, bbox }));
-    
+
     const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
     if (!duplicationExist) {
       const batches: ITileRange[] = [];
       for (let i = 0; i <= zoomLevel; i++) {
         batches.push(bboxToTileRange(sanitizedBbox, i));
       }
-      const estimatesGpkgSize = calculateEstimateGpkgSize(batches);
-      const isFreeSpace = await this.validateFreeStorage();
+      const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tIleEstimatedSize);
+      const diskFreeSpace = await this.getFreeStorage();
+      if ((diskFreeSpace - estimatesGpkgSize) < 0) {
+        throw new InsufficientStorage(`There isn't enough free disk space to executing export, estimated requested gpkg size: ${estimatesGpkgSize}, estimated free space: ${diskFreeSpace}`);
+      }
+
       const separator = this.getSeparator();
       const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
       const packageRelativePath = getGpkgRelativePath(packageName);
@@ -127,10 +133,30 @@ export class CreatePackageManager {
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
   }
 
-  public async validateFreeStorage(): Promise<void> {
+  public async getFreeStorage(): Promise<number> {
+    const sizeBufferFactor = 1.25;
     const gpkgsLocation: string = config.get('gpkgsLocation');
     const storageStatus: IStorageStatusResponse = await getStorageStatus(gpkgsLocation);
-    this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({ free: storageStatus.free, total: storageStatus.size })}`);
+    let otherRunningJobsSize = 0;
+
+    const shouldReturnTasks = true;
+    const inProcessingJobs: JobResponse[] | undefined = await this.jobManagerClient.getInProgressJobs(shouldReturnTasks);
+    if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
+      inProcessingJobs.forEach((job) => {
+        if (job.tasks !== undefined && job.tasks.length !== 0) {
+          const jobBatches = job.tasks[0].parameters.batches;
+          let jobGpkgEstimatedSize = calculateEstimateGpkgSize(jobBatches, this.tIleEstimatedSize);
+          if (job.percentage) {
+            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+            jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the size that left for this gpkg creation
+          }
+          otherRunningJobsSize += jobGpkgEstimatedSize * sizeBufferFactor;
+        }
+      });
+    }
+    const actualFreeSpace = storageStatus.free - otherRunningJobsSize;
+    this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({ free: actualFreeSpace, total: storageStatus.size })}`);
+    return actualFreeSpace;
   }
 
   private getSeparator(): string {

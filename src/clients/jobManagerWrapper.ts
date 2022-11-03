@@ -149,14 +149,14 @@ export class JobManagerWrapper extends JobManagerClient {
     return tasks;
   }
 
-  public async getJobsStatus(): Promise<JobResponse[] | undefined> {
+  public async getInProgressJobs(shouldReturnTasks = false): Promise<JobResponse[] | undefined> {
     const queryParams: IFindJob = {
       isCleaned: 'false',
       type: this.tilesJobType,
-      shouldReturnTasks: 'false',
+      shouldReturnTasks: shouldReturnTasks ? 'true' : 'false',
       status: OperationStatus.IN_PROGRESS,
     };
-
+    console.log('remove the failed back to in progress')
     const jobs = await this.getJobs(queryParams);
     return jobs;
   }
@@ -171,7 +171,7 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
-    this.logger.info(`Getting jobs that match these parameters: ${JSON.stringify(queryParams)}`);
+    this.logger.debug(`Getting jobs that match these parameters: ${JSON.stringify(queryParams)}`);
     const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
     return jobs;
   }

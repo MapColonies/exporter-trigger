@@ -31,7 +31,7 @@ export class TasksManager {
   }
 
   public async getJobsByTaskStatus(): Promise<IJobStatusResponse> {
-    const jobs = await this.jobManagerClient.getJobsStatus();
+    const jobs = await this.jobManagerClient.getInProgressJobs();
 
     const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
     const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
