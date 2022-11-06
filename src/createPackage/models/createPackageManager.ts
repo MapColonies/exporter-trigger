@@ -31,7 +31,7 @@ import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 @injectable()
 export class CreatePackageManager {
   private readonly tilesProvider: MergerSourceType;
-  private readonly gpkgsLocation: string; 
+  private readonly gpkgsLocation: string;
   private readonly tileEstimatedSize: number;
   private readonly storageFactorBuffer: number;
   private readonly metadataFileName: string;
@@ -42,7 +42,7 @@ export class CreatePackageManager {
   ) {
     this.tilesProvider = config.get('tilesProvider');
     this.tileEstimatedSize = config.get('jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
-    this.storageFactorBuffer = config.get('storageFactorBuffer')
+    this.storageFactorBuffer = config.get('storageFactorBuffer');
     this.gpkgsLocation = config.get('gpkgsLocation');
 
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
@@ -85,9 +85,7 @@ export class CreatePackageManager {
       }
       const isEnoughStorage = await this.validateFreeSpace(batches); // todo - on current stage, the calculation estimated by jpeg sizes
       if (!isEnoughStorage) {
-        throw new InsufficientStorage(
-          `There isn't enough free disk space to executing export`
-        );
+        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
       }
       const separator = this.getSeparator();
       const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
@@ -157,18 +155,17 @@ export class CreatePackageManager {
         }
       });
     }
-    const actualFreeSpace = storageStatus.free - (otherRunningJobsSize * this.storageFactorBuffer);
+    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageFactorBuffer;
     this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({ free: actualFreeSpace, total: storageStatus.size })}`);
     return actualFreeSpace;
   }
 
-  private async validateFreeSpace(batches: ITileRange[]):Promise<boolean>{
-    const diskFreeSpace  = await this.getFreeStorage(); // calculate free space including other running jobs
+  private async validateFreeSpace(batches: ITileRange[]): Promise<boolean> {
+    const diskFreeSpace = await this.getFreeStorage(); // calculate free space including other running jobs
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
-    this.logger.debug(`Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`)
-    return (diskFreeSpace - estimatesGpkgSize >= 0)
-
-  } 
+    this.logger.debug(`Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`);
+    return diskFreeSpace - estimatesGpkgSize >= 0;
+  }
   private getSeparator(): string {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
