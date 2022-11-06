@@ -43,6 +43,7 @@ export interface IWorkerInput {
   productType: string;
   batches: ITileRange[];
   sources: IMapSource[];
+  gpkgEstimatedSize?: number;
 }
 
 export interface IBasicResponse {
@@ -92,6 +93,7 @@ export interface IJobParameters {
   zoomLevel: number;
   callbackParams?: ICallbackDataBase;
   fileName: string;
+  gpkgEstimatedSize?: number;
 }
 
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';

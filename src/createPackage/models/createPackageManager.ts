@@ -83,7 +83,8 @@ export class CreatePackageManager {
       for (let i = 0; i <= zoomLevel; i++) {
         batches.push(bboxToTileRange(sanitizedBbox, i));
       }
-      const isEnoughStorage = await this.validateFreeSpace(batches); // todo - on current stage, the calculation estimated by jpeg sizes
+      const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
+      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
       if (!isEnoughStorage) {
         throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
       }
@@ -120,6 +121,7 @@ export class CreatePackageManager {
         sources,
         priority: priority ?? DEFAULT_PRIORITY,
         callbacks: callbacks,
+        gpkgEstimatedSize: estimatesGpkgSize,
       };
 
       const jobCreated = await this.jobManagerClient.create(workerInput);
@@ -140,19 +142,16 @@ export class CreatePackageManager {
     const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
     let otherRunningJobsSize = 0;
 
-    const shouldReturnTasks = true;
-    const inProcessingJobs: JobResponse[] | undefined = await this.jobManagerClient.getInProgressJobs(shouldReturnTasks);
+    const inProcessingJobs: JobResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
     if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
       inProcessingJobs.forEach((job) => {
-        if (job.tasks !== undefined && job.tasks.length !== 0) {
-          const jobBatches = job.tasks[0].parameters.batches;
-          let jobGpkgEstimatedSize = calculateEstimateGpkgSize(jobBatches, this.tileEstimatedSize);
+          let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
           if (job.percentage) {
             // eslint-disable-next-line @typescript-eslint/no-magic-numbers
             jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the needed size that left for this gpkg creation
           }
           otherRunningJobsSize += jobGpkgEstimatedSize;
-        }
+        
       });
     }
     const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageFactorBuffer;
@@ -160,9 +159,8 @@ export class CreatePackageManager {
     return actualFreeSpace;
   }
 
-  private async validateFreeSpace(batches: ITileRange[]): Promise<boolean> {
+  private async validateFreeSpace(estimatesGpkgSize: number): Promise<boolean> {
     const diskFreeSpace = await this.getFreeStorage(); // calculate free space including other running jobs
-    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
     this.logger.debug(`Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`);
     return diskFreeSpace - estimatesGpkgSize >= 0;
   }
