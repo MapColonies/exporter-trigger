@@ -62,7 +62,7 @@ export class JobManagerWrapper extends JobManagerClient {
         callbacks: data.callbacks,
         crs: data.crs,
         fileName: data.fileName,
-        gpkgEstimatedSize: data.gpkgEstimatedSize
+        gpkgEstimatedSize: data.gpkgEstimatedSize,
       },
       internalId: data.dbId,
       productType: data.productType,

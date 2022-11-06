@@ -145,13 +145,12 @@ export class CreatePackageManager {
     const inProcessingJobs: JobResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
     if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
       inProcessingJobs.forEach((job) => {
-          let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
-          if (job.percentage) {
-            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-            jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the needed size that left for this gpkg creation
-          }
-          otherRunningJobsSize += jobGpkgEstimatedSize;
-        
+        let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
+        if (job.percentage) {
+          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+          jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the needed size that left for this gpkg creation
+        }
+        otherRunningJobsSize += jobGpkgEstimatedSize;
       });
     }
     const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageFactorBuffer;

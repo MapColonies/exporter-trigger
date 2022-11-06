@@ -74,9 +74,33 @@ describe('tiles', function () {
 
       const resposne = await requestSender.create(body);
 
+      expect(resposne).toSatisfyApiSpec();
       expect(findLayerSpy).toHaveBeenCalledTimes(0);
       expect(createJobSpy).toHaveBeenCalledTimes(0);
       expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
+    });
+  });
+
+  describe('Bad Path', function () {
+    it('should return 507 status code for insufficient storage to gpkg creation', async function () {
+      const body: ICreatePackage = {
+        dbId: layerFromCatalog.id,
+        bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
+        targetResolution: 0.0000429153442382812,
+        callbackURLs: ['http://example.getmap.com/callback'],
+        crs: 'EPSG:4326',
+        priority: 0,
+      };
+
+      findLayerSpy.mockResolvedValue(layerFromCatalog);
+      checkForDuplicateSpy.mockResolvedValue(undefined);
+      validateFreeSpaceSpy.mockResolvedValue(false);
+      const resposne = await requestSender.create(body);
+
+      expect(resposne).toSatisfyApiSpec();
+      expect(findLayerSpy).toHaveBeenCalledTimes(1);
+      expect(createJobSpy).toHaveBeenCalledTimes(0);
+      expect(resposne.status).toBe(httpStatusCodes.INSUFFICIENT_STORAGE);
     });
   });
 });
