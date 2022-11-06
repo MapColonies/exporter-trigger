@@ -93,6 +93,9 @@ env:
     attempts: 5
     delay: exponential
     shouldResetTimeout: true
+  estimatedStorageCalculation:
+    jpegTileEstimatedSizeInBytes: 12500
+    storageFactorBuffer: 1.25
 
 resources:
   enabled: true

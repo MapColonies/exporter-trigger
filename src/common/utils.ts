@@ -5,7 +5,6 @@ import checkDiskSpace from 'check-disk-space';
 import { ITileRange } from '@map-colonies/mc-utils';
 import { IStorageStatusResponse } from './interfaces';
 
-
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;
   return Math.trunc(fileSizeInBytes); // Make sure we return an Integer
@@ -33,14 +32,14 @@ export const getStorageStatus = async (gpkgsLocation: string): Promise<IStorageS
   return checkDiskSpace(gpkgsLocation);
 };
 
-export const calculateEstimateGpkgSize =(batches: ITileRange[], tileEstimatedSize: number): number =>{
+export const calculateEstimateGpkgSize = (batches: ITileRange[], tileEstimatedSize: number): number => {
   let totalTilesCount = 0;
   batches.forEach((batch) => {
     const width = batch.maxX - batch.minX;
     const height = batch.maxY - batch.minY;
-    const area = width*height;
+    const area = width * height;
     totalTilesCount += area;
   });
-  const gpkgEstimatedSize = totalTilesCount*(tileEstimatedSize);
+  const gpkgEstimatedSize = totalTilesCount * tileEstimatedSize;
   return gpkgEstimatedSize;
-}
+};

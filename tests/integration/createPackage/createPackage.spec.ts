@@ -16,6 +16,7 @@ describe('tiles', function () {
   let findLayerSpy: jest.SpyInstance;
   let createJobSpy: jest.SpyInstance;
   let checkForDuplicateSpy: jest.SpyInstance;
+  let validateFreeSpaceSpy: jest.SpyInstance;
 
   beforeEach(function () {
     const app = getApp({
@@ -27,6 +28,7 @@ describe('tiles', function () {
     });
     requestSender = new CreatePackageSender(app);
     checkForDuplicateSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForDuplicate: jest.Mock }, 'checkForDuplicate');
+    validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
     findLayerSpy = jest.spyOn(RasterCatalogManagerClient.prototype, 'findLayer');
     createJobSpy = jest.spyOn(JobManagerWrapper.prototype, 'createJob');
   });
@@ -49,6 +51,7 @@ describe('tiles', function () {
       findLayerSpy.mockResolvedValue(layerFromCatalog);
       createJobSpy.mockResolvedValue({ id: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
       checkForDuplicateSpy.mockResolvedValue(undefined);
+      validateFreeSpaceSpy.mockResolvedValue(true);
 
       const resposne = await requestSender.create(body);
 

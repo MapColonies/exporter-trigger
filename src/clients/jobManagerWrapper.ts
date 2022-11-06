@@ -156,7 +156,6 @@ export class JobManagerWrapper extends JobManagerClient {
       shouldReturnTasks: shouldReturnTasks ? 'true' : 'false',
       status: OperationStatus.IN_PROGRESS,
     };
-    console.log('remove the failed back to in progress')
     const jobs = await this.getJobs(queryParams);
     return jobs;
   }
