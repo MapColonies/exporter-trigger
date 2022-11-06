@@ -147,7 +147,7 @@ export class CreatePackageManager {
         if (job.tasks !== undefined && job.tasks.length !== 0) {
           const jobBatches = job.tasks[0].parameters.batches;
           let jobGpkgEstimatedSize = calculateEstimateGpkgSize(jobBatches, this.tileEstimatedSize);
-          if (job.percentage != null && job.percentage && job.percentage > 0) {
+          if (job.percentage != null && job.percentage > 0) {
             // eslint-disable-next-line @typescript-eslint/no-magic-numbers
             jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the needed size that left for this gpkg creation
           }
