@@ -6,7 +6,7 @@ import { ICallbackDataBase, ITaskParameters, JobResponse, TaskResponse } from '.
 import { registerDefaultConfig } from '../../../mocks/config';
 import { callbackClientMock, sendMock } from '../../../mocks/clients/callbackClient';
 import { createJsonMetadataMock, packageManagerMock } from '../../../mocks/clients/packageManager';
-import { jobManagerWrapperMock, getJobsStatusMock, updateJobMock } from '../../../mocks/clients/jobManagerWrapper';
+import { jobManagerWrapperMock, getInProgressJobsMock as getInProgressJobsMock, updateJobMock } from '../../../mocks/clients/jobManagerWrapper';
 import { mockJob } from '../../../mocks/data/mockJob';
 import * as utils from '../../../../src/common/utils';
 
@@ -74,26 +74,26 @@ describe('TasksManager', () => {
       const jobs: JobResponse[] = [];
       const completedMockJob = { ...mockJob, completedTasks: 1 };
       jobs.push(completedMockJob);
-      getJobsStatusMock.mockResolvedValue(jobs);
+      getInProgressJobsMock.mockResolvedValue(jobs);
 
       const jobsStatus = await tasksManager.getJobsByTaskStatus();
 
       expect(jobsStatus.completedJobs?.length).toBe(1);
       expect(jobsStatus.failedJobs?.length).toBe(0);
-      expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+      expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
     });
 
     it('should return failed job with no completed jobs', async () => {
       const jobs: JobResponse[] = [];
       const failedMockJob = { ...mockJob, failedTasks: 1 };
       jobs.push(failedMockJob);
-      getJobsStatusMock.mockResolvedValue(jobs);
+      getInProgressJobsMock.mockResolvedValue(jobs);
 
       const jobsStatus = await tasksManager.getJobsByTaskStatus();
 
       expect(jobsStatus.completedJobs?.length).toBe(0);
       expect(jobsStatus.failedJobs?.length).toBe(1);
-      expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+      expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
     });
 
     it('should return completed job and failed job', async () => {
@@ -101,13 +101,13 @@ describe('TasksManager', () => {
       const completedMockJob = { ...mockJob, completedTasks: 1 };
       const failedMockJob = { ...mockJob, failedTasks: 1 };
       jobs.push(completedMockJob, failedMockJob);
-      getJobsStatusMock.mockResolvedValue(jobs);
+      getInProgressJobsMock.mockResolvedValue(jobs);
 
       const jobsStatus = await tasksManager.getJobsByTaskStatus();
 
       expect(jobsStatus.completedJobs?.length).toBe(1);
       expect(jobsStatus.failedJobs?.length).toBe(1);
-      expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+      expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
     });
 
     it('should return an empty jobs response if task is in progress', async () => {
@@ -115,52 +115,52 @@ describe('TasksManager', () => {
 
       const inProgressMockJob = { ...mockJob, inProgressTasks: 1 };
       jobs.push(inProgressMockJob);
-      getJobsStatusMock.mockResolvedValue(jobs);
+      getInProgressJobsMock.mockResolvedValue(jobs);
 
       const jobsStatus = await tasksManager.getJobsByTaskStatus();
 
       expect(jobsStatus.completedJobs?.length).toBe(0);
       expect(jobsStatus.failedJobs?.length).toBe(0);
-      expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+      expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
     });
 
     it('should return an empty jobs response if task is in pending', async () => {
       const jobs: JobResponse[] = [];
       const pendingMockJob = { ...mockJob, pendingTasks: 1 };
       jobs.push(pendingMockJob);
-      getJobsStatusMock.mockResolvedValue(jobs);
+      getInProgressJobsMock.mockResolvedValue(jobs);
 
       const jobsStatus = await tasksManager.getJobsByTaskStatus();
 
       expect(jobsStatus.completedJobs?.length).toBe(0);
       expect(jobsStatus.failedJobs?.length).toBe(0);
-      expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+      expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
     });
 
     it('should return an empty jobs response if task is in expired', async () => {
       const jobs: JobResponse[] = [];
       const expiredMockJob = { ...mockJob, expiredTasks: 1 };
       jobs.push(expiredMockJob);
-      getJobsStatusMock.mockResolvedValue(jobs);
+      getInProgressJobsMock.mockResolvedValue(jobs);
 
       const jobsStatus = await tasksManager.getJobsByTaskStatus();
 
       expect(jobsStatus.completedJobs?.length).toBe(0);
       expect(jobsStatus.failedJobs?.length).toBe(0);
-      expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+      expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
     });
 
     it('should return an empty jobs response if task is in aborted', async () => {
       const jobs: JobResponse[] = [];
       const abortedMockJob = { ...mockJob, abortedTasks: 1 };
       jobs.push(abortedMockJob);
-      getJobsStatusMock.mockResolvedValue(jobs);
+      getInProgressJobsMock.mockResolvedValue(jobs);
 
       const jobsStatus = await tasksManager.getJobsByTaskStatus();
 
       expect(jobsStatus.completedJobs?.length).toBe(0);
       expect(jobsStatus.failedJobs?.length).toBe(0);
-      expect(getJobsStatusMock).toHaveBeenCalledTimes(1);
+      expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
     });
   });
 

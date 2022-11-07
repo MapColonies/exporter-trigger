@@ -5,7 +5,7 @@ const findInProgressJobMock = jest.fn();
 const findPendingJobMock = jest.fn();
 const createMock = jest.fn();
 const createJobMock = jest.fn();
-const getJobsStatusMock = jest.fn();
+const getInProgressJobsMock = jest.fn();
 const updateJobMock = jest.fn();
 
 const jobManagerWrapperMock = {
@@ -14,7 +14,7 @@ const jobManagerWrapperMock = {
   findInProgressJob: findInProgressJobMock,
   findPendingJob: findPendingJobMock,
   create: createMock,
-  getJobsStatus: getJobsStatusMock,
+  getInProgressJobs: getInProgressJobsMock,
   updateJob: updateJobMock,
 } as unknown as JobManagerWrapper;
 
@@ -25,6 +25,6 @@ export {
   findCompletedJobMock,
   findInProgressJobMock,
   findPendingJobMock,
-  getJobsStatusMock,
+  getInProgressJobsMock as getInProgressJobsMock,
   updateJobMock,
 };

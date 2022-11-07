@@ -30,4 +30,6 @@ data:
   TILES_PROVIDER: {{ .Values.rasterCommon.storage.tilesStorageProvider | quote }}
   DOWNLOAD_SERVER_URL: {{ .Values.rasterCommon.serviceUrls.downloadServer | quote }}
   POLLING_TIMEOUT_MS: {{ .Values.env.pollingTimeoutMS | quote }}
+  JPEG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.jpegTileEstimatedSizeInBytes | quote }}
+  STORAGE_FACTOR_BUFFER: {{ .Values.env.estimatedStorageCalculation.storageFactorBuffer | quote }}
 {{- end }}

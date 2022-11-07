@@ -53,13 +53,14 @@ describe('CreatePackageManager', () => {
         taskIds: ['66aa1e2e-784c-4178-b5a0-af962937d561'],
         status: OperationStatus.IN_PROGRESS,
       };
+      const validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
 
       findLayerMock.mockResolvedValue(layerFromCatalog);
       createMock.mockResolvedValue(expectedCreateJobResponse);
       findCompletedJobMock.mockResolvedValue(undefined);
       findInProgressJobMock.mockResolvedValue(undefined);
       findPendingJobMock.mockResolvedValue(undefined);
-
+      validateFreeSpaceSpy.mockResolvedValue(true);
       const res = await createPackageManager.createPackage(req);
 
       expect(res).toEqual(expectedCreateJobResponse);
