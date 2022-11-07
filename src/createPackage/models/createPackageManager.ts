@@ -66,7 +66,6 @@ export class CreatePackageManager {
     if (sanitizedBbox === null) {
       throw new BadRequestError(`requested bbox has no intersection with requested layer`);
     }
-
     const dupParams: JobDuplicationParams = {
       resourceId: resourceId as string,
       version: version as string,
@@ -75,9 +74,10 @@ export class CreatePackageManager {
       sanitizedBbox,
       crs: crs ?? DEFAULT_CRS,
     };
+    
     const callbacks = callbackURLs.map((url) => ({ url, bbox }));
-
     const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
+    console.log(duplicationExist,'******************duplication params')
     if (!duplicationExist) {
       const batches: ITileRange[] = [];
       for (let i = 0; i <= zoomLevel; i++) {
@@ -107,6 +107,7 @@ export class CreatePackageManager {
           type: this.tilesProvider,
         },
       ];
+
       const workerInput: IWorkerInput = {
         sanitizedBbox,
         targetResolution,
@@ -123,7 +124,6 @@ export class CreatePackageManager {
         callbacks: callbacks,
         gpkgEstimatedSize: estimatesGpkgSize,
       };
-
       const jobCreated = await this.jobManagerClient.create(workerInput);
       return jobCreated;
     }
@@ -182,6 +182,7 @@ export class CreatePackageManager {
   ): Promise<ICallbackResponse | ICreateJobResponse | undefined> {
     let completedExists = await this.checkForCompleted(dupParams);
     if (completedExists) {
+      console.log(completedExists,'**** response for completed')
       return completedExists;
     }
 
@@ -201,7 +202,9 @@ export class CreatePackageManager {
   private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResponse | undefined> {
     this.logger.info(`Checking for COMPLETED duplications with parameters: ${JSON.stringify(dupParams)}`);
     const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
+    console.log('*********** here is found completed', responseJob)
     if (responseJob) {
+      console.log('************ in if of founded job')
       return {
         ...responseJob.parameters.callbackParams,
         status: OperationStatus.COMPLETED,
@@ -230,7 +233,9 @@ export class CreatePackageManager {
       const hasCallback = callbacks.findIndex((callback) => {
         let exist = callback.url === newCallback.url;
         for (let i = 0; i < callback.bbox.length; i++) {
-          exist &&= callback.bbox[i] === newCallback.bbox[i];
+          if (callback.bbox[i] === newCallback.bbox[i]){
+            exist = true
+          }
         }
         return exist;
       });

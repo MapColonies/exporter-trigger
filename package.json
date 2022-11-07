@@ -46,7 +46,7 @@
     "@map-colonies/js-logger": "^0.0.3",
     "@map-colonies/mc-model-types": "^11.0.0",
     "@map-colonies/mc-priority-queue": "^4.0.1",
-    "@map-colonies/mc-utils": "^1.4.6",
+    "@map-colonies/mc-utils": "file:../mc-utils/map-colonies-mc-utils-1.4.6.tgz",
     "@map-colonies/openapi-express-viewer": "^2.0.1",
     "@map-colonies/read-pkg": "0.0.1",
     "@map-colonies/telemetry": "3.1.0",
@@ -101,6 +101,6 @@
     "standard-version": "^9.3.2",
     "supertest": "^6.1.6",
     "ts-jest": "^27.0.7",
-    "typescript": "^4.2.4"
+    "typescript": "^4.6.3"
   }
 }
