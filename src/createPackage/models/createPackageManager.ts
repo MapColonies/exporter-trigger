@@ -74,10 +74,9 @@ export class CreatePackageManager {
       sanitizedBbox,
       crs: crs ?? DEFAULT_CRS,
     };
-    
+
     const callbacks = callbackURLs.map((url) => ({ url, bbox }));
     const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
-    console.log(duplicationExist,'******************duplication params')
     if (!duplicationExist) {
       const batches: ITileRange[] = [];
       for (let i = 0; i <= zoomLevel; i++) {
@@ -126,6 +125,9 @@ export class CreatePackageManager {
       };
       const jobCreated = await this.jobManagerClient.create(workerInput);
       return jobCreated;
+    } else if (duplicationExist.status === OperationStatus.COMPLETED) {
+      const completeResponseData = duplicationExist as ICallbackResponse;
+      completeResponseData.bbox = bbox;
     }
 
     return duplicationExist;
@@ -182,7 +184,6 @@ export class CreatePackageManager {
   ): Promise<ICallbackResponse | ICreateJobResponse | undefined> {
     let completedExists = await this.checkForCompleted(dupParams);
     if (completedExists) {
-      console.log(completedExists,'**** response for completed')
       return completedExists;
     }
 
@@ -202,9 +203,7 @@ export class CreatePackageManager {
   private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResponse | undefined> {
     this.logger.info(`Checking for COMPLETED duplications with parameters: ${JSON.stringify(dupParams)}`);
     const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
-    console.log('*********** here is found completed', responseJob)
     if (responseJob) {
-      console.log('************ in if of founded job')
       return {
         ...responseJob.parameters.callbackParams,
         status: OperationStatus.COMPLETED,
@@ -231,13 +230,20 @@ export class CreatePackageManager {
     const callbacks = processingJob.parameters.callbacks;
     for (const newCallback of newCallbacks) {
       const hasCallback = callbacks.findIndex((callback) => {
-        let exist = callback.url === newCallback.url;
+        const exist = callback.url === newCallback.url;
+        if (!exist) {
+          return false;
+        }
+
+        let sameBboxCoordinate = false;
         for (let i = 0; i < callback.bbox.length; i++) {
-          if (callback.bbox[i] === newCallback.bbox[i]){
-            exist = true
+          sameBboxCoordinate = callback.bbox[i] === newCallback.bbox[i];
+          if (!sameBboxCoordinate) {
+            sameBboxCoordinate = false;
+            break;
           }
         }
-        return exist;
+        return sameBboxCoordinate;
       });
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
       if (hasCallback === -1) {

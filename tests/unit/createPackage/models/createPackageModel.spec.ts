@@ -38,7 +38,7 @@ describe('CreatePackageManager', () => {
         crs: 'EPSG:4326',
       };
 
-      const expectedsanitizedBbox: BBox2d = [0, -90, 180, 90];
+      const expectedsanitizedBbox: BBox2d = [0, 0, 11.25, 11.25];
       const jobDupParams: JobDuplicationParams = {
         resourceId: 'string',
         version: '1.0',

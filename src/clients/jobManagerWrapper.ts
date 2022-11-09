@@ -176,7 +176,6 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   private findJobWithMatchingParams(jobs: JobResponse[], jobParams: JobDuplicationParams): JobResponse | undefined {
-
     const matchingJob = jobs.find(
       (job) =>
         job.internalId === jobParams.dbId &&
