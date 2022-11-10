@@ -91,7 +91,7 @@ export class CreatePackageManager {
           },
         },
         {
-          path: (resourceId as string) + separator + (layerMetadata.productType as string), //tiles path
+          path: (layerMetadata.id as string) + separator + (layerMetadata.displayPath as string), //tiles path
           type: this.tilesProvider,
         },
       ];
