@@ -77,8 +77,15 @@ export class CreatePackageManager {
 
     const callbacks = callbackURLs.map((url) => ({ url, bbox }));
     const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
-    if (!duplicationExist) {
+    if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
+      const completeResponseData = duplicationExist as ICallbackResponse;
+      completeResponseData.bbox = bbox;
+      return duplicationExist;
+    } else if (duplicationExist) {
+      return duplicationExist;
+    } else {
       const batches: ITileRange[] = [];
+
       for (let i = 0; i <= zoomLevel; i++) {
         batches.push(bboxToTileRange(sanitizedBbox, i));
       }
@@ -125,12 +132,7 @@ export class CreatePackageManager {
       };
       const jobCreated = await this.jobManagerClient.create(workerInput);
       return jobCreated;
-    } else if (duplicationExist.status === OperationStatus.COMPLETED) {
-      const completeResponseData = duplicationExist as ICallbackResponse;
-      completeResponseData.bbox = bbox;
     }
-
-    return duplicationExist;
   }
 
   public async createJsonMetadata(filePath: string, dbId: string): Promise<void> {
