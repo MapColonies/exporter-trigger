@@ -83,56 +83,55 @@ export class CreatePackageManager {
       return duplicationExist;
     } else if (duplicationExist) {
       return duplicationExist;
-    } else {
-      const batches: ITileRange[] = [];
-
-      for (let i = 0; i <= zoomLevel; i++) {
-        batches.push(bboxToTileRange(sanitizedBbox, i));
-      }
-      const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
-      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
-      if (!isEnoughStorage) {
-        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
-      }
-      const separator = this.getSeparator();
-      const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
-      const packageRelativePath = getGpkgRelativePath(packageName);
-      const sources: IMapSource[] = [
-        {
-          path: packageRelativePath,
-          type: 'GPKG',
-          extent: {
-            minX: bbox[0],
-            minY: bbox[1],
-            maxX: bbox[2],
-            maxY: bbox[3],
-          },
-        },
-        {
-          path: (resourceId as string) + separator + (layerMetadata.productType as string), //tiles path
-          type: this.tilesProvider,
-        },
-      ];
-
-      const workerInput: IWorkerInput = {
-        sanitizedBbox,
-        targetResolution,
-        fileName: packageName,
-        zoomLevel,
-        dbId,
-        version: version as string,
-        cswProductId: resourceId as string,
-        crs: crs ?? DEFAULT_CRS,
-        productType: productType ?? DEFAULT_PRODUCT_TYPE,
-        batches,
-        sources,
-        priority: priority ?? DEFAULT_PRIORITY,
-        callbacks: callbacks,
-        gpkgEstimatedSize: estimatesGpkgSize,
-      };
-      const jobCreated = await this.jobManagerClient.create(workerInput);
-      return jobCreated;
     }
+    const batches: ITileRange[] = [];
+
+    for (let i = 0; i <= zoomLevel; i++) {
+      batches.push(bboxToTileRange(sanitizedBbox, i));
+    }
+    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
+    const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
+    if (!isEnoughStorage) {
+      throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+    }
+    const separator = this.getSeparator();
+    const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
+    const packageRelativePath = getGpkgRelativePath(packageName);
+    const sources: IMapSource[] = [
+      {
+        path: packageRelativePath,
+        type: 'GPKG',
+        extent: {
+          minX: bbox[0],
+          minY: bbox[1],
+          maxX: bbox[2],
+          maxY: bbox[3],
+        },
+      },
+      {
+        path: (resourceId as string) + separator + (layerMetadata.productType as string), //tiles path
+        type: this.tilesProvider,
+      },
+    ];
+
+    const workerInput: IWorkerInput = {
+      sanitizedBbox,
+      targetResolution,
+      fileName: packageName,
+      zoomLevel,
+      dbId,
+      version: version as string,
+      cswProductId: resourceId as string,
+      crs: crs ?? DEFAULT_CRS,
+      productType: productType ?? DEFAULT_PRODUCT_TYPE,
+      batches,
+      sources,
+      priority: priority ?? DEFAULT_PRIORITY,
+      callbacks: callbacks,
+      gpkgEstimatedSize: estimatesGpkgSize,
+    };
+    const jobCreated = await this.jobManagerClient.create(workerInput);
+    return jobCreated;
   }
 
   public async createJsonMetadata(filePath: string, dbId: string): Promise<void> {
