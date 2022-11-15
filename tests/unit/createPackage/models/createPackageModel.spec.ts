@@ -38,7 +38,7 @@ describe('CreatePackageManager', () => {
         crs: 'EPSG:4326',
       };
 
-      const expectedsanitizedBbox: BBox2d = [0, -90, 180, 90];
+      const expectedsanitizedBbox: BBox2d = [0, 0, 11.25, 11.25];
       const jobDupParams: JobDuplicationParams = {
         resourceId: 'string',
         version: '1.0',
@@ -89,7 +89,7 @@ describe('CreatePackageManager', () => {
       updateJobMock.mockResolvedValue(undefined);
       findCompletedJobMock.mockResolvedValue(undefined);
       findInProgressJobMock.mockResolvedValue(undefined);
-      findPendingJobMock.mockResolvedValue(inProgressJob);
+      findPendingJobMock.mockResolvedValue(JSON.parse(JSON.stringify(inProgressJob)));
 
       await createPackageManager.createPackage(userInput);
 
@@ -120,7 +120,7 @@ describe('CreatePackageManager', () => {
       createMock.mockResolvedValue(undefined);
       updateJobMock.mockResolvedValue(undefined);
       findCompletedJobMock.mockResolvedValue(undefined);
-      findInProgressJobMock.mockResolvedValue(inProgressJob);
+      findInProgressJobMock.mockResolvedValue(JSON.parse(JSON.stringify(inProgressJob)));
 
       const res = await createPackageManager.createPackage(userInput);
       const expectedReturn: ICreateJobResponse = {
@@ -138,6 +138,55 @@ describe('CreatePackageManager', () => {
       expect(findCompletedJobMock).toHaveBeenCalledTimes(2);
       expect(findInProgressJobMock).toHaveBeenCalledWith(jobDupParams);
       expect(findInProgressJobMock).toHaveBeenCalledTimes(1);
+      expect(findPendingJobMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('should increase callbacks array of existing in progress job', async () => {
+      const expectedsanitizedBbox: BBox2d = [0, 2.8125, 25.3125, 42.1875];
+      const jobDupParams: JobDuplicationParams = {
+        resourceId: layerFromCatalog.metadata.productId as string,
+        version: layerFromCatalog.metadata.productVersion as string,
+        dbId: layerFromCatalog.id,
+        zoomLevel: 7,
+        sanitizedBbox: expectedsanitizedBbox,
+        crs: userInput.crs as string,
+      };
+
+      findLayerMock.mockResolvedValue(layerFromCatalog);
+      createMock.mockResolvedValue(undefined);
+      updateJobMock.mockResolvedValue(undefined);
+      findCompletedJobMock.mockResolvedValue(undefined);
+      findInProgressJobMock.mockResolvedValue(JSON.parse(JSON.stringify(inProgressJob)));
+      const jobUpdateParams = {
+        parameters: {
+          fileName: 'test.gpkg',
+          crs: 'EPSG:4326',
+          sanitizedBbox: [0, 0, 25, 41],
+          zoomLevel: 4,
+          callbacks: [
+            { url: 'http://localhost:6969', bbox: [0, 0, 25, 41] },
+            { url: 'http://new-added-callback-url.com', bbox: [-5, 3, 25, 41] },
+          ],
+          targetResolution: 0.0439453125,
+        },
+      };
+      const res = await createPackageManager.createPackage({ ...userInput, callbackURLs: ['http://new-added-callback-url.com'] });
+      const expectedReturn: ICreateJobResponse = {
+        id: inProgressJob.id,
+        taskIds: [(inProgressJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[])[0].id],
+        status: OperationStatus.IN_PROGRESS,
+      };
+
+      expect(res).toEqual(expectedReturn);
+      expect(findLayerMock).toHaveBeenCalledWith(jobDupParams.dbId);
+      expect(findLayerMock).toHaveBeenCalledTimes(1);
+      expect(createMock).toHaveBeenCalledTimes(0);
+      expect(findCompletedJobMock).toHaveBeenNthCalledWith(1, jobDupParams);
+      expect(findCompletedJobMock).toHaveBeenNthCalledWith(2, jobDupParams);
+      expect(findCompletedJobMock).toHaveBeenCalledTimes(2);
+      expect(findInProgressJobMock).toHaveBeenCalledWith(jobDupParams);
+      expect(findInProgressJobMock).toHaveBeenCalledTimes(1);
+      expect(updateJobMock).toHaveBeenCalledWith('fa3ab609-377a-4d96-bf0b-e0bb72f683b8', jobUpdateParams);
       expect(findPendingJobMock).toHaveBeenCalledTimes(0);
     });
 

@@ -97,7 +97,6 @@ export class JobManagerWrapper extends JobManagerClient {
       shouldReturnTasks: 'false',
       status: OperationStatus.COMPLETED,
     };
-
     const jobs = await this.getJobs(queryParams);
     if (jobs) {
       const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);

@@ -66,7 +66,6 @@ export class CreatePackageManager {
     if (sanitizedBbox === null) {
       throw new BadRequestError(`requested bbox has no intersection with requested layer`);
     }
-
     const dupParams: JobDuplicationParams = {
       resourceId: resourceId as string,
       version: version as string,
@@ -75,60 +74,64 @@ export class CreatePackageManager {
       sanitizedBbox,
       crs: crs ?? DEFAULT_CRS,
     };
+
     const callbacks = callbackURLs.map((url) => ({ url, bbox }));
-
     const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
-    if (!duplicationExist) {
-      const batches: ITileRange[] = [];
-      for (let i = 0; i <= zoomLevel; i++) {
-        batches.push(bboxToTileRange(sanitizedBbox, i));
-      }
-      const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
-      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
-      if (!isEnoughStorage) {
-        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
-      }
-      const separator = this.getSeparator();
-      const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
-      const packageRelativePath = getGpkgRelativePath(packageName);
-      const sources: IMapSource[] = [
-        {
-          path: packageRelativePath,
-          type: 'GPKG',
-          extent: {
-            minX: bbox[0],
-            minY: bbox[1],
-            maxX: bbox[2],
-            maxY: bbox[3],
-          },
-        },
-        {
-          path: (resourceId as string) + separator + (layerMetadata.productType as string), //tiles path
-          type: this.tilesProvider,
-        },
-      ];
-      const workerInput: IWorkerInput = {
-        sanitizedBbox,
-        targetResolution,
-        fileName: packageName,
-        zoomLevel,
-        dbId,
-        version: version as string,
-        cswProductId: resourceId as string,
-        crs: crs ?? DEFAULT_CRS,
-        productType: productType ?? DEFAULT_PRODUCT_TYPE,
-        batches,
-        sources,
-        priority: priority ?? DEFAULT_PRIORITY,
-        callbacks: callbacks,
-        gpkgEstimatedSize: estimatesGpkgSize,
-      };
-
-      const jobCreated = await this.jobManagerClient.create(workerInput);
-      return jobCreated;
+    if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
+      const completeResponseData = duplicationExist as ICallbackResponse;
+      completeResponseData.bbox = bbox;
+      return duplicationExist;
+    } else if (duplicationExist) {
+      return duplicationExist;
     }
+    const batches: ITileRange[] = [];
 
-    return duplicationExist;
+    for (let i = 0; i <= zoomLevel; i++) {
+      batches.push(bboxToTileRange(sanitizedBbox, i));
+    }
+    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
+    const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
+    if (!isEnoughStorage) {
+      throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+    }
+    const separator = this.getSeparator();
+    const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
+    const packageRelativePath = getGpkgRelativePath(packageName);
+    const sources: IMapSource[] = [
+      {
+        path: packageRelativePath,
+        type: 'GPKG',
+        extent: {
+          minX: bbox[0],
+          minY: bbox[1],
+          maxX: bbox[2],
+          maxY: bbox[3],
+        },
+      },
+      {
+        path: (resourceId as string) + separator + (layerMetadata.productType as string), //tiles path
+        type: this.tilesProvider,
+      },
+    ];
+
+    const workerInput: IWorkerInput = {
+      sanitizedBbox,
+      targetResolution,
+      fileName: packageName,
+      zoomLevel,
+      dbId,
+      version: version as string,
+      cswProductId: resourceId as string,
+      crs: crs ?? DEFAULT_CRS,
+      productType: productType ?? DEFAULT_PRODUCT_TYPE,
+      batches,
+      sources,
+      priority: priority ?? DEFAULT_PRIORITY,
+      callbacks: callbacks,
+      gpkgEstimatedSize: estimatesGpkgSize,
+    };
+    const jobCreated = await this.jobManagerClient.create(workerInput);
+    return jobCreated;
   }
 
   public async createJsonMetadata(filePath: string, dbId: string): Promise<void> {
@@ -212,7 +215,6 @@ export class CreatePackageManager {
   private async checkForProcessing(dupParams: JobDuplicationParams, newCallbacks: ICallbackTarget[]): Promise<ICreateJobResponse | undefined> {
     this.logger.info(`Checking for PROCESSING duplications with parameters: ${JSON.stringify(dupParams)}`);
     const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
-
     if (processingJob) {
       await this.updateCallbackURLs(processingJob, newCallbacks);
 
@@ -228,11 +230,20 @@ export class CreatePackageManager {
     const callbacks = processingJob.parameters.callbacks;
     for (const newCallback of newCallbacks) {
       const hasCallback = callbacks.findIndex((callback) => {
-        let exist = callback.url === newCallback.url;
-        for (let i = 0; i < callback.bbox.length; i++) {
-          exist &&= callback.bbox[i] === newCallback.bbox[i];
+        const exist = callback.url === newCallback.url;
+        if (!exist) {
+          return false;
         }
-        return exist;
+
+        let sameBboxCoordinate = false;
+        for (let i = 0; i < callback.bbox.length; i++) {
+          sameBboxCoordinate = callback.bbox[i] === newCallback.bbox[i];
+          if (!sameBboxCoordinate) {
+            sameBboxCoordinate = false;
+            break;
+          }
+        }
+        return sameBboxCoordinate;
       });
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
       if (hasCallback === -1) {
