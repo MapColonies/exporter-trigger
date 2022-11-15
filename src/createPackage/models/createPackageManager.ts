@@ -7,9 +7,9 @@ import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
-import { BadRequestError } from '@map-colonies/error-types';
+import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { generatePackageName, getGpkgRelativePath } from '../../common/utils';
+import { calculateEstimateGpkgSize, generatePackageName, getGpkgRelativePath, getStorageStatus } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
 import {
@@ -24,12 +24,16 @@ import {
   IMapSource,
   ICallbackTarget,
   ITaskParameters,
+  IStorageStatusResponse,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
 @injectable()
 export class CreatePackageManager {
   private readonly tilesProvider: MergerSourceType;
+  private readonly gpkgsLocation: string;
+  private readonly tileEstimatedSize: number;
+  private readonly storageFactorBuffer: number;
   private readonly metadataFileName: string;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -37,6 +41,10 @@ export class CreatePackageManager {
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
     this.tilesProvider = config.get('tilesProvider');
+    this.tileEstimatedSize = config.get('jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
+    this.storageFactorBuffer = config.get('storageFactorBuffer');
+    this.gpkgsLocation = config.get('gpkgsLocation');
+
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
     this.metadataFileName = 'metadata.json';
   }
@@ -76,6 +84,11 @@ export class CreatePackageManager {
       for (let i = 0; i <= zoomLevel; i++) {
         batches.push(bboxToTileRange(sanitizedBbox, i));
       }
+      const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
+      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
+      if (!isEnoughStorage) {
+        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+      }
       const separator = this.getSeparator();
       const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
       const packageRelativePath = getGpkgRelativePath(packageName);
@@ -109,6 +122,7 @@ export class CreatePackageManager {
         sources,
         priority: priority ?? DEFAULT_PRIORITY,
         callbacks: callbacks,
+        gpkgEstimatedSize: estimatesGpkgSize,
       };
 
       const jobCreated = await this.jobManagerClient.create(workerInput);
@@ -125,6 +139,31 @@ export class CreatePackageManager {
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
   }
 
+  private async getFreeStorage(): Promise<number> {
+    const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
+    let otherRunningJobsSize = 0;
+
+    const inProcessingJobs: JobResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
+    if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
+      inProcessingJobs.forEach((job) => {
+        let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
+        if (job.percentage) {
+          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+          jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the needed size that left for this gpkg creation
+        }
+        otherRunningJobsSize += jobGpkgEstimatedSize;
+      });
+    }
+    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageFactorBuffer;
+    this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({ free: actualFreeSpace, total: storageStatus.size })}`);
+    return actualFreeSpace;
+  }
+
+  private async validateFreeSpace(estimatesGpkgSize: number): Promise<boolean> {
+    const diskFreeSpace = await this.getFreeStorage(); // calculate free space including other running jobs
+    this.logger.debug(`Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`);
+    return diskFreeSpace - estimatesGpkgSize >= 0;
+  }
   private getSeparator(): string {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }

@@ -68,6 +68,8 @@ const registerDefaultConfig = (): void => {
     gpkgsLocation: '/app/tiles_outputs/gpkgs',
     downloadServerUrl: 'http://download-service',
     pollingTimeoutMS: 2000,
+    jpegTileEstimatedSizeInBytes: 12500,
+    storageFactorBuffer: 1.25,
   };
   setConfigValues(config);
 };

@@ -82,7 +82,7 @@ describe('JobManagerClient', () => {
       const jobManager = jobManagerClient as unknown as { getJobs: unknown };
       jobManager.getJobs = getJobs.mockResolvedValue(jobs);
 
-      const result = await jobManagerClient.getJobsStatus();
+      const result = await jobManagerClient.getInProgressJobs();
 
       expect(getJobs).toHaveBeenCalledTimes(1);
       expect(result).toBeDefined();
