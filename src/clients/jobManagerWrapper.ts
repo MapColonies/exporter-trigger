@@ -68,6 +68,7 @@ export class JobManagerWrapper extends JobManagerClient {
       productType: data.productType,
       productName: data.cswProductId,
       priority: data.priority,
+      status: OperationStatus.IN_PROGRESS,
       additionalIdentifiers: data.sanitizedBbox.toString() + String(data.zoomLevel),
       tasks: [
         {

@@ -53,18 +53,20 @@ export class CreatePackageManager {
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
     const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
-    const { bbox, dbId, targetResolution, crs, priority, callbackURLs } = userInput;
+    const { dbId, crs, priority, bbox: bboxFromUser, callbackURLs } = userInput;
+    const bbox = (bboxFromUser ?? PolygonBbox(footprint)) as BBox2d;
+    const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
 
     const srcRes = layerMetadata.maxResolutionDeg as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
     if (zoomLevel > maxZoom) {
-      throw new BadRequestError(`the requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
+      throw new BadRequestError(`The requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
     }
 
     const sanitizedBbox = this.sanitizeBbox(bbox, footprint as Polygon | MultiPolygon, zoomLevel);
     if (sanitizedBbox === null) {
-      throw new BadRequestError(`requested bbox has no intersection with requested layer`);
+      throw new BadRequestError(`Requested bbox has no intersection with requested layer`);
     }
     const dupParams: JobDuplicationParams = {
       resourceId: resourceId as string,
@@ -102,14 +104,14 @@ export class CreatePackageManager {
         path: packageRelativePath,
         type: 'GPKG',
         extent: {
-          minX: bbox[0],
-          minY: bbox[1],
-          maxX: bbox[2],
-          maxY: bbox[3],
+          minX: sanitizedBbox[0],
+          minY: sanitizedBbox[1],
+          maxX: sanitizedBbox[2],
+          maxY: sanitizedBbox[3],
         },
       },
       {
-        path: (resourceId as string) + separator + (layerMetadata.productType as string), //tiles path
+        path: (layerMetadata.id as string) + separator + (layerMetadata.displayPath as string), //tiles path
         type: this.tilesProvider,
       },
     ];
@@ -128,7 +130,7 @@ export class CreatePackageManager {
       sources,
       priority: priority ?? DEFAULT_PRIORITY,
       callbacks: callbacks,
-      gpkgEstimatedSize: estimatesGpkgSize,
+      gpkgEstimatedSize: 8,
     };
     const jobCreated = await this.jobManagerClient.create(workerInput);
     return jobCreated;
@@ -175,8 +177,8 @@ export class CreatePackageManager {
     if (intersaction === null) {
       return null;
     }
-    bbox = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
-    return bbox;
+    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
+    return sanitized;
   }
 
   private async checkForDuplicate(
