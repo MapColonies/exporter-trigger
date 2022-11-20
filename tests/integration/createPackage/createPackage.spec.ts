@@ -66,6 +66,26 @@ describe('tiles', function () {
       expect(resposne.status).toBe(httpStatusCodes.OK);
     });
 
+    it('should return 200 status code and the job created details even if bbox and resolution were not supplied', async function () {
+      const body: ICreatePackage = {
+        dbId: layerFromCatalog.id,
+        callbackURLs: ['http://example.getmap.com/callback'],
+        crs: 'EPSG:4326',
+        priority: 0,
+      };
+      findLayerSpy.mockResolvedValue(layerFromCatalog);
+      createJobSpy.mockResolvedValue({ id: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
+      checkForDuplicateSpy.mockResolvedValue(undefined);
+      validateFreeSpaceSpy.mockResolvedValue(true);
+
+      const resposne = await requestSender.create(body);
+
+      expect(resposne).toSatisfyApiSpec();
+      expect(findLayerSpy).toHaveBeenCalledTimes(1);
+      expect(createJobSpy).toHaveBeenCalledTimes(1);
+      expect(resposne.status).toBe(httpStatusCodes.OK);
+    });
+
     it(`should return 200 status code and the exists un-cleaned completed job's callback (with original bbox of request)`, async function () {
       checkForDuplicateSpy.mockRestore();
 
