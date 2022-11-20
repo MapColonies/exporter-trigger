@@ -48,7 +48,6 @@ spec:
           {{- with .Values.image }}
           image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $imageTag }}
           {{- end }}
-          imagePullPolicy: Always
           env:
             - name: SERVER_PORT
               value: {{ .Values.env.targetPort | quote }}
