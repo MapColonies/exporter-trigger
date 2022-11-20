@@ -130,7 +130,7 @@ export class CreatePackageManager {
       sources,
       priority: priority ?? DEFAULT_PRIORITY,
       callbacks: callbacks,
-      gpkgEstimatedSize: 8,
+      gpkgEstimatedSize: estimatesGpkgSize,
     };
     const jobCreated = await this.jobManagerClient.create(workerInput);
     return jobCreated;
