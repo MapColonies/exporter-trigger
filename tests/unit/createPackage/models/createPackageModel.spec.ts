@@ -104,8 +104,10 @@ describe('CreatePackageManager', () => {
       expect(findLayerMock).toHaveBeenCalledWith(req.dbId);
       expect(findLayerMock).toHaveBeenCalledTimes(1);
       expect(createMock).toHaveBeenCalledTimes(1);
-      expect(createMock.mock.calls[0][0]['targetResolution']).toEqual(expectedTargetResolution);
-      expect(createMock.mock.calls[0][0]['sanitizedBbox']).toEqual(expectedsanitizedBbox);
+      expect(createMock).toHaveBeenCalledWith(expect.objectContaining({
+        targetResolution: expectedTargetResolution,
+        sanitizedBbox: expectedsanitizedBbox
+      }));
     });
 
     it('should return job and task-ids of existing in pending job', async () => {
