@@ -123,7 +123,7 @@ components:
           type: number
           description: >-
             The target resolution in which the tiles will be created - DEGREE to
-            PIXEL
+            PIXEL. If empty - original layer's resolution is taken.
         callbackURLs:
           type: array
           items:
@@ -138,8 +138,6 @@ components:
           maximum: 999999999
       required:
         - dbId
-        - bbox
-        - targetResolution
         - callbackURLs
       example:
         dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
@@ -245,7 +243,7 @@ components:
       maxItems: 4
       description: >-
         Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in
-        crs units as array
+        crs units as array. If empty - original layer's bbox is taken.
     getTaskStatusResponse:
       type: object
       properties:
