@@ -177,7 +177,7 @@ describe('tiles', function () {
   });
 
   describe('Sad Path', function () {
-    it('should return 400 status code beause of bad data - no "dbId" field', async function () {
+    it('should return 400 status code because of bad data - no "dbId" field', async function () {
       const body = {
         targetResolution: 0.0000429153442382812,
         bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
