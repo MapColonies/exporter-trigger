@@ -169,6 +169,29 @@ export class JobManagerWrapper extends JobManagerClient {
     });
   }
 
+  public async validateAndUpdateExpiration(jobId: string): Promise<void> {
+    const getJobUrl = `/jobs/${jobId}`;
+    const newExpirationDate = new Date();
+    newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
+
+    const job = await this.get<JobResponse | undefined>(getJobUrl);
+    if (job !== undefined) {
+      const expirationDate = new Date(job.expirationDate as Date);
+      if (expirationDate < newExpirationDate) {
+        await this.updateJobExpirationDate(jobId);
+        this.logger.debug(`old expiration date was updated`);
+      }
+    }
+  }
+  private async updateJobExpirationDate(jobId: string): Promise<void> {
+    const updateJobUrl = `/jobs/${jobId}`;
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
+    await this.put(updateJobUrl, {
+      expirationDate,
+    });
+  }
+
   private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
     this.logger.debug(`Getting jobs that match these parameters: ${JSON.stringify(queryParams)}`);
     const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
