@@ -14,12 +14,14 @@ import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalo
 import { ICreateJobResponse, ICreatePackage, IJobParameters, ITaskParameters, JobDuplicationParams } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
 import { inProgressJob, layerFromCatalog, userInput } from '../../../mocks/data';
+import { configMock, registerDefaultConfig } from '../../../mocks/config';
 
 let createPackageManager: CreatePackageManager;
 
 describe('CreatePackageManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
+    registerDefaultConfig();
     createPackageManager = new CreatePackageManager(logger, jobManagerWrapperMock, catalogManagerMock);
   });
 
@@ -151,12 +153,14 @@ describe('CreatePackageManager', () => {
         sanitizedBbox: expectedsanitizedBbox,
         crs: userInput.crs as string,
       };
-
+      const expirationDays: number = configMock.get('jobManager.expirationDays');
+      const testExpirationDate = new Date();
+      testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
       findLayerMock.mockResolvedValue(layerFromCatalog);
       createMock.mockResolvedValue(undefined);
       updateJobMock.mockResolvedValue(undefined);
       findCompletedJobMock.mockResolvedValue(undefined);
-      findInProgressJobMock.mockResolvedValue(JSON.parse(JSON.stringify(inProgressJob)));
+      findInProgressJobMock.mockResolvedValue(JSON.parse(JSON.stringify({ ...inProgressJob, expirationDate: testExpirationDate })));
       const jobUpdateParams = {
         parameters: {
           fileName: 'test.gpkg',

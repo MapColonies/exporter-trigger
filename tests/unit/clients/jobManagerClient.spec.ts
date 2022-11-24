@@ -2,16 +2,19 @@ import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobResponse } from '../../../src/common/interfaces';
+import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { inProgressJob, jobs, workerInput } from '../../mocks/data';
 
 let jobManagerClient: JobManagerWrapper;
 let postFun: jest.Mock;
 let putFun: jest.Mock;
 let getJobs: jest.Mock;
+let get: jest.Mock;
 
 describe('JobManagerClient', () => {
   describe('#createJob', () => {
     beforeEach(() => {
+      registerDefaultConfig();
       const logger = jsLogger({ enabled: false });
       jobManagerClient = new JobManagerWrapper(logger);
     });
@@ -87,6 +90,50 @@ describe('JobManagerClient', () => {
       expect(getJobs).toHaveBeenCalledTimes(1);
       expect(result).toBeDefined();
       expect(result).toEqual(jobs);
+    });
+
+    it('should successfully update job expirationDate (old expirationDate lower)', async () => {
+      const expirationDays: number = configMock.get('jobManager.expirationDays');
+      const testExpirationDate = new Date();
+      const expectedNewExpirationDate = new Date();
+      testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
+      expectedNewExpirationDate.setDate(expectedNewExpirationDate.getDate() + expirationDays);
+      expectedNewExpirationDate.setSeconds(0, 0);
+
+      get = jest.fn();
+      putFun = jest.fn();
+      (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
+      const jobManager = jobManagerClient as unknown as { get: unknown };
+      jobManager.get = get.mockResolvedValue({ ...inProgressJob, expirationDate: testExpirationDate });
+
+      await jobManagerClient.validateAndUpdateExpiration(inProgressJob.id);
+
+      expect(get).toHaveBeenCalledTimes(1);
+      expect(putFun).toHaveBeenCalledTimes(1);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const expirationParamCall: Date = putFun.mock.calls[0][1].expirationDate;
+      expirationParamCall.setSeconds(0, 0);
+      expect(JSON.stringify(expirationParamCall)).toBe(JSON.stringify(expectedNewExpirationDate));
+    });
+
+    it('should not update job expirationDate (old expirationDate higher)', async () => {
+      const expirationDays: number = configMock.get('jobManager.expirationDays');
+      const testExpirationDate = new Date();
+      const expectedNewExpirationDate = new Date();
+      testExpirationDate.setDate(testExpirationDate.getDate() + 2 * expirationDays);
+      expectedNewExpirationDate.setDate(expectedNewExpirationDate.getDate() + expirationDays);
+      expectedNewExpirationDate.setSeconds(0, 0);
+
+      get = jest.fn();
+      putFun = jest.fn();
+      (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
+      const jobManager = jobManagerClient as unknown as { get: unknown };
+      jobManager.get = get.mockResolvedValue({ ...inProgressJob, expirationDate: testExpirationDate });
+
+      await jobManagerClient.validateAndUpdateExpiration(inProgressJob.id);
+
+      expect(get).toHaveBeenCalledTimes(1);
+      expect(putFun).toHaveBeenCalledTimes(0);
     });
   });
 });

@@ -170,26 +170,24 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   public async validateAndUpdateExpiration(jobId: string): Promise<void> {
-    const getJobUrl = `/jobs/${jobId}`;
+    const getOrUpdateURL = `/jobs/${jobId}`;
     const newExpirationDate = new Date();
     newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
 
-    const job = await this.get<JobResponse | undefined>(getJobUrl);
+    const job = await this.get<JobResponse | undefined>(getOrUpdateURL);
     if (job !== undefined) {
-      const expirationDate = new Date(job.expirationDate as Date);
-      if (expirationDate < newExpirationDate) {
-        await this.updateJobExpirationDate(jobId);
-        this.logger.debug(`old expiration date was updated`);
+      const oldExpirationDate = new Date(job.expirationDate as Date);
+      if (oldExpirationDate < newExpirationDate) {
+        const msg = 'Will execute update for expirationDate';
+        this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg });
+        await this.put(getOrUpdateURL, {
+          expirationDate: newExpirationDate,
+        });
+      } else {
+        const msg = 'New expiration date is older than current expiration date';
+        this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg });
       }
     }
-  }
-  private async updateJobExpirationDate(jobId: string): Promise<void> {
-    const updateJobUrl = `/jobs/${jobId}`;
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
-    await this.put(updateJobUrl, {
-      expirationDate,
-    });
   }
 
   private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
