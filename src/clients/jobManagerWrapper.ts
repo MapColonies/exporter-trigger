@@ -15,6 +15,7 @@ import {
   JobResponse,
   TaskResponse,
 } from '../common/interfaces';
+import { getUtcNow } from '../common/utils';
 //this is the job manager api for find job DO NOT MODIFY
 interface IFindJob {
   resourceId?: string;
@@ -168,6 +169,27 @@ export class JobManagerWrapper extends JobManagerClient {
       reason: reason,
       internalId: catalogId,
     });
+  }
+
+  public async validateAndUpdateExpiration(jobId: string): Promise<void> {
+    const getOrUpdateURL = `/jobs/${jobId}`;
+    const newExpirationDate = getUtcNow();
+    newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
+
+    const job = await this.get<JobResponse | undefined>(getOrUpdateURL);
+    if (job !== undefined) {
+      const oldExpirationDate = new Date(job.expirationDate as Date);
+      if (oldExpirationDate < newExpirationDate) {
+        const msg = 'Will execute update for expirationDate';
+        this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg });
+        await this.put(getOrUpdateURL, {
+          expirationDate: newExpirationDate,
+        });
+      } else {
+        const msg = 'New expiration date is older than current expiration date';
+        this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg });
+      }
+    }
   }
 
   private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {

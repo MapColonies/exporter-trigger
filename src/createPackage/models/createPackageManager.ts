@@ -207,6 +207,7 @@ export class CreatePackageManager {
     this.logger.info(`Checking for COMPLETED duplications with parameters: ${JSON.stringify(dupParams)}`);
     const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
     if (responseJob) {
+      await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
       return {
         ...responseJob.parameters.callbackParams,
         status: OperationStatus.COMPLETED,
@@ -219,7 +220,7 @@ export class CreatePackageManager {
     const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
     if (processingJob) {
       await this.updateCallbackURLs(processingJob, newCallbacks);
-
+      await this.jobManagerClient.validateAndUpdateExpiration(processingJob.id);
       return {
         id: processingJob.id,
         taskIds: (processingJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[]).map((t) => t.id),
