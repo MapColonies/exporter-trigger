@@ -112,6 +112,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
     crs: 'EPSG:4326',
     sanitizedBbox: [0, 0, 25, 41],
     fileName: 'test.gpkg',
+    relativeDirectoryPath: 'test',
     zoomLevel: 4,
     callbacks: [
       {
@@ -179,6 +180,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   description: '',
   parameters: {
     fileName: 'test.gpkg',
+    relativeDirectoryPath: 'test',
     crs: 'EPSG:4326',
     sanitizedBbox: [0, 0, 25, 41],
     zoomLevel: 4,
@@ -223,6 +225,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
 
 const workerInput: IWorkerInput = {
   fileName: 'test.gpkg',
+  relativeDirectoryPath: 'test',
   sanitizedBbox: [0, 2.999267578125, 25.0048828125, 41.0009765625],
   targetResolution: 0.0000429153442382812,
   zoomLevel: 15,

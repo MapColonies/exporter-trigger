@@ -16,14 +16,20 @@ export const generatePackageName = (dbId: string, zoomLevel: number, bbox: BBox)
   return `gm_${dbId.replace(/-/g, '_')}_${zoomLevel}_${bboxToString}.gpkg`;
 };
 
+export const getGpkgNameWithoutExt = (packageName: string): string => {
+  const gpkgNameArr = packageName.split('.');
+  gpkgNameArr.pop();
+  return gpkgNameArr.join('.');
+};
+
 export const getGpkgRelativePath = (packageName: string): string => {
-  const packageDirectoryName = packageName.substr(0, packageName.lastIndexOf('.'));
+  const packageDirectoryName = getGpkgNameWithoutExt(packageName);
   const packageRelativePath = join(packageDirectoryName, packageName);
   return packageRelativePath;
 };
 
 export const getGpkgFullPath = (gpkgsLocation: string, packageName: string): string => {
-  const packageDirectoryName = packageName.substr(0, packageName.lastIndexOf('.'));
+  const packageDirectoryName = getGpkgNameWithoutExt(packageName);
   const packageFullPath = join(gpkgsLocation, packageDirectoryName, packageName);
   return packageFullPath;
 };

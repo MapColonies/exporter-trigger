@@ -33,6 +33,7 @@ export interface IWorkerInput {
   dbId: string;
   targetResolution: number;
   fileName: string;
+  relativeDirectoryPath: string;
   priority?: number;
   callbacks: ICallbackTarget[];
   crs: string;
@@ -87,6 +88,7 @@ export interface JobDuplicationParams {
 
 export interface IJobParameters {
   targetResolution: number;
+  relativeDirectoryPath: string;
   crs: string;
   callbacks: ICallbackTarget[];
   sanitizedBbox: BBox2d;
