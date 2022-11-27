@@ -63,6 +63,7 @@ export class JobManagerWrapper extends JobManagerClient {
         callbacks: data.callbacks,
         crs: data.crs,
         fileName: data.fileName,
+        relativeDirectoryPath: data.relativeDirectoryPath,
         gpkgEstimatedSize: data.gpkgEstimatedSize,
       },
       internalId: data.dbId,

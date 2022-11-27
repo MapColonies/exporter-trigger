@@ -9,7 +9,7 @@ import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { calculateEstimateGpkgSize, generatePackageName, getGpkgRelativePath, getStorageStatus } from '../../common/utils';
+import { calculateEstimateGpkgSize, generatePackageName, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
 import {
@@ -120,6 +120,7 @@ export class CreatePackageManager {
       sanitizedBbox,
       targetResolution,
       fileName: packageName,
+      relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
       zoomLevel,
       dbId,
       version: version as string,

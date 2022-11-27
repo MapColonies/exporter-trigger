@@ -203,6 +203,7 @@ describe('CreatePackageManager', () => {
       const jobUpdateParams = {
         parameters: {
           fileName: 'test.gpkg',
+          relativeDirectoryPath: 'test',
           crs: 'EPSG:4326',
           sanitizedBbox: [0, 0, 25, 41],
           zoomLevel: 4,

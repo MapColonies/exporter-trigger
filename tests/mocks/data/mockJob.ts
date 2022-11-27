@@ -24,6 +24,7 @@ export const mockJob: JobResponse = {
     zoomLevel: 3,
     sanitizedBbox: [0, -90, 180, 90],
     targetResolution: 0.072,
+    relativeDirectoryPath: 'test',
   },
   status: OperationStatus.IN_PROGRESS,
   percentage: 100,
