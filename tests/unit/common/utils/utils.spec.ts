@@ -26,4 +26,18 @@ describe('Utils', () => {
       expect(result).toBe(1062500);
     });
   });
+
+  describe('calculate  gpkg name without extention', () => {
+    it('should return string name without extention (.gpkg)', () => {
+      const fileName = 'test.gpkg';
+      const result = utils.getGpkgNameWithoutExt(fileName);
+      expect(result).toBe('test');
+    });
+
+    it('should return string name without extention file with number of point inside the string', () => {
+      const fileName = 'test.test2.test3.gpkg';
+      const result = utils.getGpkgNameWithoutExt(fileName);
+      expect(result).toBe('test.test2.test3');
+    });
+  });
 });

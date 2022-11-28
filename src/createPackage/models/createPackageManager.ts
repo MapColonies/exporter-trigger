@@ -9,7 +9,7 @@ import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus } from '../../common/utils';
+import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
 import {
@@ -96,7 +96,7 @@ export class CreatePackageManager {
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
     const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
     if (!isEnoughStorage) {
-      throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+      // throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
     }
     const separator = this.getSeparator();
     const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, bbox);
@@ -122,6 +122,7 @@ export class CreatePackageManager {
       sanitizedBbox,
       targetResolution,
       fileName: packageName,
+      relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
       zoomLevel,
       dbId,
       version: version,
@@ -217,6 +218,7 @@ export class CreatePackageManager {
     this.logger.info(`Checking for COMPLETED duplications with parameters: ${JSON.stringify(dupParams)}`);
     const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
     if (responseJob) {
+      await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
       return {
         ...responseJob.parameters.callbackParams,
         status: OperationStatus.COMPLETED,
@@ -229,7 +231,7 @@ export class CreatePackageManager {
     const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
     if (processingJob) {
       await this.updateCallbackURLs(processingJob, newCallbacks);
-
+      await this.jobManagerClient.validateAndUpdateExpiration(processingJob.id);
       return {
         id: processingJob.id,
         taskIds: (processingJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[]).map((t) => t.id),
