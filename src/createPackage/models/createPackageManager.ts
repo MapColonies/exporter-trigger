@@ -1,5 +1,5 @@
 import { promises as fsPromise } from 'fs';
-import { sep, join, dirname } from 'path';
+import { sep, join, parse as parsePath } from 'path';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon } from '@turf/turf';
@@ -9,9 +9,9 @@ import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { calculateEstimateGpkgSize, generatePackageName, getGpkgRelativePath, getStorageStatus } from '../../common/utils';
+import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
-import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, SERVICES } from '../../common/constants';
+import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
 import {
   ICreatePackage,
   ICreateJobResponse,
@@ -34,29 +34,31 @@ export class CreatePackageManager {
   private readonly gpkgsLocation: string;
   private readonly tileEstimatedSize: number;
   private readonly storageFactorBuffer: number;
-  private readonly metadataFileName: string;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
-    this.tilesProvider = config.get('tilesProvider');
-    this.tileEstimatedSize = config.get('jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
-    this.storageFactorBuffer = config.get('storageFactorBuffer');
-    this.gpkgsLocation = config.get('gpkgsLocation');
+    this.tilesProvider = config.get<MergerSourceType>('tilesProvider');
+    this.gpkgsLocation = config.get<string>('gpkgsLocation');
+    this.tileEstimatedSize = config.get<number>('jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
+    this.storageFactorBuffer = config.get<number>('storageFactorBuffer');
 
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
-    this.metadataFileName = 'metadata.json';
   }
 
   public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
-    const { productId: resourceId, productVersion: version, footprint, productType } = layerMetadata;
+    let { productId: resourceId, productVersion: version, productType } = layerMetadata;
     const { dbId, crs, priority, bbox: bboxFromUser, callbackURLs } = userInput;
-    const bbox = (bboxFromUser ?? PolygonBbox(footprint)) as BBox2d;
+    const bbox = (bboxFromUser ?? PolygonBbox(layerMetadata.footprint)) as BBox2d;
     const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
+
+    resourceId = resourceId as string;
+    version = version as string;
+    productType = productType ?? DEFAULT_PRODUCT_TYPE;
 
     const srcRes = layerMetadata.maxResolutionDeg as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
@@ -64,13 +66,13 @@ export class CreatePackageManager {
       throw new BadRequestError(`The requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
     }
 
-    const sanitizedBbox = this.sanitizeBbox(bbox, footprint as Polygon | MultiPolygon, zoomLevel);
+    const sanitizedBbox = this.sanitizeBbox(bbox, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
     if (sanitizedBbox === null) {
       throw new BadRequestError(`Requested bbox has no intersection with requested layer`);
     }
     const dupParams: JobDuplicationParams = {
-      resourceId: resourceId as string,
-      version: version as string,
+      resourceId,
+      version,
       dbId,
       zoomLevel,
       sanitizedBbox,
@@ -97,7 +99,7 @@ export class CreatePackageManager {
       throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
     }
     const separator = this.getSeparator();
-    const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
+    const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, bbox);
     const packageRelativePath = getGpkgRelativePath(packageName);
     const sources: IMapSource[] = [
       {
@@ -122,10 +124,10 @@ export class CreatePackageManager {
       fileName: packageName,
       zoomLevel,
       dbId,
-      version: version as string,
-      cswProductId: resourceId as string,
+      version: version,
+      cswProductId: resourceId,
       crs: crs ?? DEFAULT_CRS,
-      productType: productType ?? DEFAULT_PRODUCT_TYPE,
+      productType,
       batches,
       sources,
       priority: priority ?? DEFAULT_PRIORITY,
@@ -136,9 +138,17 @@ export class CreatePackageManager {
     return jobCreated;
   }
 
-  public async createJsonMetadata(filePath: string, dbId: string): Promise<void> {
-    const metadataFilePath = join(dirname(filePath), this.metadataFileName);
+  public async createJsonMetadata(fullGpkgPath: string, dbId: string, sanitizedBbox: BBox2d): Promise<void> {
     const record = await this.rasterCatalogManager.findLayer(dbId);
+
+    const parsedPath = parsePath(fullGpkgPath);
+    const directoryName = parsedPath.dir;
+    const metadataFileName = parsedPath.name.concat(JSON_FILE_EXTENSION);
+    const metadataFilePath = join(directoryName, metadataFileName);
+
+    record.metadata.footprint = bboxPolygon(sanitizedBbox);
+    delete record.metadata.layerPolygonParts;
+
     const recordMetadata = JSON.stringify(record.metadata);
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
   }
@@ -255,5 +265,11 @@ export class CreatePackageManager {
     await this.jobManagerClient.updateJob<IJobParameters>(processingJob.id, {
       parameters: processingJob.parameters,
     });
+  }
+
+  private generatePackageName(productType: string, productId: string, productVersion: string, zoomLevel: number, bbox: BBox): string {
+    const numberOfDecimals = 5;
+    const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_').replace(/-/g, 'm')).join('');
+    return `${productType}_${productId}_${productVersion}_${zoomLevel}_${bboxToString}.gpkg`;
   }
 }
