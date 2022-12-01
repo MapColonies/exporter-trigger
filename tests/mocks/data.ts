@@ -107,6 +107,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
   resourceId: 'string',
   version: '1.0',
   type: 'rasterTilesExporter',
+  domain: 'testDomain',
   description: '',
   parameters: {
     crs: 'EPSG:4326',
@@ -173,6 +174,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
 
 const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   id: 'fa3ab609-377a-4d96-bf0b-e0bb72f683b8',
+  domain: 'testDomain',
   resourceId: 'string',
   version: '1.0',
   type: 'rasterTilesExporter',

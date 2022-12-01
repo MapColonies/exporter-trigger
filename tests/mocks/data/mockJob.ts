@@ -5,6 +5,7 @@ import { JobResponse } from '../../../src/common/interfaces';
 export const mockJob: JobResponse = {
   id: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
   resourceId: 'test',
+  domain: 'testDomain',
   version: '1.0',
   type: 'rasterTilesExporter',
   description: '',
