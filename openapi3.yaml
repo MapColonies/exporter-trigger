@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: exporter-trigger
   description: Service that responsible for activating the export geopackage process
-  version: 2.4.1
+  version: 2.5.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -38,18 +38,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        '507':
-          description: Insufficient Storage on disk for exporting
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
         '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/internalError'
+        '507':
+          description: Insufficient Storage on disk for exporting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
   /taskStatus/{jobId}:
     get:
       tags:

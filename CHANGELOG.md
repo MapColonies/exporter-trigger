@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.5.0](https://github.com/MapColonies/exporter-trigger/compare/v2.4.1...v2.5.0) (2022-12-01)
+
+
+### Features
+
+* added polling jobs status system ([#31](https://github.com/MapColonies/exporter-trigger/issues/31)) ([11960f1](https://github.com/MapColonies/exporter-trigger/commit/11960f14922482650dff9052bc8d4137f56981c8))
+* adding expiration date update on existing gpkg request (MAPCO-2311) ([#39](https://github.com/MapColonies/exporter-trigger/issues/39)) ([75fa1fe](https://github.com/MapColonies/exporter-trigger/commit/75fa1fe196f4c70f9ae5d14625bf042927f2599f))
+* adding relative path param ([#40](https://github.com/MapColonies/exporter-trigger/issues/40)) ([eb2e8bf](https://github.com/MapColonies/exporter-trigger/commit/eb2e8bf0e1f8a5b8fff4c804af8d31900ddc0dbd))
+* envoy jwt validation ([#33](https://github.com/MapColonies/exporter-trigger/issues/33)) ([f05a0e6](https://github.com/MapColonies/exporter-trigger/commit/f05a0e61e06c75082bd05adf7ee44fd056c3c603))
+* support no bbox and res ([#38](https://github.com/MapColonies/exporter-trigger/issues/38)) ([a867653](https://github.com/MapColonies/exporter-trigger/commit/a86765319cce54b8a05991e6147938f6aa8fbb2b))
+
+
+### Bug Fixes
+
+* disabled envoy access logs ([#32](https://github.com/MapColonies/exporter-trigger/issues/32)) ([2cc47d0](https://github.com/MapColonies/exporter-trigger/commit/2cc47d0ec76d25b2b4594d3f666a31967d7d4ea9))
+* trigger bug fixes ([#36](https://github.com/MapColonies/exporter-trigger/issues/36)) ([b035fe2](https://github.com/MapColonies/exporter-trigger/commit/b035fe23a38c636944e45cfa02f610adb146b03b))
+
 ### [2.4.1](https://github.com/MapColonies/exporter-trigger/compare/v2.4.0...v2.4.1) (2022-08-16)
 
 
