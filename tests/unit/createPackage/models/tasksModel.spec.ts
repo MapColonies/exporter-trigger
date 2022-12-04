@@ -172,7 +172,7 @@ describe('TasksManager', () => {
       getFileSizeSpy.mockResolvedValue(2000);
       const expirationTime = new Date();
       const expectedCallbackData: ICallbackDataBase = {
-        fileUri: 'http://download-service/downloads/test' + sep + 'test.gpkg',
+        fileUri: `http://download-service/downloads/test${sep}test.gpkg`,
         expirationTime: expirationTime,
         fileSize: 2000,
         dbId: '880a9316-0f10-4874-92e2-a62d587a1169',
