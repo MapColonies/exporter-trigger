@@ -34,6 +34,7 @@ export class JobManagerWrapper extends JobManagerClient {
   private readonly tilesJobType: string;
   private readonly tilesTaskType: string;
   private readonly expirationDays: number;
+  private readonly jobDomain: string;
 
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
     super(
@@ -45,6 +46,7 @@ export class JobManagerWrapper extends JobManagerClient {
     this.expirationDays = config.get<number>('jobManager.expirationDays');
     this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
     this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
+    this.jobDomain = config.get<string>('jobManager.jobDomain');
   }
 
   public async create(data: IWorkerInput): Promise<ICreateJobResponse> {
@@ -56,6 +58,7 @@ export class JobManagerWrapper extends JobManagerClient {
       version: data.version,
       type: this.tilesJobType,
       expirationDate,
+      domain: this.jobDomain,
       parameters: {
         sanitizedBbox: data.sanitizedBbox,
         targetResolution: data.targetResolution,

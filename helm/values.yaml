@@ -12,6 +12,7 @@ rasterCommon:
     jobManager: "http://job-manager-raster-dev-discrete-ingestion-db"
     downloadServer: "http://files-server-raster-dev-files-server"
   jobManagement:
+    jobDomain: RASTER
     exporter:
       jobType: tilesExport
       taskType: tilesExport

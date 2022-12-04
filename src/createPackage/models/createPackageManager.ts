@@ -98,7 +98,7 @@ export class CreatePackageManager {
     }
     const separator = this.getSeparator();
     const packageName = generatePackageName(dbId, zoomLevel, sanitizedBbox);
-    const packageRelativePath = getGpkgRelativePath(packageName);
+    const packageRelativePath = getGpkgRelativePath(packageName, separator);
     const sources: IMapSource[] = [
       {
         path: packageRelativePath,
@@ -111,7 +111,7 @@ export class CreatePackageManager {
         },
       },
       {
-        path: (layerMetadata.id as string) + separator + (layerMetadata.displayPath as string), //tiles path
+        path: `${layerMetadata.id as string}${separator}${layerMetadata.displayPath as string}`, //tiles path
         type: this.tilesProvider,
       },
     ];
@@ -169,6 +169,7 @@ export class CreatePackageManager {
     this.logger.debug(`Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`);
     return diskFreeSpace - estimatesGpkgSize >= 0;
   }
+
   private getSeparator(): string {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }

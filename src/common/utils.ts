@@ -1,5 +1,5 @@
 import { promises as fsPromise } from 'fs';
-import { join } from 'path';
+import { sep } from 'path';
 import { BBox } from '@turf/turf';
 import checkDiskSpace from 'check-disk-space';
 import { ITileRange } from '@map-colonies/mc-utils';
@@ -22,15 +22,15 @@ export const getGpkgNameWithoutExt = (packageName: string): string => {
   return gpkgNameArr.join('.');
 };
 
-export const getGpkgRelativePath = (packageName: string): string => {
+export const getGpkgRelativePath = (packageName: string, separator: string = sep): string => {
   const packageDirectoryName = getGpkgNameWithoutExt(packageName);
-  const packageRelativePath = join(packageDirectoryName, packageName);
+  const packageRelativePath = `${packageDirectoryName}${separator}${packageName}`;
   return packageRelativePath;
 };
 
-export const getGpkgFullPath = (gpkgsLocation: string, packageName: string): string => {
+export const getGpkgFullPath = (gpkgsLocation: string, packageName: string, separator: string = sep): string => {
   const packageDirectoryName = getGpkgNameWithoutExt(packageName);
-  const packageFullPath = join(gpkgsLocation, packageDirectoryName, packageName);
+  const packageFullPath = `${gpkgsLocation}${separator}${packageDirectoryName}${separator}${packageName}`;
   return packageFullPath;
 };
 

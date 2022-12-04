@@ -32,6 +32,7 @@
   },
   "jobManager": {
     "url": "http://job-manager-job-manager",
+    "jobDomain": "RASTER",
     "expirationDays": 30
   },
   "rasterCatalogManager": {
