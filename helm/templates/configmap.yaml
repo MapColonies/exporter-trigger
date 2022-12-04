@@ -22,6 +22,7 @@ data:
   JOB_MANAGER_URL: {{ .Values.rasterCommon.serviceUrls.jobManager | quote }}
   JOB_MANAGER_EXPIRATION_DAYS: {{ .Values.env.jobManager.expirationDays | quote }}
   RASTER_CATALOG_MANAGER_URL: {{ .Values.rasterCommon.serviceUrls.catalogManager | quote }}
+  JOB_DOMAIN: {{ .Values.rasterCommon.jobManagement.jobDomain | quote }}
   WORKER_TYPES_TILES_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.jobType | quote }}
   WORKER_TYPES_TILES_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.taskType | quote }}
   HTTP_RETRY_ATTEMPTS: {{ .Values.env.httpRetry.attempts | quote }}

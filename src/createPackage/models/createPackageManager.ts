@@ -100,7 +100,7 @@ export class CreatePackageManager {
     }
     const separator = this.getSeparator();
     const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, bbox);
-    const packageRelativePath = getGpkgRelativePath(packageName);
+    const packageRelativePath = getGpkgRelativePath(packageName, separator);
     const sources: IMapSource[] = [
       {
         path: packageRelativePath,
@@ -113,7 +113,7 @@ export class CreatePackageManager {
         },
       },
       {
-        path: (layerMetadata.id as string) + separator + (layerMetadata.displayPath as string), //tiles path
+        path: `${layerMetadata.id as string}${separator}${layerMetadata.displayPath as string}`, //tiles path
         type: this.tilesProvider,
       },
     ];

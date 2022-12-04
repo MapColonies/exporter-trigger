@@ -53,6 +53,7 @@ const registerDefaultConfig = (): void => {
     },
     jobManager: {
       url: 'http://job-manager-job-manager',
+      jobDomain: 'testDomain',
       expirationDays: 30,
     },
     rasterCatalogManager: {

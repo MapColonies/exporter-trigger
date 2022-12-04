@@ -52,6 +52,7 @@
   },
   "jobManager": {
     "url": "JOB_MANAGER_URL",
+    "jobDomain": "JOB_DOMAIN",
     "expirationDays": {
       "__name": "JOB_MANAGER_EXPIRATION_DAYS",
       "__format": "number"
