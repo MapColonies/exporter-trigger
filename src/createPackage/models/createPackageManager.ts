@@ -96,7 +96,7 @@ export class CreatePackageManager {
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
     const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
     if (!isEnoughStorage) {
-      // throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+      throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
     }
     const separator = this.getSeparator();
     const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, bbox);
@@ -179,6 +179,7 @@ export class CreatePackageManager {
     this.logger.debug(`Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`);
     return diskFreeSpace - estimatesGpkgSize >= 0;
   }
+
   private getSeparator(): string {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
