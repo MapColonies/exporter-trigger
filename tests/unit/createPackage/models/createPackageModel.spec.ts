@@ -3,6 +3,7 @@ import { BadRequestError } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
+import { LayerMetadata } from '@map-colonies/mc-model-types';
 import {
   jobManagerWrapperMock,
   findCompletedJobMock,
@@ -16,12 +17,13 @@ import { ICreateJobResponse, ICreatePackage, IJobParameters, ITaskParameters, Jo
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
 import { completedJob, inProgressJob, layerFromCatalog, userInput } from '../../../mocks/data';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
-import { LayerMetadata } from '@map-colonies/mc-model-types';
 import { METADA_JSON_FILE_EXTENSION } from '../../../../src/common/constants';
 
 jest.mock('fs', () => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return {
     ...jest.requireActual('fs'),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     promises: {
       ...jest.requireActual('fs/promises'),
       writeFile: jest.fn(),
