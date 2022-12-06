@@ -1,6 +1,6 @@
 import { promises as fsPromise } from 'fs';
+import { parse as parsePath } from 'path';
 import { sep } from 'path';
-import { BBox } from '@turf/turf';
 import checkDiskSpace from 'check-disk-space';
 import { ITileRange } from '@map-colonies/mc-utils';
 import { IStorageStatusResponse } from './interfaces';
@@ -10,16 +10,8 @@ export const getFileSize = async (filePath: string): Promise<number> => {
   return Math.trunc(fileSizeInBytes); // Make sure we return an Integer
 };
 
-export const generatePackageName = (dbId: string, zoomLevel: number, bbox: BBox): string => {
-  const numberOfDecimals = 5;
-  const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_').replace(/-/g, 'm')).join('');
-  return `gm_${dbId.replace(/-/g, '_')}_${zoomLevel}_${bboxToString}.gpkg`;
-};
-
 export const getGpkgNameWithoutExt = (packageName: string): string => {
-  const gpkgNameArr = packageName.split('.');
-  gpkgNameArr.pop();
-  return gpkgNameArr.join('.');
+  return parsePath(packageName).name;
 };
 
 export const getGpkgRelativePath = (packageName: string, separator: string = sep): string => {

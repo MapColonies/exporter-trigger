@@ -1,7 +1,9 @@
+import fs from 'fs';
 import { BadRequestError } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
+import { LayerMetadata } from '@map-colonies/mc-model-types';
 import {
   jobManagerWrapperMock,
   findCompletedJobMock,
@@ -13,8 +15,21 @@ import {
 import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalogManagerClient';
 import { ICreateJobResponse, ICreatePackage, IJobParameters, ITaskParameters, JobDuplicationParams } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
-import { inProgressJob, layerFromCatalog, userInput } from '../../../mocks/data';
+import { completedJob, inProgressJob, layerFromCatalog, userInput } from '../../../mocks/data';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
+import { METADA_JSON_FILE_EXTENSION } from '../../../../src/common/constants';
+
+jest.mock('fs', () => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return {
+    ...jest.requireActual('fs'),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    promises: {
+      ...jest.requireActual('fs/promises'),
+      writeFile: jest.fn(),
+    },
+  };
+});
 
 let createPackageManager: CreatePackageManager;
 
@@ -244,5 +259,42 @@ describe('CreatePackageManager', () => {
       expect(findLayerMock).toHaveBeenCalledTimes(1);
       expect(findLayerMock).toHaveBeenCalledWith(layer.id);
     });
+  });
+
+  it('should create metada.json file with the correct parameters', async () => {
+    const fileName = 'file';
+    const directoryName = '/tmp/gpkgDir';
+
+    const mockGgpkgPath = `${directoryName}/${fileName}`;
+
+    findLayerMock.mockResolvedValue(layerFromCatalog);
+
+    await createPackageManager.createJsonMetadata(mockGgpkgPath, completedJob);
+
+    const expectedFileName = `${directoryName}/${fileName}${METADA_JSON_FILE_EXTENSION}`;
+    const expectedMetadata: LayerMetadata = {
+      ...layerFromCatalog.metadata,
+      maxResolutionDeg: completedJob.parameters.targetResolution,
+      footprint: {
+        type: 'Feature',
+        bbox: [0, 0, 25, 41],
+        properties: {},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [25, 0],
+              [25, 41],
+              [0, 41],
+              [0, 0],
+            ],
+          ],
+        },
+      },
+    };
+
+    expect(fs.promises.writeFile).toHaveBeenCalledTimes(1);
+    expect(fs.promises.writeFile).toHaveBeenCalledWith(expectedFileName, JSON.stringify(expectedMetadata));
   });
 });
