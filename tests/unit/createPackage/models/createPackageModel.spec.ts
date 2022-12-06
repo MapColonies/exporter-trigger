@@ -24,8 +24,8 @@ jest.mock('fs', () => {
     ...jest.requireActual('fs'),
     promises: {
       ...jest.requireActual('fs/promises'),
-      writeFile: jest.fn()
-    }
+      writeFile: jest.fn(),
+    },
   };
 });
 
@@ -274,13 +274,21 @@ describe('CreatePackageManager', () => {
       ...layerFromCatalog.metadata,
       maxResolutionDeg: completedJob.parameters.targetResolution,
       footprint: {
-        type: "Feature",
+        type: 'Feature',
         bbox: [0, 0, 25, 41],
         properties: {},
         geometry: {
-          type: "Polygon",
-          coordinates: [[[0, 0], [25, 0], [25, 41], [0, 41], [0, 0]]]
-        }
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [25, 0],
+              [25, 41],
+              [0, 41],
+              [0, 0],
+            ],
+          ],
+        },
       },
     };
 
