@@ -1,4 +1,3 @@
-import { ProductType } from '@map-colonies/mc-model-types';
 import { readPackageJsonSync } from '@map-colonies/read-pkg';
 
 export const SERVICE_NAME = readPackageJsonSync().name ?? 'unknown_service';
@@ -18,5 +17,4 @@ export const SERVICES: Record<string, symbol> = {
 
 export const DEFAULT_PRIORITY = 1000;
 export const DEFAULT_CRS = 'EPSG:4326';
-export const DEFAULT_PRODUCT_TYPE = ProductType.ORTHOPHOTO;
-export const JSON_FILE_EXTENSION = '.json';
+export const METADA_JSON_FILE_EXTENSION = '.metadata.json';

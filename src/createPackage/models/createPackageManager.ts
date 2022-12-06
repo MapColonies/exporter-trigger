@@ -9,9 +9,10 @@ import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
+import { ProductType } from '@map-colonies/mc-model-types';
 import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
-import { DEFAULT_CRS, DEFAULT_PRIORITY, DEFAULT_PRODUCT_TYPE, JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
+import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
 import {
   ICreatePackage,
   ICreateJobResponse,
@@ -58,7 +59,7 @@ export class CreatePackageManager {
 
     resourceId = resourceId as string;
     version = version as string;
-    productType = productType ?? DEFAULT_PRODUCT_TYPE;
+    productType = productType as ProductType;
 
     const srcRes = layerMetadata.maxResolutionDeg as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
@@ -139,16 +140,17 @@ export class CreatePackageManager {
     return jobCreated;
   }
 
-  public async createJsonMetadata(fullGpkgPath: string, dbId: string, sanitizedBbox: BBox2d): Promise<void> {
-    const record = await this.rasterCatalogManager.findLayer(dbId);
+  public async createJsonMetadata(fullGpkgPath: string, job: JobResponse): Promise<void> {
+    this.logger.info(`Creating metadata.json file for gpkg in path "${fullGpkgPath}"`);
+    const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
 
     const parsedPath = parsePath(fullGpkgPath);
     const directoryName = parsedPath.dir;
-    const metadataFileName = parsedPath.name.concat(JSON_FILE_EXTENSION);
+    const metadataFileName = parsedPath.name.concat(METADATA_JSON_FILE_EXTENSION);
     const metadataFilePath = join(directoryName, metadataFileName);
 
-    record.metadata.footprint = bboxPolygon(sanitizedBbox);
-    delete record.metadata.layerPolygonParts;
+    record.metadata.footprint = bboxPolygon(job.parameters.sanitizedBbox);
+    record.metadata.maxResolutionDeg = job.parameters.targetResolution;
 
     const recordMetadata = JSON.stringify(record.metadata);
     await fsPromise.writeFile(metadataFilePath, recordMetadata);

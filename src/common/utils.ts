@@ -1,7 +1,6 @@
 import { promises as fsPromise } from 'fs';
 import { parse as parsePath } from 'path';
 import { sep } from 'path';
-import { BBox } from '@turf/turf';
 import checkDiskSpace from 'check-disk-space';
 import { ITileRange } from '@map-colonies/mc-utils';
 import { IStorageStatusResponse } from './interfaces';

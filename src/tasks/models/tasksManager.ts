@@ -115,7 +115,7 @@ export class TasksManager {
       const packageName = job.parameters.fileName;
       if (isSuccess) {
         const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
-        await this.packageManager.createJsonMetadata(packageFullPath, job.internalId as string, job.parameters.sanitizedBbox);
+        await this.packageManager.createJsonMetadata(packageFullPath, job);
       }
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
       updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
