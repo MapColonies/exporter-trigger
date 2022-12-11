@@ -1,10 +1,10 @@
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { getUTCDate } from '@map-colonies/mc-utils';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { inProgressJob, jobs, workerInput } from '../../mocks/data';
-import { getUtcNow } from '../../../src/common/utils';
 
 let jobManagerClient: JobManagerWrapper;
 let postFun: jest.Mock;
@@ -95,8 +95,8 @@ describe('JobManagerClient', () => {
 
     it('should successfully update job expirationDate (old expirationDate lower)', async () => {
       const expirationDays: number = configMock.get('jobManager.expirationDays');
-      const testExpirationDate = getUtcNow();
-      const expectedNewExpirationDate = getUtcNow();
+      const testExpirationDate = getUTCDate();
+      const expectedNewExpirationDate = getUTCDate();
       testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
       expectedNewExpirationDate.setDate(expectedNewExpirationDate.getDate() + expirationDays);
       expectedNewExpirationDate.setSeconds(0, 0);
@@ -119,8 +119,8 @@ describe('JobManagerClient', () => {
 
     it('should not update job expirationDate (old expirationDate higher)', async () => {
       const expirationDays: number = configMock.get('jobManager.expirationDays');
-      const testExpirationDate = getUtcNow();
-      const expectedNewExpirationDate = getUtcNow();
+      const testExpirationDate = getUTCDate();
+      const expectedNewExpirationDate = getUTCDate();
       testExpirationDate.setDate(testExpirationDate.getDate() + 2 * expirationDays);
       expectedNewExpirationDate.setDate(expectedNewExpirationDate.getDate() + expirationDays);
       expectedNewExpirationDate.setSeconds(0, 0);

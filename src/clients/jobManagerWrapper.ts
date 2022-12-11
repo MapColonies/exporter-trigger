@@ -4,6 +4,7 @@ import { Logger } from '@map-colonies/js-logger';
 import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
 import { JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { getUTCDate } from '@map-colonies/mc-utils';
 import { SERVICES } from '../common/constants';
 import {
   CreateJobBody,
@@ -15,7 +16,6 @@ import {
   JobResponse,
   TaskResponse,
 } from '../common/interfaces';
-import { getUtcNow } from '../common/utils';
 //this is the job manager api for find job DO NOT MODIFY
 interface IFindJob {
   resourceId?: string;
@@ -177,7 +177,7 @@ export class JobManagerWrapper extends JobManagerClient {
 
   public async validateAndUpdateExpiration(jobId: string): Promise<void> {
     const getOrUpdateURL = `/jobs/${jobId}`;
-    const newExpirationDate = getUtcNow();
+    const newExpirationDate = getUTCDate();
     newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
 
     const job = await this.get<JobResponse | undefined>(getOrUpdateURL);
