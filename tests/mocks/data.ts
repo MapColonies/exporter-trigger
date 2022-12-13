@@ -43,13 +43,21 @@ const layerMetadata = {
     type: 'FeatureCollection',
     features: [
       {
-        type: "Feature",
+        type: 'Feature',
         properties: {},
         geometry: {
-          type: "Polygon",
-          coordinates: [[[0, 0], [67.5, 0], [67.5, 22.5], [0, 22.5], [0, 0]]],
-        }
-      }
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [67.5, 0],
+              [67.5, 22.5],
+              [0, 22.5],
+              [0, 0],
+            ],
+          ],
+        },
+      },
     ],
   },
   includedInBests: [],
@@ -58,13 +66,21 @@ const layerMetadata = {
     type: 'FeatureCollection',
     features: [
       {
-        type: "Feature",
+        type: 'Feature',
         properties: {},
         geometry: {
-          type: "Polygon",
-          coordinates: [[[0, 0], [67.5, 0], [67.5, 22.5], [0, 22.5], [0, 0]]],
-        }
-      }
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [67.5, 0],
+              [67.5, 22.5],
+              [0, 22.5],
+              [0, 0],
+            ],
+          ],
+        },
+      },
     ],
   },
   productBoundingBox: '-180,-89.999,0,90',

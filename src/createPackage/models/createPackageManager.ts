@@ -2,7 +2,7 @@ import { promises as fsPromise } from 'fs';
 import { sep, join, parse as parsePath } from 'path';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
-import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon, FeatureCollection, Feature, Properties } from '@turf/turf';
+import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon, FeatureCollection, Feature } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
@@ -152,7 +152,10 @@ export class CreatePackageManager {
 
     record.metadata.footprint = sanitizedBboxToPolygon;
     record.metadata.maxResolutionDeg = job.parameters.targetResolution;
-    (record.metadata.layerPolygonParts as FeatureCollection) = this.extractPolygonParts(record.metadata.layerPolygonParts as FeatureCollection, sanitizedBboxToPolygon);
+    (record.metadata.layerPolygonParts as FeatureCollection) = this.extractPolygonParts(
+      record.metadata.layerPolygonParts as FeatureCollection,
+      sanitizedBboxToPolygon
+    );
 
     const recordMetadata = JSON.stringify(record.metadata);
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
@@ -280,12 +283,12 @@ export class CreatePackageManager {
     return `${productType}_${productId}_${productVersion}_${zoomLevel}_${bboxToString}.gpkg`;
   }
 
-  private extractPolygonParts(layerPolygonParts: FeatureCollection, sanitizedBboxPolygonzied: Feature<Polygon, Properties>): FeatureCollection {
-    this.logger.info(`Extracting layerPolygonParts from original record that intersects with sanitized bbox ${sanitizedBboxPolygonzied.bbox?.toString()}`);
+  private extractPolygonParts(layerPolygonParts: FeatureCollection, sanitizedBboxPolygonzied: Feature<Polygon>): FeatureCollection {
+    this.logger.info(`Extracting layerPolygonParts from original record that intersects with sanitized bbox`);
     let newPolygonLarts = layerPolygonParts;
     const newFeatures: Feature[] = [];
 
-    newPolygonLarts.features.forEach(feature => {
+    newPolygonLarts.features.forEach((feature) => {
       const intersection = intersect(feature.geometry as Polygon, sanitizedBboxPolygonzied);
       if (intersection !== null) {
         intersection.properties = feature.properties;
@@ -294,7 +297,7 @@ export class CreatePackageManager {
     });
 
     newPolygonLarts = { ...newPolygonLarts, bbox: sanitizedBboxPolygonzied.bbox, features: newFeatures };
-    
+
     return newPolygonLarts;
   }
 }
