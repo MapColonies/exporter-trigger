@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.6.0](https://github.com/MapColonies/exporter-trigger/compare/v2.5.0...v2.6.0) (2022-12-11)
+
+
+### Features
+
+* add job domain (MAPCO-2709) ([#43](https://github.com/MapColonies/exporter-trigger/issues/43)) ([92f6075](https://github.com/MapColonies/exporter-trigger/commit/92f6075e688127945c31726fe897aada88f29f01))
+* adding to helm external cert + api convention ([#42](https://github.com/MapColonies/exporter-trigger/issues/42)) ([669dcdb](https://github.com/MapColonies/exporter-trigger/commit/669dcdbff326acf17dc3b5011db35bc5f22edbb8))
+
 ## [2.5.0](https://github.com/MapColonies/exporter-trigger/compare/v2.4.1...v2.5.0) (2022-12-01)
 
 
