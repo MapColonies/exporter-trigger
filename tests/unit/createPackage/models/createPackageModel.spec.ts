@@ -90,6 +90,64 @@ describe('CreatePackageManager', () => {
       expect(findInProgressJobMock).toHaveBeenCalledTimes(1);
     });
 
+    it('should create job and convert provided footprint to bbox', async () => {
+      const footprint = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [25, 15],
+            [50, 15],
+            [50, 40],
+            [25, 40],
+            [25, 15],
+          ],
+        ],
+      };
+      const req: ICreatePackage = {
+        dbId: layerFromCatalog.id,
+        bbox: footprint,
+        callbackURLs: ['testUrl'],
+        targetResolution: 0.0439453125,
+        crs: 'EPSG:4326',
+      };
+
+      const expectedsanitizedBbox: BBox2d = [22.5, 11.25, 56.25, 45];
+      const jobDupParams: JobDuplicationParams = {
+        resourceId: 'string',
+        version: '1.0',
+        dbId: layerFromCatalog.id,
+        zoomLevel: 4,
+        sanitizedBbox: expectedsanitizedBbox,
+        crs: 'EPSG:4326',
+      };
+
+      const expectedCreateJobResponse = {
+        jobId: '09e29fa8-7283-4334-b3a4-99f75922de59',
+        taskIds: ['66aa1e2e-784c-4178-b5a0-af962937d561'],
+        status: OperationStatus.IN_PROGRESS,
+      };
+      const validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
+      const normalize2BboxSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { normalize2Bbox: jest.Mock }, 'normalize2Bbox');
+
+      findLayerMock.mockResolvedValue(layerFromCatalog);
+      createMock.mockResolvedValue(expectedCreateJobResponse);
+      findCompletedJobMock.mockResolvedValue(undefined);
+      findInProgressJobMock.mockResolvedValue(undefined);
+      findPendingJobMock.mockResolvedValue(undefined);
+      validateFreeSpaceSpy.mockResolvedValue(true);
+      const res = await createPackageManager.createPackage(req);
+
+      expect(res).toEqual(expectedCreateJobResponse);
+      expect(findLayerMock).toHaveBeenCalledWith(req.dbId);
+      expect(findLayerMock).toHaveBeenCalledTimes(1);
+      expect(normalize2BboxSpy).toHaveBeenCalledTimes(1);
+      expect(createMock).toHaveBeenCalledTimes(1);
+      expect(findCompletedJobMock).toHaveBeenCalledWith(jobDupParams);
+      expect(findCompletedJobMock).toHaveBeenCalledTimes(1);
+      expect(findInProgressJobMock).toHaveBeenCalledWith(jobDupParams);
+      expect(findInProgressJobMock).toHaveBeenCalledTimes(1);
+    });
+
     it(`should create job and take original layer's resolution and sanitized bbox`, async () => {
       const req: ICreatePackage = {
         dbId: layerFromCatalog.id,
