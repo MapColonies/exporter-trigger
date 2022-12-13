@@ -20,6 +20,7 @@ describe('tiles', function () {
   let validateFreeSpaceSpy: jest.SpyInstance;
   let checkForCompletedSpy: jest.SpyInstance;
   let checkForProcessingSpy: jest.SpyInstance;
+  let normalize2BboxSpy: jest.SpyInstance;
 
   beforeEach(function () {
     const app = getApp({
@@ -31,6 +32,7 @@ describe('tiles', function () {
     });
     requestSender = new CreatePackageSender(app);
     checkForDuplicateSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForDuplicate: jest.Mock }, 'checkForDuplicate');
+    normalize2BboxSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { normalize2Bbox: jest.Mock }, 'normalize2Bbox');
     checkForCompletedSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForCompleted: jest.Mock }, 'checkForCompleted');
     checkForProcessingSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForProcessing: jest.Mock }, 'checkForProcessing');
     validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
@@ -59,7 +61,6 @@ describe('tiles', function () {
       validateFreeSpaceSpy.mockResolvedValue(true);
 
       const resposne = await requestSender.create(body);
-
       expect(resposne).toSatisfyApiSpec();
       expect(findLayerSpy).toHaveBeenCalledTimes(1);
       expect(createJobSpy).toHaveBeenCalledTimes(1);
@@ -139,6 +140,72 @@ describe('tiles', function () {
       expect(JSON.stringify(response.body)).toBe(JSON.stringify(expectedCompletedCallback));
       expect(response.status).toBe(httpStatusCodes.OK);
     });
+  });
+
+  it(`should return 200 status code and the exists un-cleaned completed job's callback (with original bbox as footprint of request)`, async function () {
+    checkForDuplicateSpy.mockRestore();
+
+    const expirationTime = new Date();
+    const body: ICreatePackage = {
+      dbId: layerFromCatalog.id,
+      bbox: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [25, 15],
+            [50, 15],
+            [50, 40],
+            [25, 40],
+            [25, 15],
+          ],
+        ],
+      },
+      targetResolution: 0.0000429153442382812,
+      callbackURLs: ['http://example.getmap.com/callback'],
+      crs: 'EPSG:4326',
+      priority: 0,
+    };
+    const origCallback = {
+      dbId: layerFromCatalog.id,
+      fileUri: 'http://example.getmap.com/callback',
+      success: true,
+      fileSize: 10,
+      requestId: 'string',
+      errorReason: '',
+      packageName: 'string',
+      expirationTime: expirationTime,
+      targetResolution: 0.123,
+      status: OperationStatus.COMPLETED,
+      bbox: [-180, -90, 90, 180],
+    };
+
+    const expectedCompletedCallback = {
+      dbId: layerFromCatalog.id,
+      fileUri: 'http://example.getmap.com/callback',
+      success: true,
+      fileSize: 10,
+      requestId: 'string',
+      errorReason: '',
+      packageName: 'string',
+      expirationTime: expirationTime,
+      targetResolution: 0.123,
+      status: OperationStatus.COMPLETED,
+      bbox: body.bbox,
+    };
+    findLayerSpy.mockResolvedValue(layerFromCatalog);
+    checkForCompletedSpy.mockResolvedValue(origCallback);
+    validateFreeSpaceSpy.mockResolvedValue(true);
+
+    const response = await requestSender.create(body);
+
+    expect(response).toSatisfyApiSpec();
+    expect(findLayerSpy).toHaveBeenCalledTimes(1);
+    expect(normalize2BboxSpy).toHaveBeenCalledTimes(1);
+    expect(checkForCompletedSpy).toHaveBeenCalledTimes(1);
+    expect(createJobSpy).toHaveBeenCalledTimes(0);
+    expect(validateFreeSpaceSpy).toHaveBeenCalledTimes(0);
+    expect(JSON.stringify(response.body)).toBe(JSON.stringify(expectedCompletedCallback));
+    expect(response.status).toBe(httpStatusCodes.OK);
   });
 
   it(`should return 200 status code and the exists in-progress job (id, task and status)`, async function () {

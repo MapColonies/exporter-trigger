@@ -20,7 +20,7 @@ export interface ICreatePackage {
   targetResolution?: number;
   crs?: string;
   callbackURLs: string[];
-  bbox?: BBox2d;
+  bbox?: BBox | Record<string, unknown>;
   priority?: number;
 }
 
@@ -70,7 +70,7 @@ export interface ICallbackDataBase {
 }
 
 export interface ICallbackData extends ICallbackDataBase {
-  bbox: BBox;
+  bbox: BBox | Record<string, unknown>;
 }
 
 export interface ICallbackResposne extends ICallbackData {
