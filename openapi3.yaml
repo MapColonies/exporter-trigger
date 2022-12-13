@@ -118,7 +118,9 @@ components:
           format: uuid
           description: ID as the primary key from the Raster Catalog
         bbox:
-          $ref: '#/components/schemas/BBOX'
+          oneOf:
+            - $ref: '#/components/schemas/BBOX'
+            - $ref: '#/components/schemas/Geometry'
         targetResolution:
           type: number
           description: >-
@@ -194,7 +196,9 @@ components:
         packageName:
           type: string
         bbox:
-          $ref: '#/components/schemas/BBOX'
+          oneOf:
+            - $ref: '#/components/schemas/BBOX'
+            - $ref: '#/components/schemas/Geometry'
         targetResolution:
           type: number
         requestId:
@@ -261,3 +265,53 @@ components:
             - Failed
             - Expired
             - Aborted
+    Geometry:
+      description: GeoJSon geometry
+      discriminator:
+        propertyName: type
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Polygon'
+    Polygon:
+      type: object
+      description: GeoJSon geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id4
+      allOf:
+        - $ref: '#/components/schemas/GeometryBase'
+        - properties:
+            coordinates:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Point2D'
+    GeometryBase:
+      type: object
+      description: GeoJSon geometry
+      required:
+        - type
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#geometry-objects
+      properties:
+        type:
+          type: string
+          enum:
+            - Polygon
+          description: the geometry type
+    Point2D:
+      type: array
+      maxItems: 2
+      minItems: 2
+      items:
+        type: number
+    Point:
+      type: object
+      description: GeoJSon geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id2
+      allOf:
+        - $ref: '#/components/schemas/GeometryBase'
+        - properties:
+            coordinates:
+              $ref: '#/components/schemas/Point2D'

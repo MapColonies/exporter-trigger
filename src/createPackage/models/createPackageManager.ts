@@ -53,7 +53,8 @@ export class CreatePackageManager {
     const layerMetadata = layer.metadata;
     let { productId: resourceId, productVersion: version, productType } = layerMetadata;
     const { dbId, crs, priority, bbox: bboxFromUser, callbackURLs } = userInput;
-    const bbox = (bboxFromUser ?? PolygonBbox(layerMetadata.footprint)) as BBox2d;
+    const normalizedBbox = this.normalize2Bbox(bboxFromUser);
+    const bbox = (normalizedBbox ?? PolygonBbox(layerMetadata.footprint)) as BBox2d;
     const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
 
@@ -84,7 +85,7 @@ export class CreatePackageManager {
     const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
     if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
       const completeResponseData = duplicationExist as ICallbackResponse;
-      completeResponseData.bbox = bbox;
+      completeResponseData.bbox = bboxFromUser ?? bbox;
       return duplicationExist;
     } else if (duplicationExist) {
       return duplicationExist;
@@ -186,6 +187,21 @@ export class CreatePackageManager {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
 
+  private normalize2Bbox(bboxFromUser: Record<string, unknown> | BBox | undefined): BBox | undefined {
+    if (!bboxFromUser) {
+      this.logger.debug(`Export will be executed on entire layer's footprint`);
+      return undefined;
+    } else if (bboxFromUser instanceof Array) {
+      this.logger.debug(`Export will be executed by provided BBox from request input`);
+      return bboxFromUser as BBox2d;
+    } else if (bboxFromUser.type == 'Polygon') {
+      this.logger.debug(`Export will be executed by provided Footprint from request input`);
+      const bboxFromFootprint = PolygonBbox(bboxFromUser) as BBox2d;
+      return bboxFromFootprint;
+    } else {
+      throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
+    }
+  }
   private sanitizeBbox(bbox: BBox, footprint: Polygon | MultiPolygon, zoom: number): BBox2d | null {
     const intersaction = intersect(bboxPolygon(bbox), footprint);
     if (intersaction === null) {
