@@ -2,7 +2,7 @@ import { promises as fsPromise } from 'fs';
 import { sep, join, parse as parsePath } from 'path';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
-import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon, FeatureCollection, Feature } from '@turf/turf';
+import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon, FeatureCollection, Feature, featureCollection as createFeatureCollection } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
@@ -141,7 +141,7 @@ export class CreatePackageManager {
   }
 
   public async createJsonMetadata(fullGpkgPath: string, job: JobResponse): Promise<void> {
-    this.logger.info(`Creating metadata.json file for gpkg in path "${fullGpkgPath}"`);
+    this.logger.info(`Creating metadata.json file for gpkg in path "${fullGpkgPath}" for jobId ${job.id}`);
     const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
 
     const parsedPath = parsePath(fullGpkgPath);
@@ -284,11 +284,10 @@ export class CreatePackageManager {
   }
 
   private extractPolygonParts(layerPolygonParts: FeatureCollection, sanitizedBboxPolygonzied: Feature<Polygon>): FeatureCollection {
-    this.logger.info(`Extracting layerPolygonParts from original record that intersects with sanitized bbox`);
-    let newPolygonLarts = layerPolygonParts;
+    this.logger.debug(`Extracting layerPolygonParts from original record that intersects with sanitized bbox`);
     const newFeatures: Feature[] = [];
 
-    newPolygonLarts.features.forEach((feature) => {
+    layerPolygonParts.features.forEach((feature) => {
       const intersection = intersect(feature.geometry as Polygon, sanitizedBboxPolygonzied);
       if (intersection !== null) {
         intersection.properties = feature.properties;
@@ -296,7 +295,7 @@ export class CreatePackageManager {
       }
     });
 
-    newPolygonLarts = { ...newPolygonLarts, bbox: sanitizedBboxPolygonzied.bbox, features: newFeatures };
+    const newPolygonLarts = createFeatureCollection(newFeatures, { bbox: sanitizedBboxPolygonzied.bbox });
 
     return newPolygonLarts;
   }
