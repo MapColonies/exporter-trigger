@@ -39,41 +39,47 @@ const layerMetadata = {
     ],
   },
   layerPolygonParts: {
-    bbox: [0, 0, 0, 0],
+    bbox: [0, 0, 67.5, 22.5],
     type: 'FeatureCollection',
     features: [
       {
-        bbox: [0, 0, 0, 0],
         type: 'Feature',
+        properties: {},
         geometry: {
-          type: 'GeometryCollection',
-          geometries: [
-            {
-              type: 'Point',
-            },
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [67.5, 0],
+              [67.5, 22.5],
+              [0, 22.5],
+              [0, 0],
+            ],
           ],
         },
-        properties: {},
       },
     ],
   },
   includedInBests: [],
   rawProductData: {
-    bbox: [0, 0, 0, 0],
+    bbox: [0, 0, 67.5, 22.5],
     type: 'FeatureCollection',
     features: [
       {
-        bbox: [0, 0, 0, 0],
         type: 'Feature',
+        properties: {},
         geometry: {
-          type: 'GeometryCollection',
-          geometries: [
-            {
-              type: 'Point',
-            },
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [67.5, 0],
+              [67.5, 22.5],
+              [0, 22.5],
+              [0, 0],
+            ],
           ],
         },
-        properties: {},
       },
     ],
   },

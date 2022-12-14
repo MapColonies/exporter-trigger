@@ -2,7 +2,17 @@ import { promises as fsPromise } from 'fs';
 import { sep, join, parse as parsePath } from 'path';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
-import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon } from '@turf/turf';
+import {
+  Polygon,
+  MultiPolygon,
+  BBox,
+  bbox as PolygonBbox,
+  intersect,
+  bboxPolygon,
+  FeatureCollection,
+  Feature,
+  featureCollection as createFeatureCollection,
+} from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
@@ -142,16 +152,21 @@ export class CreatePackageManager {
   }
 
   public async createJsonMetadata(fullGpkgPath: string, job: JobResponse): Promise<void> {
-    this.logger.info(`Creating metadata.json file for gpkg in path "${fullGpkgPath}"`);
+    this.logger.info(`Creating metadata.json file for gpkg in path "${fullGpkgPath}" for jobId ${job.id}`);
     const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
 
     const parsedPath = parsePath(fullGpkgPath);
     const directoryName = parsedPath.dir;
     const metadataFileName = parsedPath.name.concat(METADATA_JSON_FILE_EXTENSION);
     const metadataFilePath = join(directoryName, metadataFileName);
+    const sanitizedBboxToPolygon = bboxPolygon(job.parameters.sanitizedBbox);
 
-    record.metadata.footprint = bboxPolygon(job.parameters.sanitizedBbox);
+    record.metadata.footprint = sanitizedBboxToPolygon;
     record.metadata.maxResolutionDeg = job.parameters.targetResolution;
+    (record.metadata.layerPolygonParts as FeatureCollection) = this.extractPolygonParts(
+      record.metadata.layerPolygonParts as FeatureCollection,
+      sanitizedBboxToPolygon
+    );
 
     const recordMetadata = JSON.stringify(record.metadata);
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
@@ -292,5 +307,22 @@ export class CreatePackageManager {
     const numberOfDecimals = 5;
     const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_').replace(/-/g, 'm')).join('');
     return `${productType}_${productId}_${productVersion}_${zoomLevel}_${bboxToString}.gpkg`;
+  }
+
+  private extractPolygonParts(layerPolygonParts: FeatureCollection, sanitizedBboxPolygonzied: Feature<Polygon>): FeatureCollection {
+    this.logger.debug(`Extracting layerPolygonParts from original record that intersects with sanitized bbox`);
+    const newFeatures: Feature[] = [];
+
+    layerPolygonParts.features.forEach((feature) => {
+      const intersection = intersect(feature.geometry as Polygon, sanitizedBboxPolygonzied);
+      if (intersection !== null) {
+        intersection.properties = feature.properties;
+        newFeatures.push(intersection);
+      }
+    });
+
+    const newPolygonLarts = createFeatureCollection(newFeatures, { bbox: sanitizedBboxPolygonzied.bbox });
+
+    return newPolygonLarts;
   }
 }
