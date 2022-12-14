@@ -2,7 +2,17 @@ import { promises as fsPromise } from 'fs';
 import { sep, join, parse as parsePath } from 'path';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
-import { Polygon, MultiPolygon, BBox, bbox as PolygonBbox, intersect, bboxPolygon, FeatureCollection, Feature, featureCollection as createFeatureCollection } from '@turf/turf';
+import {
+  Polygon,
+  MultiPolygon,
+  BBox,
+  bbox as PolygonBbox,
+  intersect,
+  bboxPolygon,
+  FeatureCollection,
+  Feature,
+  featureCollection as createFeatureCollection,
+} from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
