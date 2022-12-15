@@ -11,6 +11,7 @@ import {
   bboxPolygon,
   FeatureCollection,
   Feature,
+  featureOf,
   featureCollection as createFeatureCollection,
 } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
@@ -18,8 +19,8 @@ import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
-import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
+import { isArray } from 'lodash';
 import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
@@ -41,10 +42,14 @@ import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
 @injectable()
 export class CreatePackageManager {
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  private static readonly bboxLength2d = 4;
+
   private readonly tilesProvider: MergerSourceType;
   private readonly gpkgsLocation: string;
   private readonly tileEstimatedSize: number;
   private readonly storageFactorBuffer: number;
+
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
@@ -63,8 +68,8 @@ export class CreatePackageManager {
     const layerMetadata = layer.metadata;
     let { productId: resourceId, productVersion: version, productType } = layerMetadata;
     const { dbId, crs, priority, bbox: bboxFromUser, callbackURLs } = userInput;
-    const normalizedBbox = this.normalize2Bbox(bboxFromUser);
-    const bbox = (normalizedBbox ?? PolygonBbox(layerMetadata.footprint)) as BBox2d;
+    const normalizedPolygon = this.normalize2Polygon(bboxFromUser);
+    const polygon = normalizedPolygon ?? layerMetadata.footprint;
     const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
 
@@ -78,7 +83,7 @@ export class CreatePackageManager {
       throw new BadRequestError(`The requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
     }
 
-    const sanitizedBbox = this.sanitizeBbox(bbox, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
+    const sanitizedBbox = this.sanitizeBbox(polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
     if (sanitizedBbox === null) {
       throw new BadRequestError(`Requested bbox has no intersection with requested layer`);
     }
@@ -202,27 +207,35 @@ export class CreatePackageManager {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
 
-  private normalize2Bbox(bboxFromUser: Record<string, unknown> | BBox | undefined): BBox | undefined {
-    if (!bboxFromUser) {
-      this.logger.debug(`Export will be executed on entire layer's footprint`);
-      return undefined;
-    } else if (bboxFromUser instanceof Array) {
-      this.logger.debug(`Export will be executed by provided BBox from request input`);
-      return bboxFromUser as BBox2d;
-    } else if (bboxFromUser.type == 'Polygon') {
-      this.logger.debug(`Export will be executed by provided Footprint from request input`);
-      const bboxFromFootprint = PolygonBbox(bboxFromUser) as BBox2d;
-      return bboxFromFootprint;
-    } else {
+  private normalize2Polygon(bboxFromUser: Polygon | BBox | undefined): Polygon | undefined {
+    try {
+      if (!bboxFromUser) {
+        this.logger.debug(`Export will be executed on entire layer's footprint`);
+        return undefined;
+      } else if (isArray(bboxFromUser) && bboxFromUser.length === CreatePackageManager.bboxLength2d) {
+        this.logger.debug({ bboxFromUser }, `Export will be executed by provided BBox from request input`);
+        let resultPolygon: Polygon = bboxPolygon(bboxFromUser);
+        return resultPolygon;
+      } else if (bboxFromUser.type == 'Polygon') {
+        this.logger.debug({ bboxFromUser }, `Export will be executed by provided Footprint from request input`);
+        const feature = Feature(bboxFromUser) as Feature<Polygon>;
+        featureOf(feature, 'Polygon', 'normalize2Bbox');
+        return bboxFromUser;
+      } else {
+        throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
+      }
+    }
+    catch (error) {
+      this.logger.error({ bboxFromUser }, `Failed `);
       throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
     }
   }
-  private sanitizeBbox(bbox: BBox, footprint: Polygon | MultiPolygon, zoom: number): BBox2d | null {
-    const intersaction = intersect(bboxPolygon(bbox), footprint);
+  private sanitizeBbox(bbox: Polygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
+    const intersaction = intersect(bbox, footprint);
     if (intersaction === null) {
       return null;
     }
-    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
+    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction), zoom);
     return sanitized;
   }
 

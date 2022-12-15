@@ -18,6 +18,7 @@ export interface RegisterOptions {
 
 export const registerExternalValues = (options?: RegisterOptions): DependencyContainer => {
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
 
