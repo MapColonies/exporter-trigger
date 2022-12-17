@@ -207,13 +207,6 @@ export class CreatePackageManager {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
 
-  private isAPolygon(obj?: object): obj is Polygon {
-    if (obj === undefined) {
-      return false;
-    }
-    return 'type' in obj && 'coordinates' in obj && (obj as { type: string }).type === 'Polygon';
-  }
-
   private normalize2Polygon(bboxFromUser: Polygon | BBox | undefined): Polygon | undefined {
     try {
       if (isArray(bboxFromUser) && bboxFromUser.length === CreatePackageManager.bboxLength2d) {
@@ -235,8 +228,16 @@ export class CreatePackageManager {
       throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
     }
   }
-  private sanitizeBbox(bbox: Polygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
-    const intersaction = intersect(bbox, footprint);
+
+  private isAPolygon(obj?: object): obj is Polygon {
+    if (obj === undefined) {
+      return false;
+    }
+    return 'type' in obj && 'coordinates' in obj && (obj as { type: string }).type === 'Polygon';
+  }
+
+  private sanitizeBbox(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
+    const intersaction = intersect(polygon, footprint);
     if (intersaction === null) {
       return null;
     }
