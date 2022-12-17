@@ -223,9 +223,11 @@ export class CreatePackageManager {
       } else if (this.isAPolygon(bboxFromUser)) {
         this.logger.debug({ bboxFromUser, msg: `Export will be executed by provided Footprint from request input` });
         return bboxFromUser;
-      } else {
+      } else if (bboxFromUser === undefined) {
         this.logger.debug(`Export will be executed on entire layer's footprint`);
         return undefined;
+      } else {
+        throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
       }
     } catch (error) {
       this.logger.error({ bboxFromUser, msg: `Failed` });
