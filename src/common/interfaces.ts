@@ -19,13 +19,13 @@ export interface ICreatePackage {
   targetResolution?: number;
   crs?: string;
   callbackURLs: string[];
-  bbox?: BBox | Record<string, unknown>;
+  bbox?: BBox | Polygon;
   priority?: number;
 }
 
 export interface ICallbackTarget {
   url: string;
-  bbox: BBox;
+  bbox: BBox | Polygon;
 }
 
 export interface IWorkerInput {
@@ -69,7 +69,7 @@ export interface ICallbackDataBase {
 }
 
 export interface ICallbackData extends ICallbackDataBase {
-  bbox: BBox | Record<string, unknown>;
+  bbox: BBox | Polygon;
 }
 
 export interface ICallbackResposne extends ICallbackData {

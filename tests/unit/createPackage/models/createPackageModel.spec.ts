@@ -1,9 +1,10 @@
 import fs from 'fs';
+import { sep } from 'path';
 import { BadRequestError } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { LayerMetadata } from '@map-colonies/mc-model-types';
-import { BBox } from '@turf/helpers';
+import { BBox, Polygon } from '@turf/helpers';
 import {
   jobManagerWrapperMock,
   findCompletedJobMock,
@@ -91,7 +92,7 @@ describe('CreatePackageManager', () => {
     });
 
     it('should create job and convert provided footprint to bbox', async () => {
-      const footprint = {
+      const footprint: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -127,7 +128,7 @@ describe('CreatePackageManager', () => {
         status: OperationStatus.IN_PROGRESS,
       };
       const validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
-      const normalize2BboxSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { normalize2Bbox: jest.Mock }, 'normalize2Bbox');
+      const normalize2PolygonSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { normalize2Polygon: jest.Mock }, 'normalize2Polygon');
 
       findLayerMock.mockResolvedValue(layerFromCatalog);
       createMock.mockResolvedValue(expectedCreateJobResponse);
@@ -140,7 +141,7 @@ describe('CreatePackageManager', () => {
       expect(res).toEqual(expectedCreateJobResponse);
       expect(findLayerMock).toHaveBeenCalledWith(req.dbId);
       expect(findLayerMock).toHaveBeenCalledTimes(1);
-      expect(normalize2BboxSpy).toHaveBeenCalledTimes(1);
+      expect(normalize2PolygonSpy).toHaveBeenCalledTimes(1);
       expect(createMock).toHaveBeenCalledTimes(1);
       expect(findCompletedJobMock).toHaveBeenCalledWith(jobDupParams);
       expect(findCompletedJobMock).toHaveBeenCalledTimes(1);
@@ -329,7 +330,7 @@ describe('CreatePackageManager', () => {
 
     await createPackageManager.createJsonMetadata(mockGgpkgPath, completedJob);
 
-    const expectedFileName = `${directoryName}/${fileName}${METADA_JSON_FILE_EXTENSION}`;
+    const expectedFileName = `${directoryName}${sep}${fileName}${METADA_JSON_FILE_EXTENSION}`;
     const expectedMetadata: LayerMetadata = {
       ...layerFromCatalog.metadata,
       maxResolutionDeg: completedJob.parameters.targetResolution,
