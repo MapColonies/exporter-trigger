@@ -227,6 +227,7 @@ export class CreatePackageManager {
         this.logger.debug(`Export will be executed on entire layer's footprint`);
         return undefined;
       } else {
+        this.logger.warn({bboxFromUser, msg: `Input bbox param illegal - should be bbox | polygon | null types`});
         throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
       }
     } catch (error) {
