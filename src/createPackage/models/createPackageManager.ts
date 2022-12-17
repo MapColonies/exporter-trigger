@@ -21,6 +21,7 @@ import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types'
 import { ProductType } from '@map-colonies/mc-model-types';
 import { isArray } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
+import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
@@ -39,7 +40,6 @@ import {
   IStorageStatusResponse,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
-import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 
 @injectable()
 export class CreatePackageManager {
