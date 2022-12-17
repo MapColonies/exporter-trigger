@@ -39,6 +39,7 @@ import {
   IStorageStatusResponse,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
+import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 
 @injectable()
 export class CreatePackageManager {
@@ -108,7 +109,7 @@ export class CreatePackageManager {
     const batches: ITileRange[] = [];
 
     for (let i = 0; i <= zoomLevel; i++) {
-      batches.push(bboxToTileRange(sanitizedBbox, i));
+      batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
     }
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
     const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
@@ -241,7 +242,7 @@ export class CreatePackageManager {
     if (intersaction === null) {
       return null;
     }
-    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction), zoom);
+    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
     return sanitized;
   }
 
