@@ -20,7 +20,7 @@ describe('tiles', function () {
   let validateFreeSpaceSpy: jest.SpyInstance;
   let checkForCompletedSpy: jest.SpyInstance;
   let checkForProcessingSpy: jest.SpyInstance;
-  let normalize2BboxSpy: jest.SpyInstance;
+  let normalize2Polygon: jest.SpyInstance;
 
   beforeEach(function () {
     const app = getApp({
@@ -32,7 +32,7 @@ describe('tiles', function () {
     });
     requestSender = new CreatePackageSender(app);
     checkForDuplicateSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForDuplicate: jest.Mock }, 'checkForDuplicate');
-    normalize2BboxSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { normalize2Bbox: jest.Mock }, 'normalize2Bbox');
+    normalize2Polygon = jest.spyOn(CreatePackageManager.prototype as unknown as { normalize2Polygon: jest.Mock }, 'normalize2Polygon');
     checkForCompletedSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForCompleted: jest.Mock }, 'checkForCompleted');
     checkForProcessingSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForProcessing: jest.Mock }, 'checkForProcessing');
     validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
@@ -200,7 +200,7 @@ describe('tiles', function () {
 
     expect(response).toSatisfyApiSpec();
     expect(findLayerSpy).toHaveBeenCalledTimes(1);
-    expect(normalize2BboxSpy).toHaveBeenCalledTimes(1);
+    expect(normalize2Polygon).toHaveBeenCalledTimes(1);
     expect(checkForCompletedSpy).toHaveBeenCalledTimes(1);
     expect(createJobSpy).toHaveBeenCalledTimes(0);
     expect(validateFreeSpaceSpy).toHaveBeenCalledTimes(0);
