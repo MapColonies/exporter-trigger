@@ -75,6 +75,10 @@
     "__name": "STORAGE_FACTOR_BUFFER",
     "__format": "number"
   },
+  "validateStorage": {
+    "__name": "VALIDATE_STORAGE",
+    "__format": "boolean"
+  },
   "tilesProvider": "TILES_PROVIDER",
   "gpkgsLocation": "GPKGS_LOCATION",
   "downloadServerUrl": "DOWNLOAD_SERVER_URL",

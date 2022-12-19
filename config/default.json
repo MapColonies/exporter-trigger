@@ -46,6 +46,7 @@
   },
   "jpegTileEstimatedSizeInBytes": 12500,
   "storageFactorBuffer": 1.25,
+  "validateStorage": true,
   "tilesProvider": "S3",
   "gpkgsLocation": "/app/tiles_outputs/gpkgs",
   "downloadServerUrl": "http://download-service",

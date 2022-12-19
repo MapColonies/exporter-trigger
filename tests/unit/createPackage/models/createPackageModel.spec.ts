@@ -37,7 +37,7 @@ describe('CreatePackageManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    createPackageManager = new CreatePackageManager(logger, jobManagerWrapperMock, catalogManagerMock);
+    createPackageManager = new CreatePackageManager(configMock, logger, jobManagerWrapperMock, catalogManagerMock);
   });
 
   afterEach(() => {

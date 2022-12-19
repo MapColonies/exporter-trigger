@@ -1,11 +1,8 @@
-import jsLogger from '@map-colonies/js-logger';
-import { trace } from '@opentelemetry/api';
 import httpStatusCodes from 'http-status-codes';
-import { container } from 'tsyringe';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getApp } from '../../../src/app';
 import { RasterCatalogManagerClient } from '../../../src/clients/rasterCatalogManagerClient';
-import { SERVICES } from '../../../src/common/constants';
+import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { ICreateJobResponse, ICreatePackage } from '../../../src/common/interfaces';
 import { layerFromCatalog } from '../../mocks/data';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
@@ -24,10 +21,7 @@ describe('tiles', function () {
 
   beforeEach(function () {
     const app = getApp({
-      override: [
-        { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
-        { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
-      ],
+      override: [...getContainerConfig()],
       useChild: true,
     });
     requestSender = new CreatePackageSender(app);
@@ -41,7 +35,7 @@ describe('tiles', function () {
   });
 
   afterEach(function () {
-    container.clearInstances();
+    resetContainer();
     jest.resetAllMocks();
   });
 

@@ -1,6 +1,5 @@
 import { promises as fsPromise } from 'fs';
 import { sep, join, parse as parsePath } from 'path';
-import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import {
   Polygon,
@@ -20,6 +19,7 @@ import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
+import { IConfig } from '../../../src/common/interfaces';
 import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
@@ -45,7 +45,9 @@ export class CreatePackageManager {
   private readonly gpkgsLocation: string;
   private readonly tileEstimatedSize: number;
   private readonly storageFactorBuffer: number;
+  private readonly validateStorage: boolean;
   public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
@@ -54,6 +56,7 @@ export class CreatePackageManager {
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
     this.tileEstimatedSize = config.get<number>('jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
     this.storageFactorBuffer = config.get<number>('storageFactorBuffer');
+    this.validateStorage = config.get<boolean>('validateStorage');
 
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
   }
@@ -105,10 +108,13 @@ export class CreatePackageManager {
     for (let i = 0; i <= zoomLevel; i++) {
       batches.push(bboxToTileRange(sanitizedBbox, i));
     }
+
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
-    const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
-    if (!isEnoughStorage) {
-      throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+    if (this.validateStorage) {
+      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
+      if (!isEnoughStorage) {
+        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+      }
     }
     const separator = this.getSeparator();
     const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, bbox);
