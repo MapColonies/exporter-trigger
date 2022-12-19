@@ -41,12 +41,12 @@ import {
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const geojsonhint: IHinter = require('@mapbox/geojsonhint') as IHinter;
+
 interface IHinter {
   hint: (obj: object) => [];
 }
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const geojsonhint: IHinter = require('@mapbox/geojsonhint') as IHinter;
 
 @injectable()
 export class CreatePackageManager {
