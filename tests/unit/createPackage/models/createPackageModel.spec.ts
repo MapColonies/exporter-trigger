@@ -1,9 +1,10 @@
 import fs from 'fs';
+import { sep } from 'path';
 import { BadRequestError } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { LayerMetadata } from '@map-colonies/mc-model-types';
+import { BBox, Polygon } from '@turf/helpers';
 import {
   jobManagerWrapperMock,
   findCompletedJobMock,
@@ -55,7 +56,7 @@ describe('CreatePackageManager', () => {
         crs: 'EPSG:4326',
       };
 
-      const expectedsanitizedBbox: BBox2d = [0, 0, 11.25, 11.25];
+      const expectedsanitizedBbox: BBox = [0, 0, 11.25, 11.25];
       const jobDupParams: JobDuplicationParams = {
         resourceId: 'string',
         version: '1.0',
@@ -91,7 +92,7 @@ describe('CreatePackageManager', () => {
     });
 
     it('should create job and convert provided footprint to bbox', async () => {
-      const footprint = {
+      const footprint: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -111,7 +112,7 @@ describe('CreatePackageManager', () => {
         crs: 'EPSG:4326',
       };
 
-      const expectedsanitizedBbox: BBox2d = [22.5, 11.25, 56.25, 45];
+      const expectedsanitizedBbox: BBox = [22.5, 11.25, 56.25, 45];
       const jobDupParams: JobDuplicationParams = {
         resourceId: 'string',
         version: '1.0',
@@ -127,7 +128,7 @@ describe('CreatePackageManager', () => {
         status: OperationStatus.IN_PROGRESS,
       };
       const validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
-      const normalize2BboxSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { normalize2Bbox: jest.Mock }, 'normalize2Bbox');
+      const normalize2PolygonSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { normalize2Polygon: jest.Mock }, 'normalize2Polygon');
 
       findLayerMock.mockResolvedValue(layerFromCatalog);
       createMock.mockResolvedValue(expectedCreateJobResponse);
@@ -140,7 +141,7 @@ describe('CreatePackageManager', () => {
       expect(res).toEqual(expectedCreateJobResponse);
       expect(findLayerMock).toHaveBeenCalledWith(req.dbId);
       expect(findLayerMock).toHaveBeenCalledTimes(1);
-      expect(normalize2BboxSpy).toHaveBeenCalledTimes(1);
+      expect(normalize2PolygonSpy).toHaveBeenCalledTimes(1);
       expect(createMock).toHaveBeenCalledTimes(1);
       expect(findCompletedJobMock).toHaveBeenCalledWith(jobDupParams);
       expect(findCompletedJobMock).toHaveBeenCalledTimes(1);
@@ -163,7 +164,7 @@ describe('CreatePackageManager', () => {
 
       const validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
 
-      const expectedsanitizedBbox: BBox2d = [0, -90, 180, 90];
+      const expectedsanitizedBbox: BBox = [0, -90, 180, 90];
       const expectedTargetResolution = layerFromCatalog.metadata.maxResolutionDeg;
 
       findLayerMock.mockResolvedValue(layerFromCatalog);
@@ -188,7 +189,7 @@ describe('CreatePackageManager', () => {
     });
 
     it('should return job and task-ids of existing in pending job', async () => {
-      const expectedsanitizedBbox: BBox2d = [0, 2.8125, 25.3125, 42.1875];
+      const expectedsanitizedBbox: BBox = [0, 2.8125, 25.3125, 42.1875];
       const jobDupParams: JobDuplicationParams = {
         resourceId: layerFromCatalog.metadata.productId as string,
         version: layerFromCatalog.metadata.productVersion as string,
@@ -220,7 +221,7 @@ describe('CreatePackageManager', () => {
     });
 
     it('should return job and task-ids of existing in progress job', async () => {
-      const expectedsanitizedBbox: BBox2d = [0, 2.8125, 25.3125, 42.1875];
+      const expectedsanitizedBbox: BBox = [0, 2.8125, 25.3125, 42.1875];
       const jobDupParams: JobDuplicationParams = {
         resourceId: layerFromCatalog.metadata.productId as string,
         version: layerFromCatalog.metadata.productVersion as string,
@@ -256,7 +257,7 @@ describe('CreatePackageManager', () => {
     });
 
     it('should increase callbacks array of existing in progress job', async () => {
-      const expectedsanitizedBbox: BBox2d = [0, 2.8125, 25.3125, 42.1875];
+      const expectedsanitizedBbox: BBox = [0, 2.8125, 25.3125, 42.1875];
       const jobDupParams: JobDuplicationParams = {
         resourceId: layerFromCatalog.metadata.productId as string,
         version: layerFromCatalog.metadata.productVersion as string,
@@ -329,7 +330,7 @@ describe('CreatePackageManager', () => {
 
     await createPackageManager.createJsonMetadata(mockGgpkgPath, completedJob);
 
-    const expectedFileName = `${directoryName}/${fileName}${METADA_JSON_FILE_EXTENSION}`;
+    const expectedFileName = `${directoryName}${sep}${fileName}${METADA_JSON_FILE_EXTENSION}`;
     const expectedMetadata: LayerMetadata = {
       ...layerFromCatalog.metadata,
       maxResolutionDeg: completedJob.parameters.targetResolution,

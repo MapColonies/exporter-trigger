@@ -1,5 +1,5 @@
 import { promises as fsPromise } from 'fs';
-import { sep, join, parse as parsePath } from 'path';
+import { sep, parse as parsePath } from 'path';
 import { Logger } from '@map-colonies/js-logger';
 import {
   Polygon,
@@ -17,6 +17,8 @@ import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
+import { isArray, isEmpty } from 'lodash';
+import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
 import { IConfig } from '../../../src/common/interfaces';
@@ -39,8 +41,18 @@ import {
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const geojsonhint: IHinter = require('@mapbox/geojsonhint') as IHinter;
+
+interface IHinter {
+  hint: (obj: object) => [];
+}
+
 @injectable()
 export class CreatePackageManager {
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  private static readonly bboxLength2d = 4;
+
   private readonly tilesProvider: MergerSourceType;
   private readonly gpkgsLocation: string;
   private readonly tileEstimatedSize: number;
@@ -66,8 +78,8 @@ export class CreatePackageManager {
     const layerMetadata = layer.metadata;
     let { productId: resourceId, productVersion: version, productType } = layerMetadata;
     const { dbId, crs, priority, bbox: bboxFromUser, callbackURLs } = userInput;
-    const normalizedBbox = this.normalize2Bbox(bboxFromUser);
-    const bbox = (normalizedBbox ?? PolygonBbox(layerMetadata.footprint)) as BBox2d;
+    const normalizedPolygon = this.normalize2Polygon(bboxFromUser);
+    const polygon = normalizedPolygon ?? layerMetadata.footprint;
     const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
 
@@ -81,7 +93,7 @@ export class CreatePackageManager {
       throw new BadRequestError(`The requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
     }
 
-    const sanitizedBbox = this.sanitizeBbox(bbox, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
+    const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
     if (sanitizedBbox === null) {
       throw new BadRequestError(`Requested bbox has no intersection with requested layer`);
     }
@@ -94,11 +106,11 @@ export class CreatePackageManager {
       crs: crs ?? DEFAULT_CRS,
     };
 
-    const callbacks = callbackURLs.map((url) => ({ url, bbox }));
+    const callbacks = callbackURLs.map((url) => <ICallbackTarget>{ url, bbox: bboxFromUser ?? sanitizedBbox });
     const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
     if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
       const completeResponseData = duplicationExist as ICallbackResponse;
-      completeResponseData.bbox = bboxFromUser ?? bbox;
+      completeResponseData.bbox = bboxFromUser ?? sanitizedBbox;
       return duplicationExist;
     } else if (duplicationExist) {
       return duplicationExist;
@@ -106,7 +118,7 @@ export class CreatePackageManager {
     const batches: ITileRange[] = [];
 
     for (let i = 0; i <= zoomLevel; i++) {
-      batches.push(bboxToTileRange(sanitizedBbox, i));
+      batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
     }
 
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
@@ -117,7 +129,7 @@ export class CreatePackageManager {
       }
     }
     const separator = this.getSeparator();
-    const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, bbox);
+    const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, sanitizedBbox);
     const packageRelativePath = getGpkgRelativePath(packageName, separator);
     const sources: IMapSource[] = [
       {
@@ -164,7 +176,7 @@ export class CreatePackageManager {
     const parsedPath = parsePath(fullGpkgPath);
     const directoryName = parsedPath.dir;
     const metadataFileName = parsedPath.name.concat(METADATA_JSON_FILE_EXTENSION);
-    const metadataFilePath = join(directoryName, metadataFileName);
+    const metadataFilePath = `${directoryName}${sep}${metadataFileName}`;
     const sanitizedBboxToPolygon = bboxPolygon(job.parameters.sanitizedBbox);
 
     record.metadata.footprint = sanitizedBboxToPolygon;
@@ -208,23 +220,45 @@ export class CreatePackageManager {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
 
-  private normalize2Bbox(bboxFromUser: Record<string, unknown> | BBox | undefined): BBox | undefined {
-    if (!bboxFromUser) {
-      this.logger.debug(`Export will be executed on entire layer's footprint`);
-      return undefined;
-    } else if (bboxFromUser instanceof Array) {
-      this.logger.debug(`Export will be executed by provided BBox from request input`);
-      return bboxFromUser as BBox2d;
-    } else if (bboxFromUser.type == 'Polygon') {
-      this.logger.debug(`Export will be executed by provided Footprint from request input`);
-      const bboxFromFootprint = PolygonBbox(bboxFromUser) as BBox2d;
-      return bboxFromFootprint;
-    } else {
+  private normalize2Polygon(bboxFromUser: Polygon | BBox | undefined): Polygon | undefined {
+    try {
+      if (isArray(bboxFromUser) && bboxFromUser.length === CreatePackageManager.bboxLength2d) {
+        this.logger.debug({ bboxFromUser, msg: `Export will be executed by provided BBox from request input` });
+        const resultPolygon = bboxPolygon(bboxFromUser as BBox);
+        return resultPolygon.geometry;
+      } else if (this.isAPolygon(bboxFromUser)) {
+        this.logger.debug({ bboxFromUser, msg: `Export will be executed by provided Footprint from request input` });
+        return bboxFromUser;
+      } else if (bboxFromUser === undefined) {
+        this.logger.debug(`Export will be executed on entire layer's footprint`);
+        return undefined;
+      } else {
+        this.logger.warn({ bboxFromUser, msg: `Input bbox param illegal - should be bbox | polygon | null types` });
+        throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
+      }
+    } catch (error) {
+      this.logger.error({ bboxFromUser, msg: `Failed` });
       throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
     }
   }
-  private sanitizeBbox(bbox: BBox, footprint: Polygon | MultiPolygon, zoom: number): BBox2d | null {
-    const intersaction = intersect(bboxPolygon(bbox), footprint);
+
+  private isAPolygon(obj?: object): obj is Polygon {
+    if (obj === undefined) {
+      return false;
+    }
+    const isPolygon = 'type' in obj && 'coordinates' in obj && (obj as { type: string }).type === 'Polygon';
+    if (isPolygon) {
+      const errors = geojsonhint.hint(obj);
+      if (!isEmpty(errors)) {
+        this.logger.warn({ bboxFromUser: obj, msg: `Not a polygon: ${JSON.stringify(errors)}` });
+        return false;
+      }
+    }
+    return isPolygon;
+  }
+
+  private sanitizeBbox(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
+    const intersaction = intersect(polygon, footprint);
     if (intersaction === null) {
       return null;
     }
@@ -289,6 +323,12 @@ export class CreatePackageManager {
           return false;
         }
 
+        if (this.isAPolygon(callback.bbox) && this.isAPolygon(newCallback.bbox)) {
+          return booleanEqual(newCallback.bbox, callback.bbox);
+        } else if (this.isAPolygon(callback.bbox) || this.isAPolygon(newCallback.bbox)) {
+          return false;
+        }
+        // else both BBoxes
         let sameBboxCoordinate = false;
         for (let i = 0; i < callback.bbox.length; i++) {
           sameBboxCoordinate = callback.bbox[i] === newCallback.bbox[i];

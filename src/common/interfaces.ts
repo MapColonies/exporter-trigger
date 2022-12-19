@@ -1,4 +1,3 @@
-import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { MultiPolygon, Polygon, BBox } from '@turf/turf';
 import { ICreateJobBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { ITileRange } from '@map-colonies/mc-utils';
@@ -20,13 +19,13 @@ export interface ICreatePackage {
   targetResolution?: number;
   crs?: string;
   callbackURLs: string[];
-  bbox?: BBox | Record<string, unknown>;
+  bbox?: BBox | Polygon;
   priority?: number;
 }
 
 export interface ICallbackTarget {
   url: string;
-  bbox: BBox2d;
+  bbox: BBox | Polygon;
 }
 
 export interface IWorkerInput {
@@ -37,7 +36,7 @@ export interface IWorkerInput {
   priority?: number;
   callbacks: ICallbackTarget[];
   crs: string;
-  sanitizedBbox: BBox2d;
+  sanitizedBbox: BBox;
   zoomLevel: number;
   version: string;
   cswProductId: string;
@@ -70,7 +69,7 @@ export interface ICallbackDataBase {
 }
 
 export interface ICallbackData extends ICallbackDataBase {
-  bbox: BBox | Record<string, unknown>;
+  bbox: BBox | Polygon;
 }
 
 export interface ICallbackResposne extends ICallbackData {
@@ -83,7 +82,7 @@ export interface JobDuplicationParams {
   dbId: string;
   zoomLevel: number;
   crs: string;
-  sanitizedBbox: BBox2d;
+  sanitizedBbox: BBox;
 }
 
 export interface IJobParameters {
@@ -91,7 +90,7 @@ export interface IJobParameters {
   relativeDirectoryPath: string;
   crs: string;
   callbacks: ICallbackTarget[];
-  sanitizedBbox: BBox2d;
+  sanitizedBbox: BBox;
   zoomLevel: number;
   callbackParams?: ICallbackDataBase;
   fileName: string;
