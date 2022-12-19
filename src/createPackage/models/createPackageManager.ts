@@ -19,7 +19,7 @@ import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { ProductType } from '@map-colonies/mc-model-types';
-import { isArray } from 'lodash';
+import { isArray, isEmpty } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
@@ -40,6 +40,13 @@ import {
   IStorageStatusResponse,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
+
+interface IHinter {
+  hint: (obj: object) => [];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const geojsonhint: IHinter = require('@mapbox/geojsonhint') as IHinter;
 
 @injectable()
 export class CreatePackageManager {
@@ -234,7 +241,15 @@ export class CreatePackageManager {
     if (obj === undefined) {
       return false;
     }
-    return 'type' in obj && 'coordinates' in obj && (obj as { type: string }).type === 'Polygon';
+    const isPolygon = 'type' in obj && 'coordinates' in obj && (obj as { type: string }).type === 'Polygon';
+    if (isPolygon) {
+      const errors = geojsonhint.hint(obj);
+      if (!isEmpty(errors)) {
+        this.logger.warn({ bboxFromUser: obj, msg: `Not a polygon: ${JSON.stringify(errors)}` });
+        return false;
+      }
+    }
+    return isPolygon;
   }
 
   private sanitizeBbox(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
