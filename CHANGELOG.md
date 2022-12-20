@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.0](https://github.com/MapColonies/exporter-trigger/compare/v2.6.0...v2.7.0) (2022-12-20)
+
+
+### Features
+
+* fix order for footprint vs bbox and other cr requests ([#46](https://github.com/MapColonies/exporter-trigger/issues/46)) ([1532109](https://github.com/MapColonies/exporter-trigger/commit/15321097ccf91c51c00909645be322e4bb8323c8))
+* support footprint as bbox params ([28c2655](https://github.com/MapColonies/exporter-trigger/commit/28c2655a8a8e27593e50f60e38fc11cb4fae3b6e))
+* validate storage as configured param ([#48](https://github.com/MapColonies/exporter-trigger/issues/48)) ([7d8b5ed](https://github.com/MapColonies/exporter-trigger/commit/7d8b5edb9aa699f289e1882c61136e4e253b1c51))
+
+
+### Bug Fixes
+
+* layer polygon parts on metadata json ([#45](https://github.com/MapColonies/exporter-trigger/issues/45)) ([7a745be](https://github.com/MapColonies/exporter-trigger/commit/7a745be592c9d3a06434df8c83db71358d2c6ea3))
+
 ## [2.6.0](https://github.com/MapColonies/exporter-trigger/compare/v2.5.0...v2.6.0) (2022-12-11)
 
 
