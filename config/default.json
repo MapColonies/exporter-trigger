@@ -44,8 +44,11 @@
       "taskType": "rasterTilesExporter"
     }
   },
-  "jpegTileEstimatedSizeInBytes": 12500,
-  "storageFactorBuffer": 1.25,
+  "storageEstimation": {
+    "jpegTileEstimatedSizeInBytes": 12500,
+    "storageFactorBuffer": 1.25,
+    "validateStorageSize": true
+  },
   "tilesProvider": "S3",
   "gpkgsLocation": "/app/tiles_outputs/gpkgs",
   "downloadServerUrl": "http://download-service",

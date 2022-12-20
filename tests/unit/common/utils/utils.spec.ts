@@ -21,7 +21,7 @@ describe('Utils', () => {
 
   describe('calculate estimated gpkg size by sanitized bbox', () => {
     it('should return estimated size in bytes to gpkg', () => {
-      const tileEstimatedSize: number = configMock.get('jpegTileEstimatedSizeInBytes'); // todo - on future will be affected by tile size configuration => png \ jpeg
+      const tileEstimatedSize: number = configMock.get('storageEstimation.jpegTileEstimatedSizeInBytes'); // todo - on future will be affected by tile size configuration => png \ jpeg
       const result = utils.calculateEstimateGpkgSize(sanitizedBatchesExample, tileEstimatedSize);
       expect(result).toBe(1062500);
     });
