@@ -33,5 +33,5 @@ data:
   POLLING_TIMEOUT_MS: {{ .Values.env.pollingTimeoutMS | quote }}
   JPEG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.jpegTileEstimatedSizeInBytes | quote }}
   STORAGE_FACTOR_BUFFER: {{ .Values.env.estimatedStorageCalculation.storageFactorBuffer | quote }}
-  VALIDATE_STORAGE: {{ .Values.env.estimatedStorageCalculation.validateStorage | quote }}
+  VALIDATE_STORAGE_SIZE: {{ .Values.env.estimatedStorageCalculation.validateStorageSize | quote }}
 {{- end }}

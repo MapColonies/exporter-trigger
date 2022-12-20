@@ -57,7 +57,7 @@ export class CreatePackageManager {
   private readonly gpkgsLocation: string;
   private readonly tileEstimatedSize: number;
   private readonly storageFactorBuffer: number;
-  private readonly validateStorage: boolean;
+  private readonly validateStorageSize: boolean;
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -66,9 +66,9 @@ export class CreatePackageManager {
   ) {
     this.tilesProvider = config.get<MergerSourceType>('tilesProvider');
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
-    this.tileEstimatedSize = config.get<number>('jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
-    this.storageFactorBuffer = config.get<number>('storageFactorBuffer');
-    this.validateStorage = config.get<boolean>('validateStorage');
+    this.tileEstimatedSize = config.get<number>('storageEstimation.jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
+    this.storageFactorBuffer = config.get<number>('storageEstimation.storageFactorBuffer');
+    this.validateStorageSize = config.get<boolean>('storageEstimation.validateStorageSize');
 
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
   }
@@ -122,7 +122,7 @@ export class CreatePackageManager {
     }
 
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
-    if (this.validateStorage) {
+    if (this.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
       if (!isEnoughStorage) {
         throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
