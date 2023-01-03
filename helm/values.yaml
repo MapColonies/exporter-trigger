@@ -60,9 +60,9 @@ opa:
 envoy:
   image: envoyproxy/envoy
   imageTag: v1.20.7
-  port: 6565
+  port: 8000
   maxRequestBytes: 8192
-  requestedDomain: raster
+  requestedDomain: rasterExport
   resources:
     enabled: true
     value:
@@ -112,7 +112,7 @@ resources:
 route:
   enabled: true
   host:
-  path: /api/raster/v1
+  path: /
   https: true
   useCert: false
   timeout:
