@@ -60,7 +60,7 @@ opa:
 envoy:
   image: envoyproxy/envoy
   imageTag: v1.20.7
-  port: 8000
+  port: 6565
   maxRequestBytes: 8192
   requestedDomain: rasterExport
   resources:
