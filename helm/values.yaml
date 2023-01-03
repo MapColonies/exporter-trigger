@@ -112,7 +112,7 @@ resources:
 route:
   enabled: true
   host:
-  path: /
+  path: /api/raster/v1
   https: true
   useCert: false
   timeout:
