@@ -93,7 +93,7 @@ export class CreatePackageManager {
 
     const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
     if (sanitizedBbox === null) {
-      throw new BadRequestError(`Requested bbox has no intersection with requested layer`);
+      throw new BadRequestError(`Requested ${polygon} has no intersection with requested layer ${layer.id}`);
     }
     const dupParams: JobDuplicationParams = {
       resourceId,
@@ -201,7 +201,7 @@ export class CreatePackageManager {
       });
     }
     const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageFactorBuffer;
-    this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({ free: actualFreeSpace, total: storageStatus.size })}`);
+    this.logger.debug({ freeSpace: actualFreeSpace, totalSpace: storageStatus.size }, `Current storage free space for gpkgs location`);
     return actualFreeSpace;
   }
 
@@ -218,21 +218,21 @@ export class CreatePackageManager {
   private normalize2Polygon(bboxFromUser: Polygon | BBox | undefined): Polygon | undefined {
     try {
       if (isArray(bboxFromUser) && bboxFromUser.length === CreatePackageManager.bboxLength2d) {
-        this.logger.debug({ bboxFromUser, msg: `Export will be executed by provided BBox from request input` });
+        this.logger.debug(bboxFromUser, `Export will be executed by provided BBox from request input`);
         const resultPolygon = bboxPolygon(bboxFromUser as BBox);
         return resultPolygon.geometry;
       } else if (this.isAPolygon(bboxFromUser)) {
-        this.logger.debug({ bboxFromUser, msg: `Export will be executed by provided Footprint from request input` });
+        this.logger.debug(bboxFromUser, `Export will be executed by provided Footprint from request input`);
         return bboxFromUser;
-      } else if (bboxFromUser === undefined) {
+      } else if (!bboxFromUser) {
         this.logger.debug(`Export will be executed on entire layer's footprint`);
         return undefined;
       } else {
-        this.logger.warn({ bboxFromUser, msg: `Input bbox param illegal - should be bbox | polygon | null types` });
+        this.logger.warn(bboxFromUser, `Input bbox param illegal - should be bbox | polygon | null types`);
         throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
       }
     } catch (error) {
-      this.logger.error({ bboxFromUser, msg: `Failed` });
+      this.logger.error(bboxFromUser, `Failed`);
       throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
     }
   }
@@ -245,7 +245,7 @@ export class CreatePackageManager {
     if (isPolygon) {
       const errors = geojsonhint.hint(obj);
       if (!isEmpty(errors)) {
-        this.logger.warn({ bboxFromUser: obj, msg: `Not a polygon: ${JSON.stringify(errors)}` });
+        this.logger.warn({ bboxFromUser: obj, errors }, `Not a polygon`);
         return false;
       }
     }
@@ -284,7 +284,7 @@ export class CreatePackageManager {
   }
 
   private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResponse | undefined> {
-    this.logger.info(`Checking for COMPLETED duplications with parameters: ${JSON.stringify(dupParams)}`);
+    this.logger.info(dupParams, `Checking for COMPLETED duplications with parameters`);
     const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
     if (responseJob) {
       await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
@@ -296,7 +296,7 @@ export class CreatePackageManager {
   }
 
   private async checkForProcessing(dupParams: JobDuplicationParams, newCallbacks: ICallbackTarget[]): Promise<ICreateJobResponse | undefined> {
-    this.logger.info(`Checking for PROCESSING duplications with parameters: ${JSON.stringify(dupParams)}`);
+    this.logger.info(dupParams, `Checking for PROCESSING duplications with parameters`);
     const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
     if (processingJob) {
       await this.updateCallbackURLs(processingJob, newCallbacks);

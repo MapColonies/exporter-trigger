@@ -26,19 +26,19 @@ const stubHealthcheck = async (): Promise<void> => Promise.resolve();
 const server = createTerminus(createServer(app), { healthChecks: { '/liveness': stubHealthcheck, onSignal: container.resolve('onSignal') } });
 const pollingManager: PollingManager = container.resolve(POLLING_MANGER_SYMBOL);
 server.listen(port, () => {
-  logger.info(`app started on port ${port}`);
+  logger.info(`App started on port ${port}`);
 });
 const mainPollLoop = async (): Promise<void> => {
   const pollingTimout = config.get<number>('pollingTimeoutMS');
   const isRunning = true;
-  logger.info('running job status poll');
+  logger.info('Running job status poll');
   //eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (isRunning) {
     let polledData = false;
     try {
       polledData = await pollingManager.jobStatusPoll();
     } catch (error) {
-      logger.error(`mainPollLoop: Error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+      logger.error(error, `Main loop poll error occured`);
     } finally {
       if (!polledData) {
         await new Promise((resolve) => setTimeout(resolve, pollingTimout));

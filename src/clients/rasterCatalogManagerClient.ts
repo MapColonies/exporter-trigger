@@ -21,14 +21,14 @@ export class RasterCatalogManagerClient extends HttpClient {
 
   public async findLayer(id: string): Promise<PycswRecord> {
     const findLayerUrl = `/records/find`;
-    this.logger.info(`Retrieving record with id ${id}`);
+    this.logger.info(`Retrieving catalog record with id ${id}`);
     const layer = (await this.post<PycswFindRecordResponse>(findLayerUrl, { id }))[0];
 
-    if (layer === undefined) {
-      throw new NotFoundError(`Could not find layer with dbID: ${id}`);
+    if (!layer) {
+      throw new NotFoundError(`Could not find catalog layer with id: ${id}`);
     }
 
-    this.logger.debug(`Retrieved layer: ${JSON.stringify(layer)}`);
+    this.logger.debug(layer, `Retrieved layer with id ${id}`);
     return layer;
   }
 }
