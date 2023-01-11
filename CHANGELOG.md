@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.8.0](https://github.com/MapColonies/exporter-trigger/compare/v2.7.1...v2.8.0) (2023-01-11)
+
+
+### Features
+
+* added referrer support ([#50](https://github.com/MapColonies/exporter-trigger/issues/50)) ([e59e295](https://github.com/MapColonies/exporter-trigger/commit/e59e2950780b356b48a741a6a2196cf2282d862a))
+
 ### [2.7.1](https://github.com/MapColonies/exporter-trigger/compare/v2.7.0...v2.7.1) (2023-01-04)
 
 ## [2.7.0](https://github.com/MapColonies/exporter-trigger/compare/v2.6.0...v2.7.0) (2022-12-20)
