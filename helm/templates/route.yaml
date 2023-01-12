@@ -1,6 +1,8 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "exporter-trigger.name" . -}}
 {{- $cloudProviderFlavor := include "exporter-trigger.cloudProviderFlavor" . -}}
+{{ $targetPort := ternary "external" "internal" .Values.rasterCommon.authentication.opa.enabled }}
+
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
 apiVersion: route.openshift.io/v1
 kind: Route
@@ -17,7 +19,7 @@ spec:
   {{- end }}
   path:  {{ .Values.route.path | default "/" }}
   port:
-    targetPort: external
+    targetPort: {{ $targetPort }}
   to:
     kind: Service
     name: {{ $releaseName }}-{{ $chartName }}

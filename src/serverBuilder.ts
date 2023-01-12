@@ -46,7 +46,7 @@ export class ServerBuilder {
   }
 
   private registerPreRoutesMiddleware(): void {
-    this.serverInstance.use(httpLogger({ logger: this.logger }));
+    this.serverInstance.use(httpLogger({ logger: this.logger, ignorePaths: ['/docs'] }));
 
     if (this.config.get<boolean>('server.response.compression.enabled')) {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
@@ -56,7 +56,10 @@ export class ServerBuilder {
 
     const ignorePathRegex = new RegExp(`^${this.config.get<string>('openapiConfig.basePath')}/.*`, 'i');
     const apiSpecPath = this.config.get<string>('openapiConfig.filePath');
-    this.serverInstance.use(OpenApiMiddleware({ apiSpec: apiSpecPath, validateRequests: true, ignorePaths: ignorePathRegex }));
+    // todo - allowUnknownQueryParameters: true, its temporary  patch - should add proxy as permanent solution to except token jwt auth
+    this.serverInstance.use(
+      OpenApiMiddleware({ apiSpec: apiSpecPath, validateRequests: { allowUnknownQueryParameters: true }, ignorePaths: ignorePathRegex })
+    );
   }
 
   private registerPostRoutesMiddleware(): void {
