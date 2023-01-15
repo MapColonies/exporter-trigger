@@ -190,7 +190,7 @@ export class JobManagerWrapper extends JobManagerClient {
         });
       } else {
         const msg = 'Will not update expiration date, as current expiration date is later than current expiration date';
-        this.logger.debug({ jobId, oldExpirationDate, newExpirationDate, msg });
+        this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg });
       }
     }
   }

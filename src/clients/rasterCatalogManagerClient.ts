@@ -7,7 +7,6 @@ import { LayerMetadata, Link } from '@map-colonies/mc-model-types';
 import { SERVICES } from '../common/constants';
 
 interface PycswRecord {
-  id: string;
   metadata: LayerMetadata;
   links: Link[];
 }

@@ -3,7 +3,6 @@ import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
-import { JobResponse } from './common/interfaces';
 
 export const POLLING_MANGER_SYMBOL = Symbol('tasksFactory');
 
