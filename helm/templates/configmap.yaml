@@ -32,6 +32,7 @@ data:
   DOWNLOAD_SERVER_URL: {{ .Values.rasterCommon.serviceUrls.downloadServer | quote }}
   POLLING_TIMEOUT_MS: {{ .Values.env.pollingTimeoutMS | quote }}
   JPEG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.jpegTileEstimatedSizeInBytes | quote }}
+  PNG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.pngTileEstimatedSizeInBytes | quote }}
   STORAGE_FACTOR_BUFFER: {{ .Values.env.estimatedStorageCalculation.storageFactorBuffer | quote }}
   VALIDATE_STORAGE_SIZE: {{ .Values.env.estimatedStorageCalculation.validateStorageSize | quote }}
 {{- end }}

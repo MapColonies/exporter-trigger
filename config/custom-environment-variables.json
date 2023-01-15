@@ -72,6 +72,10 @@
       "__name": "JPEG_TILE_ESTIMATED_SIZE_IN_BYTES",
       "__format": "number"
     },
+    "pngTileEstimatedSizeInBytes": {
+      "__name": "PNG_TILE_ESTIMATED_SIZE_IN_BYTES",
+      "__format": "number"
+    },
     "storageFactorBuffer": {
       "__name": "STORAGE_FACTOR_BUFFER",
       "__format": "number"

@@ -20,7 +20,7 @@ import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types'
 import { isArray, isEmpty } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { ProductType } from '@map-colonies/mc-model-types';
+import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { IConfig } from '../../../src/common/interfaces';
 import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
@@ -55,7 +55,6 @@ export class CreatePackageManager {
 
   private readonly tilesProvider: MergerSourceType;
   private readonly gpkgsLocation: string;
-  private readonly tileEstimatedSize: number;
   private readonly storageFactorBuffer: number;
   private readonly validateStorageSize: boolean;
   public constructor(
@@ -66,7 +65,6 @@ export class CreatePackageManager {
   ) {
     this.tilesProvider = config.get<MergerSourceType>('tilesProvider');
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
-    this.tileEstimatedSize = config.get<number>('storageEstimation.jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
     this.storageFactorBuffer = config.get<number>('storageEstimation.storageFactorBuffer');
     this.validateStorageSize = config.get<boolean>('storageEstimation.validateStorageSize');
 
@@ -82,6 +80,7 @@ export class CreatePackageManager {
     const polygon = normalizedPolygon ?? layerMetadata.footprint;
     const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
+    const tileEstimatedSize = this.getTileEstimatedSize(layerMetadata.tileOutputFormat as TileOutputFormat);
 
     resourceId = resourceId as string;
     version = version as string;
@@ -121,7 +120,7 @@ export class CreatePackageManager {
       batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
     }
 
-    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
+    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
     if (this.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
       if (!isEnoughStorage) {
@@ -370,5 +369,17 @@ export class CreatePackageManager {
     const newPolygonLarts = createFeatureCollection(newFeatures, { bbox: sanitizedBboxPolygonzied.bbox });
 
     return newPolygonLarts;
+  }
+
+  private getTileEstimatedSize(tileOutputFormat: TileOutputFormat): number {
+    let tileEstimatedSize;
+    if (tileOutputFormat === TileOutputFormat.JPEG) {
+      tileEstimatedSize = this.config.get<number>('storageEstimation.jpegTileEstimatedSizeInBytes');
+    } else {
+      tileEstimatedSize = this.config.get<number>('storageEstimation.pngTileEstimatedSizeInBytes');
+    }
+    this.logger.debug(`single tile size defined as ${tileOutputFormat} from configuration: ${tileEstimatedSize} bytes`);
+
+    return tileEstimatedSize;
   }
 }
