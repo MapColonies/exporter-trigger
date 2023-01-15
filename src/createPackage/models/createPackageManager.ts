@@ -95,7 +95,7 @@ export class CreatePackageManager {
 
     const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
     if (sanitizedBbox === null) {
-      throw new BadRequestError(`Requested ${JSON.stringify(polygon as Polygon)} has no intersection with requested layer ${layer.metadata.id}`);
+      throw new BadRequestError(`Requested ${JSON.stringify(polygon as Polygon)} has no intersection with requested layer ${layer.metadata.id as string}`);
     }
 
     const dupParams: JobDuplicationParams = {
