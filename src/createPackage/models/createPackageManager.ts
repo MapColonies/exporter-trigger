@@ -21,7 +21,7 @@ import { isArray, isEmpty } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
-import { IConfig } from '../../../src/common/interfaces';
+import { IConfig, IStorageEstimation } from '../../../src/common/interfaces';
 import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
@@ -55,8 +55,8 @@ export class CreatePackageManager {
 
   private readonly tilesProvider: MergerSourceType;
   private readonly gpkgsLocation: string;
-  private readonly storageFactorBuffer: number;
-  private readonly validateStorageSize: boolean;
+  private readonly storageEstimation: IStorageEstimation;
+
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -65,8 +65,7 @@ export class CreatePackageManager {
   ) {
     this.tilesProvider = config.get<MergerSourceType>('tilesProvider');
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
-    this.storageFactorBuffer = config.get<number>('storageEstimation.storageFactorBuffer');
-    this.validateStorageSize = config.get<boolean>('storageEstimation.validateStorageSize');
+    this.storageEstimation = config.get<IStorageEstimation>('storageEstimation');
 
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
   }
@@ -121,7 +120,7 @@ export class CreatePackageManager {
     }
 
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
-    if (this.validateStorageSize) {
+    if (this.storageEstimation.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
       if (!isEnoughStorage) {
         throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
@@ -204,7 +203,7 @@ export class CreatePackageManager {
         otherRunningJobsSize += jobGpkgEstimatedSize;
       });
     }
-    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageFactorBuffer;
+    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageEstimation.storageFactorBuffer;
     this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({ free: actualFreeSpace, total: storageStatus.size })}`);
     return actualFreeSpace;
   }
@@ -374,9 +373,9 @@ export class CreatePackageManager {
   private getTileEstimatedSize(tileOutputFormat: TileOutputFormat): number {
     let tileEstimatedSize;
     if (tileOutputFormat === TileOutputFormat.JPEG) {
-      tileEstimatedSize = this.config.get<number>('storageEstimation.jpegTileEstimatedSizeInBytes');
+      tileEstimatedSize = this.storageEstimation.jpegTileEstimatedSizeInBytes;
     } else {
-      tileEstimatedSize = this.config.get<number>('storageEstimation.pngTileEstimatedSizeInBytes');
+      tileEstimatedSize = this.storageEstimation.pngTileEstimatedSizeInBytes;
     }
     this.logger.debug(`single tile size defined as ${tileOutputFormat} from configuration: ${tileEstimatedSize} bytes`);
 
