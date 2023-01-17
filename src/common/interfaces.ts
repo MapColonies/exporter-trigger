@@ -134,6 +134,13 @@ export interface IStorageStatusResponse {
   size: number;
 }
 
+export interface IStorageEstimation {
+  jpegTileEstimatedSizeInBytes: number;
+  pngTileEstimatedSizeInBytes: number;
+  storageFactorBuffer: number;
+  validateStorageSize: boolean;
+}
+
 export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
 export type TaskResponse = ITaskResponse<ITaskParameters>;
 export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;

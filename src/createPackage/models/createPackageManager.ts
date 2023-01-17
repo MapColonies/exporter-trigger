@@ -20,8 +20,8 @@ import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types'
 import { isArray, isEmpty } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { ProductType } from '@map-colonies/mc-model-types';
-import { IConfig } from '../../../src/common/interfaces';
+import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
+import { IConfig, IStorageEstimation } from '../../../src/common/interfaces';
 import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
@@ -55,9 +55,8 @@ export class CreatePackageManager {
 
   private readonly tilesProvider: MergerSourceType;
   private readonly gpkgsLocation: string;
-  private readonly tileEstimatedSize: number;
-  private readonly storageFactorBuffer: number;
-  private readonly validateStorageSize: boolean;
+  private readonly storageEstimation: IStorageEstimation;
+
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -66,9 +65,7 @@ export class CreatePackageManager {
   ) {
     this.tilesProvider = config.get<MergerSourceType>('tilesProvider');
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
-    this.tileEstimatedSize = config.get<number>('storageEstimation.jpegTileEstimatedSizeInBytes'); // todo - should be calculated on future param from request
-    this.storageFactorBuffer = config.get<number>('storageEstimation.storageFactorBuffer');
-    this.validateStorageSize = config.get<boolean>('storageEstimation.validateStorageSize');
+    this.storageEstimation = config.get<IStorageEstimation>('storageEstimation');
 
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
   }
@@ -82,6 +79,7 @@ export class CreatePackageManager {
     const polygon = normalizedPolygon ?? layerMetadata.footprint;
     const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
     const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
+    const tileEstimatedSize = this.getTileEstimatedSize(layerMetadata.tileOutputFormat as TileOutputFormat);
 
     resourceId = resourceId as string;
     version = version as string;
@@ -121,8 +119,8 @@ export class CreatePackageManager {
       batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
     }
 
-    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, this.tileEstimatedSize); // size of requested gpkg export
-    if (this.validateStorageSize) {
+    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
+    if (this.storageEstimation.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
       if (!isEnoughStorage) {
         throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
@@ -205,7 +203,7 @@ export class CreatePackageManager {
         otherRunningJobsSize += jobGpkgEstimatedSize;
       });
     }
-    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageFactorBuffer;
+    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageEstimation.storageFactorBuffer;
     this.logger.debug(`Current storage free space for gpkgs location: ${JSON.stringify({ free: actualFreeSpace, total: storageStatus.size })}`);
     return actualFreeSpace;
   }
@@ -370,5 +368,17 @@ export class CreatePackageManager {
     const newPolygonLarts = createFeatureCollection(newFeatures, { bbox: sanitizedBboxPolygonzied.bbox });
 
     return newPolygonLarts;
+  }
+
+  private getTileEstimatedSize(tileOutputFormat: TileOutputFormat): number {
+    let tileEstimatedSize;
+    if (tileOutputFormat === TileOutputFormat.JPEG) {
+      tileEstimatedSize = this.storageEstimation.jpegTileEstimatedSizeInBytes;
+    } else {
+      tileEstimatedSize = this.storageEstimation.pngTileEstimatedSizeInBytes;
+    }
+    this.logger.debug(`single tile size defined as ${tileOutputFormat} from configuration: ${tileEstimatedSize} bytes`);
+
+    return tileEstimatedSize;
   }
 }

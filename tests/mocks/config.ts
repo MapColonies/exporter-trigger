@@ -71,6 +71,7 @@ const registerDefaultConfig = (): void => {
     pollingTimeoutMS: 2000,
     storageEstimation: {
       jpegTileEstimatedSizeInBytes: 12500,
+      pngTileEstimatedSizeInBytes: 12500,
       storageFactorBuffer: 1.25,
       validateStorageSize: true,
     },
