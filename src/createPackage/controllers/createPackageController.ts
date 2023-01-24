@@ -20,7 +20,7 @@ export class CreatePackageController {
   public create: CreatePackageHandler = async (req, res, next) => {
     const userInput: ICreatePackage = req.body;
     try {
-      this.logger.debug(`User input: ${JSON.stringify(userInput)}`);
+      this.logger.debug(userInput, `Creating package with user input`);
       const jobCreated = await this.manager.createPackage(userInput);
       return res.status(httpStatus.OK).json(jobCreated);
     } catch (err) {

@@ -92,13 +92,14 @@ export class TasksManager {
       const promisesResponse = await Promise.allSettled(callbackPromises);
       promisesResponse.forEach((response, index) => {
         if (response.status === 'rejected') {
-          this.logger.error(`Did not send callback to ${targetCallbacks[index].url}, got error: ${JSON.stringify(response.reason)}`);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url }, `Failed to send callback to url`);
         }
       });
 
       return callbackParams;
     } catch (error) {
-      this.logger.error(`Sending callback has failed with error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+      this.logger.error(error, `Sending callback has failed`);
     }
   }
 

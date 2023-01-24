@@ -10,8 +10,8 @@ export class CallbackClient extends HttpClient {
     super(logger, '', 'requestCallback', config.get<IHttpRetryConfig>('httpRetry'));
   }
 
-  public async send(callbackUrl: string, params: ICallbackData): Promise<void> {
-    this.logger.info(`send Callback request to URL: ${callbackUrl} with data ${JSON.stringify(params)}`);
-    await this.post(callbackUrl, params);
+  public async send(callbackUrl: string, data: ICallbackData): Promise<void> {
+    this.logger.info(data, `Sending callback request to URL: "${callbackUrl}"`);
+    await this.post(callbackUrl, data);
   }
 }

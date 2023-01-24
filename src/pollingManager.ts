@@ -3,7 +3,6 @@ import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
-import { JobResponse } from './common/interfaces';
 
 export const POLLING_MANGER_SYMBOL = Symbol('tasksFactory');
 
@@ -20,16 +19,16 @@ export class PollingManager {
     const jobs = await this.taskManager.getJobsByTaskStatus();
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
-    if ((jobs.completedJobs?.length ?? 0) > 0) {
+    if (jobs.completedJobs?.length) {
       existsJobs = true;
-      this.logger.info(`completed jobs detected, running finalize job`);
-      for (const job of jobs.completedJobs as JobResponse[]) {
+      this.logger.info(`Completed jobs detected, running finalize job`);
+      for (const job of jobs.completedJobs) {
         await this.taskManager.finalizeJob(job, expirationDate);
       }
-    } else if ((jobs.failedJobs?.length ?? 0) > 0) {
+    } else if (jobs.failedJobs?.length) {
       existsJobs = true;
-      this.logger.info(`failed jobs detected, updating job status`);
-      for (const job of jobs.failedJobs as JobResponse[]) {
+      this.logger.info(`Failed jobs detected, running finalize job`);
+      for (const job of jobs.failedJobs) {
         const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
         await this.taskManager.finalizeJob(job, expirationDate, false, gpkgFailedErr);
       }
