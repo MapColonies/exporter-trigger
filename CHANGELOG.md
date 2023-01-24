@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.9.0](https://github.com/MapColonies/exporter-trigger/compare/v2.8.0...v2.9.0) (2023-01-17)
+
+
+### Features
+
+* making dynamic tile size calculation per tile format: jpeg/png (MAPCO-2758) ([#52](https://github.com/MapColonies/exporter-trigger/issues/52)) ([e553d4b](https://github.com/MapColonies/exporter-trigger/commit/e553d4bca4ca95b8d1ec533d9e22537874072cec))
+
+## [2.8.0](https://github.com/MapColonies/exporter-trigger/compare/v2.7.1...v2.8.0) (2023-01-11)
+
+
+### Features
+
+* added referrer support ([#50](https://github.com/MapColonies/exporter-trigger/issues/50)) ([e59e295](https://github.com/MapColonies/exporter-trigger/commit/e59e2950780b356b48a741a6a2196cf2282d862a))
+
 ### [2.7.1](https://github.com/MapColonies/exporter-trigger/compare/v2.7.0...v2.7.1) (2023-01-04)
 
 ## [2.7.0](https://github.com/MapColonies/exporter-trigger/compare/v2.6.0...v2.7.0) (2022-12-20)

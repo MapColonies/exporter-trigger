@@ -22,10 +22,23 @@ valid_origin[payload] {
   not payload.ao
 }
 
+valid_referrer[payload] {
+	payload.ao[_] = http_request.headers.referrer
+}
+
+valid_referrer[payload] {
+	payload.ao == http_request.headers.referrer
+}
+
 # allow authenticated access
 allow {
   valid_origin[payload]
   user_has_resource_access[payload]
+}
+
+allow {
+	valid_referrer[payload]
+	user_has_resource_access[payload]
 }
 
 # allow cors preflight WITHOUT AUTHENTICATION
