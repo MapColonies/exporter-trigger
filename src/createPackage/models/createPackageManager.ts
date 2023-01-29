@@ -13,9 +13,8 @@ import {
   featureCollection as createFeatureCollection,
 } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
-import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
+import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid, TileRanger } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { isArray, isEmpty } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
@@ -88,7 +87,7 @@ export class CreatePackageManager {
     const srcRes = layerMetadata.maxResolutionDeg as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
     if (zoomLevel > maxZoom) {
-      throw new BadRequestError(`The requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
+      throw new BadRequestError(`The requested requested resolution ${targetResolution} is larger than product resolution ${srcRes}`);
     }
 
     const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
@@ -116,13 +115,9 @@ export class CreatePackageManager {
     } else if (duplicationExist) {
       return duplicationExist;
     }
-    const batches: ITileRange[] = [];
 
-    for (let i = 0; i <= zoomLevel; i++) {
-      batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
-    }
-
-    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
+    const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
+    const estimatesGpkgSize = calculateEstimateGpkgSize(batches as ITileRange[], tileEstimatedSize); // size of requested gpkg export
     if (this.storageEstimation.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
       if (!isEnoughStorage) {
@@ -160,7 +155,7 @@ export class CreatePackageManager {
       cswProductId: resourceId,
       crs: crs ?? DEFAULT_CRS,
       productType,
-      batches,
+      batches: batches as ITileRange[],
       sources,
       priority: priority ?? DEFAULT_PRIORITY,
       callbacks: callbacks,
@@ -265,6 +260,24 @@ export class CreatePackageManager {
     }
     const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
     return sanitized;
+  }
+
+  private generateTileGroups(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] | null {
+    const intersaction = intersect(polygon, footprint);
+    const tilesGroups: ITileRange[] = [];
+
+    if (intersaction === null) {
+      return null;
+    }
+
+    for (let i = 0; i <= zoom; i++) {
+      const zoomTilesGroups = new TileRanger().encodeFootprint(intersaction, i);
+      for (const group of zoomTilesGroups) {
+        tilesGroups.push(group);
+      }
+    }
+
+    return tilesGroups;
   }
 
   private async checkForDuplicate(

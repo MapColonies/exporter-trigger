@@ -18,6 +18,7 @@ describe('tiles', function () {
   let checkForCompletedSpy: jest.SpyInstance;
   let checkForProcessingSpy: jest.SpyInstance;
   let normalize2Polygon: jest.SpyInstance;
+  let generateTileGroupsSpy: jest.SpyInstance;
 
   beforeEach(function () {
     const app = getApp({
@@ -30,6 +31,7 @@ describe('tiles', function () {
     checkForCompletedSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForCompleted: jest.Mock }, 'checkForCompleted');
     checkForProcessingSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { checkForProcessing: jest.Mock }, 'checkForProcessing');
     validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
+    generateTileGroupsSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { generateTileGroups: jest.Mock }, 'generateTileGroups');
     findLayerSpy = jest.spyOn(RasterCatalogManagerClient.prototype, 'findLayer');
     createJobSpy = jest.spyOn(JobManagerWrapper.prototype, 'createJob');
   });
@@ -68,6 +70,7 @@ describe('tiles', function () {
         crs: 'EPSG:4326',
         priority: 0,
       };
+      generateTileGroupsSpy.mockReturnValue([]);
       findLayerSpy.mockResolvedValue(layerFromCatalog);
       createJobSpy.mockResolvedValue({ id: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
       checkForDuplicateSpy.mockResolvedValue(undefined);
@@ -266,7 +269,7 @@ describe('tiles', function () {
         crs: 'EPSG:4326',
         priority: 0,
       };
-
+      generateTileGroupsSpy.mockReturnValue([]);
       findLayerSpy.mockResolvedValue(layerFromCatalog);
       checkForDuplicateSpy.mockResolvedValue(undefined);
       validateFreeSpaceSpy.mockResolvedValue(false);
