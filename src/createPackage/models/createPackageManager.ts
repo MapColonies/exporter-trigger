@@ -353,7 +353,7 @@ export class CreatePackageManager {
   private generatePackageName(productType: string, productId: string, productVersion: string, zoomLevel: number, bbox: BBox): string {
     const numberOfDecimals = 5;
     const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_').replace(/-/g, 'm')).join('');
-    const productVersionConvention = `v${Math.trunc(parseFloat(productVersion))}`
+    const productVersionConvention = productVersion.replace('.', '_');
     return `${productType}_${productId}_${productVersionConvention}_${zoomLevel}_${bboxToString}.gpkg`;
   }
 
