@@ -87,7 +87,7 @@ export class CreatePackageManager {
     const srcRes = layerMetadata.maxResolutionDeg as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
     if (zoomLevel > maxZoom) {
-      throw new BadRequestError(`The requested requested resolution ${targetResolution} is larger than product resolution ${srcRes}`);
+      throw new BadRequestError(`The requested resolution ${targetResolution} is larger than product resolution ${srcRes}`);
     }
 
     const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
@@ -117,7 +117,7 @@ export class CreatePackageManager {
     }
 
     const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
-    const estimatesGpkgSize = calculateEstimateGpkgSize(batches as ITileRange[], tileEstimatedSize); // size of requested gpkg export
+    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
     if (this.storageEstimation.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
       if (!isEnoughStorage) {
@@ -155,7 +155,7 @@ export class CreatePackageManager {
       cswProductId: resourceId,
       crs: crs ?? DEFAULT_CRS,
       productType,
-      batches: batches as ITileRange[],
+      batches: batches,
       sources,
       priority: priority ?? DEFAULT_PRIORITY,
       callbacks: callbacks,
@@ -262,12 +262,14 @@ export class CreatePackageManager {
     return sanitized;
   }
 
-  private generateTileGroups(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] | null {
+  private generateTileGroups(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] {
     const intersaction = intersect(polygon, footprint);
     const tilesGroups: ITileRange[] = [];
 
     if (intersaction === null) {
-      return null;
+      throw new BadRequestError(
+        `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
+      );
     }
 
     for (let i = 0; i <= zoom; i++) {
