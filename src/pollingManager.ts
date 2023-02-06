@@ -19,13 +19,13 @@ export class PollingManager {
     const jobs = await this.taskManager.getJobsByTaskStatus();
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
-    if (jobs.completedJobs?.length) {
+    if (jobs.completedJobs?.length != null) {
       existsJobs = true;
       this.logger.info(`Completed jobs detected, running finalize job`);
       for (const job of jobs.completedJobs) {
         await this.taskManager.finalizeJob(job, expirationDate);
       }
-    } else if (jobs.failedJobs?.length) {
+    } else if (jobs.failedJobs?.length != null) {
       existsJobs = true;
       this.logger.info(`Failed jobs detected, running finalize job`);
       for (const job of jobs.failedJobs) {

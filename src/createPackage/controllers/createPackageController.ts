@@ -5,9 +5,13 @@ import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
 import { CreatePackageManager } from '../models/createPackageManager';
-import { IBasicResponse, ICreatePackage, ICreateJobResponse, ICallbackResposne } from '../../common/interfaces';
+import { IBasicResponse, ICreatePackage, ICreateJobResponse, ICallbackResposne, ICreatePackageMultiRes } from '../../common/interfaces';
 
-type CreatePackageHandler = RequestHandler<undefined, IBasicResponse | ICreateJobResponse | ICallbackResposne, ICreatePackage>;
+type CreatePackageHandler = RequestHandler<
+  undefined,
+  IBasicResponse | ICreateJobResponse | ICallbackResposne,
+  ICreatePackage | ICreatePackageMultiRes
+>;
 
 @injectable()
 export class CreatePackageController {
@@ -22,6 +26,17 @@ export class CreatePackageController {
     try {
       this.logger.debug(userInput, `Creating package with user input`);
       const jobCreated = await this.manager.createPackage(userInput);
+      return res.status(httpStatus.OK).json(jobCreated);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  public createByMultiResolution: CreatePackageHandler = async (req, res, next) => {
+    const userInput: ICreatePackageMultiRes = req.body;
+    try {
+      this.logger.debug(userInput, `Creating package with user input`);
+      const jobCreated = await this.manager.createPackageMultiRes(userInput);
       return res.status(httpStatus.OK).json(jobCreated);
     } catch (err) {
       next(err);

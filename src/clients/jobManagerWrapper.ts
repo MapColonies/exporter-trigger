@@ -196,7 +196,7 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
-    this.logger.debug(queryParams, 'Getting jobs that match these parameters');
+    this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
     return jobs;
   }

@@ -10,6 +10,7 @@ import {
   bboxPolygon,
   FeatureCollection,
   Feature,
+  Geometry,
   featureCollection as createFeatureCollection,
 } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
@@ -20,9 +21,9 @@ import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types'
 import { isArray, isEmpty } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
-import { IConfig, IStorageEstimation } from '../../../src/common/interfaces';
-import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt } from '../../common/utils';
+import { LayerMetadata, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
+import { IConfig, ICreatePackageMultiRes, IGeometryRecord, IStorageEstimation } from '../../../src/common/interfaces';
+import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt, zoomLevelToResolution } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
 import {
@@ -170,6 +171,133 @@ export class CreatePackageManager {
     return jobCreated;
   }
 
+  public async createPackageMultiRes(userInput: ICreatePackageMultiRes): Promise<ICreateJobResponse | ICallbackResponse> {
+    const { dbId, crs, priority, roi, callbackURLs } = userInput;
+    if (!roi) {
+      // todo - maybe consider convert the response to ROI requests compatibility
+      const entireLayer = await this.createPackage(userInput);
+      return entireLayer;
+    }
+    const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
+    const layerMetadata = layer.metadata;
+    let { productId: resourceId, productVersion: version, productType } = layerMetadata;
+    const featuresRecords = this.parseFeatureCollection(roi, layerMetadata);
+    const tileEstimatedSize = this.getTileEstimatedSize(layerMetadata.tileOutputFormat as TileOutputFormat);
+
+    resourceId = resourceId as string;
+    version = version as string;
+    productType = productType as ProductType;
+
+    const srcRes = layerMetadata.maxResolutionDeg as number;
+    const maxZoom = degreesPerPixelToZoomLevel(srcRes);
+
+    featuresRecords.forEach((record) => {
+      if (record.zoomLevel > maxZoom) {
+        throw new BadRequestError(`The requested resolution ${record.targetResolution} is larger then then product resolution ${srcRes}`);
+      }
+    });
+
+    featuresRecords.forEach((record) => {
+      record.sanitizedBox = this.sanitizeBbox(
+        record.geometry as Polygon | MultiPolygon,
+        layerMetadata.footprint as Polygon | MultiPolygon,
+        record.zoomLevel
+      );
+      if (!record.sanitizedBox) {
+        throw new BadRequestError(
+          `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${
+            layer.metadata.id as string
+          }`
+        );
+      }
+    });
+
+    // todo - temporary helper before future design refactoring
+    const layerBbox = this.sanitizeBbox(
+      layerMetadata.footprint as Polygon | MultiPolygon,
+      layerMetadata.footprint as Polygon | MultiPolygon,
+      maxZoom
+    ) as BBox;
+    // todo - should be implemented on future after full multi resolution exporting
+    const dupParams: JobDuplicationParams = {
+      resourceId,
+      version,
+      dbId,
+      zoomLevel: maxZoom, //todo - temporary from the entire layer data
+      sanitizedBbox: layerBbox, //todo - temporary from the entire layer data
+      crs: crs ?? DEFAULT_CRS,
+    };
+
+    // should be refactoring after new design
+    const callbacks = callbackURLs.map((url) => <ICallbackTarget>{ url, bbox: layerMetadata.footprint });
+    const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
+    if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
+      const completeResponseData = duplicationExist as ICallbackResponse;
+      completeResponseData.bbox = layerBbox;
+      return duplicationExist;
+    } else if (duplicationExist) {
+      return duplicationExist;
+    }
+
+    const batches: ITileRange[] = [];
+
+    featuresRecords.forEach((record) => {
+      for (let i = 0; i <= record.zoomLevel; i++) {
+        const recordBatches = bboxToTileRange(record.sanitizedBox as BBox2d, i);
+        batches.push(recordBatches);
+      }
+    });
+
+    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
+    if (this.storageEstimation.validateStorageSize) {
+      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
+      if (!isEnoughStorage) {
+        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+      }
+    }
+    const separator = this.getSeparator();
+    const packageName = this.generatePackageName(productType, resourceId, version, maxZoom, layerBbox); // todo - will be refactoring
+    const packageRelativePath = getGpkgRelativePath(packageName, separator);
+    const sources: IMapSource[] = [
+      // todo - will be refactoring
+      {
+        path: packageRelativePath,
+        type: 'GPKG',
+        extent: {
+          minX: layerBbox[0],
+          minY: layerBbox[1],
+          maxX: layerBbox[2],
+          maxY: layerBbox[3],
+        },
+      },
+      {
+        path: `${layerMetadata.id as string}${separator}${layerMetadata.displayPath as string}`, //tiles path
+        type: this.tilesProvider,
+      },
+    ];
+
+    // todo - after design refactoring
+    const workerInput: IWorkerInput = {
+      sanitizedBbox: layerBbox,
+      targetResolution: srcRes,
+      fileName: packageName,
+      relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
+      zoomLevel: maxZoom,
+      dbId,
+      version: version,
+      cswProductId: resourceId,
+      crs: crs ?? DEFAULT_CRS,
+      productType,
+      batches,
+      sources,
+      priority: priority ?? DEFAULT_PRIORITY,
+      callbacks: callbacks,
+      gpkgEstimatedSize: estimatesGpkgSize,
+    };
+    const jobCreated = await this.jobManagerClient.create(workerInput);
+    return jobCreated;
+  }
+
   public async createJsonMetadata(fullGpkgPath: string, job: JobResponse): Promise<void> {
     this.logger.info(`Creating metadata.json file for gpkg in path "${fullGpkgPath}" for jobId ${job.id}`);
     const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
@@ -221,20 +349,20 @@ export class CreatePackageManager {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
 
-  private normalize2Polygon(bboxFromUser: Polygon | BBox | undefined): Polygon | undefined {
+  private normalize2Polygon(bboxFromUser: Polygon | MultiPolygon | BBox | undefined): Polygon | undefined {
     try {
       if (isArray(bboxFromUser) && bboxFromUser.length === CreatePackageManager.bboxLength2d) {
-        this.logger.debug(bboxFromUser, `Export will be executed by provided BBox from request input`);
+        this.logger.debug({ ...bboxFromUser, msg: `Export will be executed by provided BBox from request input` });
         const resultPolygon = bboxPolygon(bboxFromUser as BBox);
         return resultPolygon.geometry;
       } else if (this.isAPolygon(bboxFromUser)) {
-        this.logger.debug(bboxFromUser, `Export will be executed by provided Footprint from request input`);
+        this.logger.debug({ ...bboxFromUser, msg: `Export will be executed by provided Footprint from request input` });
         return bboxFromUser;
       } else if (!bboxFromUser) {
         this.logger.debug(`Export will be executed on entire layer's footprint`);
         return undefined;
       } else {
-        this.logger.warn(bboxFromUser, `Input bbox param illegal - should be bbox | polygon | null types`);
+        this.logger.warn({ ...bboxFromUser, msg: `Input bbox param illegal - should be bbox | polygon | null types` });
         throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
       }
     } catch (error) {
@@ -258,7 +386,7 @@ export class CreatePackageManager {
     return isPolygon;
   }
 
-  private sanitizeBbox(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
+  private sanitizeBbox(polygon: Polygon | MultiPolygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
     const intersaction = intersect(polygon, footprint);
     if (intersaction === null) {
       return null;
@@ -368,9 +496,9 @@ export class CreatePackageManager {
       }
     });
 
-    const newPolygonLarts = createFeatureCollection(newFeatures, { bbox: sanitizedBboxPolygonzied.bbox });
+    const newPolygonParts = createFeatureCollection(newFeatures, { bbox: sanitizedBboxPolygonzied.bbox });
 
-    return newPolygonLarts;
+    return newPolygonParts;
   }
 
   private getTileEstimatedSize(tileOutputFormat: TileOutputFormat): number {
@@ -383,5 +511,20 @@ export class CreatePackageManager {
     this.logger.debug(`single tile size defined as ${tileOutputFormat} from configuration: ${tileEstimatedSize} bytes`);
 
     return tileEstimatedSize;
+  }
+
+  private parseFeatureCollection(featuresCollection: FeatureCollection, layerMetadata: LayerMetadata): IGeometryRecord[] {
+    const parsedGeoRecord: IGeometryRecord[] = [];
+    featuresCollection.features.forEach((feature) => {
+      if (feature.properties && (feature.properties.zoomLevel as number)) {
+        const targetResolution = zoomLevelToResolution(feature.properties.zoomLevel as number);
+        parsedGeoRecord.push({ geometry: feature.geometry as Geometry, targetResolution, zoomLevel: feature.properties.zoomLevel as number });
+      } else {
+        const targetResolution = layerMetadata.maxResolutionDeg as number;
+        const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
+        parsedGeoRecord.push({ geometry: feature.geometry as Geometry, targetResolution, zoomLevel });
+      }
+    });
+    return parsedGeoRecord;
   }
 }

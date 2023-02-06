@@ -1,6 +1,7 @@
-import { MultiPolygon, Polygon, BBox } from '@turf/turf';
+import { MultiPolygon, Polygon, BBox, FeatureCollection } from '@turf/turf';
 import { ICreateJobBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { ITileRange } from '@map-colonies/mc-utils';
+import { Geometry } from '@turf/turf';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -14,13 +15,20 @@ export interface OpenApiConfig {
   uiPath: string;
 }
 
-export interface ICreatePackage {
+export interface IBaseCreatePackage {
   dbId: string;
-  targetResolution?: number;
-  crs?: string;
   callbackURLs: string[];
-  bbox?: BBox | Polygon;
+  crs?: string;
   priority?: number;
+}
+
+export interface ICreatePackage extends IBaseCreatePackage {
+  targetResolution?: number;
+  bbox?: BBox | Polygon | MultiPolygon;
+}
+
+export interface ICreatePackageMultiRes extends IBaseCreatePackage {
+  roi?: FeatureCollection;
 }
 
 export interface ICallbackTarget {
@@ -69,7 +77,7 @@ export interface ICallbackDataBase {
 }
 
 export interface ICallbackData extends ICallbackDataBase {
-  bbox: BBox | Polygon;
+  bbox: BBox | Polygon | MultiPolygon;
 }
 
 export interface ICallbackResposne extends ICallbackData {
@@ -139,6 +147,13 @@ export interface IStorageEstimation {
   pngTileEstimatedSizeInBytes: number;
   storageFactorBuffer: number;
   validateStorageSize: boolean;
+}
+
+export interface IGeometryRecord {
+  geometry: Geometry;
+  zoomLevel: number;
+  targetResolution: number;
+  sanitizedBox?: BBox | null | undefined;
 }
 
 export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;

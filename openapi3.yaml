@@ -50,6 +50,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+  /create/featureCollection:
+    post:
+      tags:
+        - createGpkg
+      summary: Trigger export based on multi-resolution (FeatureCollection)
+      operationId: exportMultiResTilesToGpkg
+      requestBody:
+        $ref: '#/components/requestBodies/ExportMultiResolutionBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/createGpkgJobResponse'
+                  - $ref: '#/components/schemas/naiveCacheJobResponse'
+                discriminator:
+                  propertyName: response
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '404':
+          description: Could not find layer with matched dbId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalError'
+        '507':
+          description: Insufficient Storage on disk for exporting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
   /taskStatus/{jobId}:
     get:
       tags:
@@ -97,6 +141,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/exportGetMap'
+    ExportMultiResolutionBody:
+      description: Export to gpkg via FeatureCollection
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exportFromFeatures'
   schemas:
     CommonResponse:
       type: object
@@ -119,7 +170,7 @@ components:
           description: ID as the primary key from the Raster Catalog
         bbox:
           oneOf:
-            - $ref: '#/components/schemas/BBOX'
+            - $ref: '#/components/schemas/BBox'
             - $ref: '#/components/schemas/Geometry'
         targetResolution:
           type: number
@@ -149,6 +200,57 @@ components:
           - 34.82237261707599
           - 31.96426962177354
         targetResolution: 0.0000429153442382812
+        callbackURLs:
+          - http://example.getmap.com/callback
+          - http://example.getmap.com/callback2
+        crs: EPSG:4326
+        priority: 0
+    exportFromFeatures:
+      type: object
+      properties:
+        dbId:
+          type: string
+          format: uuid
+          description: ID as the primary key from the Raster Catalog
+        roi:
+          $ref: '#/components/schemas/FeatureCollection'
+        callbackURLs:
+          type: array
+          items:
+            type: string
+          description: The callback URL to notify the process if finished
+        crs:
+          $ref: '#/components/schemas/CRS'
+        priority:
+          type: number
+          description: The priority of the record. Maximum priority = most urgent.
+          minimum: 0
+          maximum: 999999999
+      required:
+        - dbId
+        - callbackURLs
+      example:
+        dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
+        roi:
+          type: FeatureCollection
+          features:
+            - type: Feature
+              properties:
+                zoomLevel: 5
+              geometry:
+                type: Polygon
+                coordinates:
+                  - - - 34.82836896556114
+                      - 32.03918441418732
+                    - - 34.81210152170695
+                      - 32.03918441418732
+                    - - 34.81210152170695
+                      - 32.02539369969462
+                    - - 34.82836896556114
+                      - 32.02539369969462
+                    - - 34.82836896556114
+                      - 32.03918441418732
+
         callbackURLs:
           - http://example.getmap.com/callback
           - http://example.getmap.com/callback2
@@ -197,7 +299,7 @@ components:
           type: string
         bbox:
           oneOf:
-            - $ref: '#/components/schemas/BBOX'
+            - $ref: '#/components/schemas/BBox'
             - $ref: '#/components/schemas/Geometry'
         targetResolution:
           type: number
@@ -239,7 +341,45 @@ components:
       description: List of supported
       enum:
         - EPSG:4326
-    BBOX:
+    Feature:
+      required:
+        - type
+        - properties
+        - geometry
+      properties:
+        type:
+          type: string
+          enum:
+            - Feature
+        properties:
+          type: object
+          nullable: true
+        geometry:
+          type: object
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/GeometryCollection'
+            - $ref: '#/components/schemas/Geometry'
+        bbox:
+          $ref: '#/components/schemas/BBox'
+    FeatureCollection:
+      type: object
+      description: GeoJson Feature collection
+      required:
+        - type
+        - features
+      properties:
+        type:
+          type: string
+          enum:
+            - FeatureCollection
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
+        bbox:
+          $ref: '#/components/schemas/BBox'
+    BBox:
       type: array
       items:
         type: number
@@ -265,13 +405,30 @@ components:
             - Failed
             - Expired
             - Aborted
+    GeometryCollection:
+      type: object
+      description: GeoJSon geometry collection
+      required:
+        - type
+        - geometries
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#geometrycollection
+      properties:
+        type:
+          type: string
+          enum:
+            - GeometryCollection
+          description: custom properties
+        geometries:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeometryBase'
     Geometry:
       description: GeoJSon geometry
-      discriminator:
-        propertyName: type
       type: object
-      allOf:
+      oneOf:
         - $ref: '#/components/schemas/Polygon'
+        - $ref: '#/components/schemas/MultiPolygon'
     Polygon:
       type: object
       description: GeoJSon geometry
@@ -286,6 +443,22 @@ components:
                 type: array
                 items:
                   $ref: '#/components/schemas/Point2D'
+    MultiPolygon:
+      type: object
+      description: GeoJSon geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id6
+      allOf:
+        - $ref: '#/components/schemas/GeometryBase'
+        - properties:
+            coordinates:
+              type: array
+              items:
+                type: array
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Point2D'
     GeometryBase:
       type: object
       description: GeoJSon geometry
@@ -298,6 +471,7 @@ components:
           type: string
           enum:
             - Polygon
+            - MultiPolygon
           description: the geometry type
     Point2D:
       type: array
