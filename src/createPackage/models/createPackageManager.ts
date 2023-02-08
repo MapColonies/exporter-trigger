@@ -254,32 +254,39 @@ export class CreatePackageManager {
   }
 
   private sanitizeBbox(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
-    const intersaction = intersect(polygon, footprint);
-    if (intersaction === null) {
-      return null;
+    try {
+      const intersaction = intersect(polygon, footprint);
+      if (intersaction === null) {
+        return null;
+      }
+      const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
+      return sanitized;
+    } catch (error) {
+      throw new Error(`Error occurred while trying to sanitized bbox: ${JSON.stringify(error)}`);
     }
-    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
-    return sanitized;
   }
 
   private generateTileGroups(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] {
-    const intersaction = intersect(polygon, footprint);
-    const tilesGroups: ITileRange[] = [];
+    try {
+      const intersaction = intersect(polygon, footprint);
+      const tilesGroups: ITileRange[] = [];
 
-    if (intersaction === null) {
-      throw new BadRequestError(
-        `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
-      );
-    }
-
-    for (let i = 0; i <= zoom; i++) {
-      const zoomTilesGroups = new TileRanger().encodeFootprint(intersaction, i);
-      for (const group of zoomTilesGroups) {
-        tilesGroups.push(group);
+      if (intersaction === null) {
+        throw new BadRequestError(
+          `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
+        );
       }
-    }
 
-    return tilesGroups;
+      for (let i = 0; i <= zoom; i++) {
+        const zoomTilesGroups = new TileRanger().encodeFootprint(intersaction, i);
+        for (const group of zoomTilesGroups) {
+          tilesGroups.push(group);
+        }
+      }
+      return tilesGroups;
+    } catch (error) {
+      throw new Error(`Error occurred while trying to generate batches: ${JSON.stringify(error)}`);
+    }
   }
 
   private async checkForDuplicate(
