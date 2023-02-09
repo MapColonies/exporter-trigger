@@ -267,16 +267,16 @@ export class CreatePackageManager {
   }
 
   private generateTileGroups(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] {
+    const intersaction = intersect(polygon, footprint);
+    const tilesGroups: ITileRange[] = [];
+
+    if (intersaction === null) {
+      throw new BadRequestError(
+        `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
+      );
+    }
+
     try {
-      const intersaction = intersect(polygon, footprint);
-      const tilesGroups: ITileRange[] = [];
-
-      if (intersaction === null) {
-        throw new BadRequestError(
-          `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
-        );
-      }
-
       for (let i = 0; i <= zoom; i++) {
         const zoomTilesGroups = new TileRanger().encodeFootprint(intersaction, i);
         for (const group of zoomTilesGroups) {
