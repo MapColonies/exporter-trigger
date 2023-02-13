@@ -267,25 +267,46 @@ export class CreatePackageManager {
   }
 
   private generateTileGroups(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] {
-    const intersaction = intersect(polygon, footprint);
-    const tilesGroups: ITileRange[] = [];
+    let intersaction: Feature<Polygon | MultiPolygon> | null;
 
-    if (intersaction === null) {
-      throw new BadRequestError(
-        `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
-      );
+    try {
+      intersaction = intersect(polygon, footprint);
+      if (intersaction === null) {
+        throw new BadRequestError(
+          `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
+        );
+      }
+    } catch (error) {
+      const message = `Error occurred while trying to generate tiles batches - intersaction error: ${JSON.stringify(error)}`;
+      this.logger.error({
+        firstPolygon: polygon,
+        secondPolygon: footprint,
+        zoom: zoom,
+        message: message,
+      });
+      throw new Error(message);
     }
 
     try {
+      const tileRanger = new TileRanger();
+      const tilesGroups: ITileRange[] = [];
+
       for (let i = 0; i <= zoom; i++) {
-        const zoomTilesGroups = new TileRanger().encodeFootprint(intersaction, i);
+        const zoomTilesGroups = tileRanger.encodeFootprint(intersaction, i);
         for (const group of zoomTilesGroups) {
           tilesGroups.push(group);
         }
       }
       return tilesGroups;
     } catch (error) {
-      throw new Error(`Error occurred while trying to generate batches: ${JSON.stringify(error)}`);
+      const message = `Error occurred while trying to generate tiles batches - encodeFootprint error: ${JSON.stringify(error)}`;
+      this.logger.error({
+        firstPolygon: polygon,
+        secondPolygon: footprint,
+        zoom: zoom,
+        message: message,
+      });
+      throw new Error(message);
     }
   }
 
