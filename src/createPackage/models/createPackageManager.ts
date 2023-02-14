@@ -13,9 +13,8 @@ import {
   featureCollection as createFeatureCollection,
 } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
-import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
+import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid, TileRanger } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { bboxToTileRange } from '@map-colonies/mc-utils';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { isArray, isEmpty } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
@@ -88,7 +87,7 @@ export class CreatePackageManager {
     const srcRes = layerMetadata.maxResolutionDeg as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
     if (zoomLevel > maxZoom) {
-      throw new BadRequestError(`The requested requested resolution ${targetResolution} is larger then then product resolution ${srcRes}`);
+      throw new BadRequestError(`The requested resolution ${targetResolution} is larger than product resolution ${srcRes}`);
     }
 
     const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
@@ -116,12 +115,8 @@ export class CreatePackageManager {
     } else if (duplicationExist) {
       return duplicationExist;
     }
-    const batches: ITileRange[] = [];
 
-    for (let i = 0; i <= zoomLevel; i++) {
-      batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
-    }
-
+    const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
     if (this.storageEstimation.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
@@ -160,7 +155,7 @@ export class CreatePackageManager {
       cswProductId: resourceId,
       crs: crs ?? DEFAULT_CRS,
       productType,
-      batches,
+      batches: batches,
       sources,
       priority: priority ?? DEFAULT_PRIORITY,
       callbacks: callbacks,
@@ -259,12 +254,60 @@ export class CreatePackageManager {
   }
 
   private sanitizeBbox(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
-    const intersaction = intersect(polygon, footprint);
-    if (intersaction === null) {
-      return null;
+    try {
+      const intersaction = intersect(polygon, footprint);
+      if (intersaction === null) {
+        return null;
+      }
+      const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
+      return sanitized;
+    } catch (error) {
+      throw new Error(`Error occurred while trying to sanitized bbox: ${JSON.stringify(error)}`);
     }
-    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
-    return sanitized;
+  }
+
+  private generateTileGroups(polygon: Polygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] {
+    let intersaction: Feature<Polygon | MultiPolygon> | null;
+
+    try {
+      intersaction = intersect(polygon, footprint);
+      if (intersaction === null) {
+        throw new BadRequestError(
+          `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
+        );
+      }
+    } catch (error) {
+      const message = `Error occurred while trying to generate tiles batches - intersaction error: ${JSON.stringify(error)}`;
+      this.logger.error({
+        firstPolygon: polygon,
+        secondPolygon: footprint,
+        zoom: zoom,
+        message: message,
+      });
+      throw new Error(message);
+    }
+
+    try {
+      const tileRanger = new TileRanger();
+      const tilesGroups: ITileRange[] = [];
+
+      for (let i = 0; i <= zoom; i++) {
+        const zoomTilesGroups = tileRanger.encodeFootprint(intersaction, i);
+        for (const group of zoomTilesGroups) {
+          tilesGroups.push(group);
+        }
+      }
+      return tilesGroups;
+    } catch (error) {
+      const message = `Error occurred while trying to generate tiles batches - encodeFootprint error: ${JSON.stringify(error)}`;
+      this.logger.error({
+        firstPolygon: polygon,
+        secondPolygon: footprint,
+        zoom: zoom,
+        message: message,
+      });
+      throw new Error(message);
+    }
   }
 
   private async checkForDuplicate(
