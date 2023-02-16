@@ -22,8 +22,29 @@ import { isArray, isEmpty } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { LayerMetadata, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
-import { IConfig, ICreatePackageMultiRes, IGeometryRecord, IStorageEstimation } from '../../../src/common/interfaces';
-import { calculateEstimateGpkgSize, getGpkgRelativePath, getStorageStatus, getGpkgNameWithoutExt, zoomLevelToResolution } from '../../common/utils';
+import { feature, featureCollection } from '@turf/helpers';
+import {
+  ExportVersion,
+  ICallbackExportResponse,
+  ICallbackTargetExport,
+  IConfig,
+  ICreatePackageRoi,
+  IGeometryRecord,
+  IJobExportParameters,
+  ILinkDefinition,
+  IStorageEstimation,
+  IWorkerExportInput,
+  JobExportDuplicationParams,
+  JobExportResponse,
+} from '../../common/interfaces';
+import {
+  calculateEstimateGpkgSize,
+  getGpkgRelativePath,
+  getStorageStatus,
+  getGpkgNameWithoutExt,
+  zoomLevelToResolution,
+  roiBooleanEqual,
+} from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
 import {
@@ -125,7 +146,7 @@ export class CreatePackageManager {
 
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
     if (this.storageEstimation.validateStorageSize) {
-      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize); // todo - on current stage, the calculation estimated by jpeg sizes
+      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
       if (!isEnoughStorage) {
         throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
       }
@@ -157,6 +178,7 @@ export class CreatePackageManager {
       relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
       zoomLevel,
       dbId,
+      exportVersion:ExportVersion.GETMAP,
       version: version,
       cswProductId: resourceId,
       crs: crs ?? DEFAULT_CRS,
@@ -171,15 +193,17 @@ export class CreatePackageManager {
     return jobCreated;
   }
 
-  public async createPackageMultiRes(userInput: ICreatePackageMultiRes): Promise<ICreateJobResponse | ICallbackResponse> {
-    const { dbId, crs, priority, roi, callbackURLs } = userInput;
-    if (!roi) {
-      // todo - maybe consider convert the response to ROI requests compatibility
-      const entireLayer = await this.createPackage(userInput);
-      return entireLayer;
-    }
+  public async createPackageRoi(userInput: ICreatePackageRoi): Promise<ICreateJobResponse | ICallbackExportResponse> {
+    const { dbId, crs, priority, callbackURLs } = userInput;
+    let roi = userInput.roi;
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
+    if (!roi) {
+      // convert and wrap layer's footprint to featureCollection
+      const layerFeature = feature(layerMetadata.footprint as Geometry);
+      roi = featureCollection([layerFeature]);
+    }
+
     let { productId: resourceId, productVersion: version, productType } = layerMetadata;
     const featuresRecords = this.parseFeatureCollection(roi, layerMetadata);
     const tileEstimatedSize = this.getTileEstimatedSize(layerMetadata.tileOutputFormat as TileOutputFormat);
@@ -191,13 +215,13 @@ export class CreatePackageManager {
     const srcRes = layerMetadata.maxResolutionDeg as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
 
+    // ROI vs layer validation section - zoom + geo intersection
     featuresRecords.forEach((record) => {
       if (record.zoomLevel > maxZoom) {
         throw new BadRequestError(`The requested resolution ${record.targetResolution} is larger then then product resolution ${srcRes}`);
       }
-    });
 
-    featuresRecords.forEach((record) => {
+      // generate sanitized bbox for each original feature
       record.sanitizedBox = this.sanitizeBbox(
         record.geometry as Polygon | MultiPolygon,
         layerMetadata.footprint as Polygon | MultiPolygon,
@@ -211,29 +235,19 @@ export class CreatePackageManager {
         );
       }
     });
+    const layerBbox = PolygonBbox(roi); // bounding box of entire ROI
 
-    // todo - temporary helper before future design refactoring
-    const layerBbox = this.sanitizeBbox(
-      layerMetadata.footprint as Polygon | MultiPolygon,
-      layerMetadata.footprint as Polygon | MultiPolygon,
-      maxZoom
-    ) as BBox;
-    // todo - should be implemented on future after full multi resolution exporting
-    const dupParams: JobDuplicationParams = {
+    const dupParams: JobExportDuplicationParams = {
       resourceId,
       version,
       dbId,
-      zoomLevel: maxZoom, //todo - temporary from the entire layer data
-      sanitizedBbox: layerBbox, //todo - temporary from the entire layer data
+      roi,
       crs: crs ?? DEFAULT_CRS,
     };
 
-    // should be refactoring after new design
-    const callbacks = callbackURLs.map((url) => <ICallbackTarget>{ url, bbox: layerMetadata.footprint });
-    const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
+    const callbacks = callbackURLs.map((url) => <ICallbackTargetExport>{ url, roi });
+    const duplicationExist = await this.checkForExportDuplicate(dupParams, callbacks);
     if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
-      const completeResponseData = duplicationExist as ICallbackResponse;
-      completeResponseData.bbox = layerBbox;
       return duplicationExist;
     } else if (duplicationExist) {
       return duplicationExist;
@@ -256,10 +270,14 @@ export class CreatePackageManager {
       }
     }
     const separator = this.getSeparator();
-    const packageName = this.generatePackageName(productType, resourceId, version, maxZoom, layerBbox); // todo - will be refactoring
+    const packageName = this.generateExportPackageName(productType, resourceId, version, featuresRecords);
+    const metadataFileName = `${getGpkgNameWithoutExt(packageName)}.json`;
+    const fileNamesTemplates: ILinkDefinition = {
+      dataURI: packageName,
+      metadataURI: metadataFileName,
+    }
     const packageRelativePath = getGpkgRelativePath(packageName, separator);
     const sources: IMapSource[] = [
-      // todo - will be refactoring
       {
         path: packageRelativePath,
         type: 'GPKG',
@@ -275,15 +293,12 @@ export class CreatePackageManager {
         type: this.tilesProvider,
       },
     ];
-
-    // todo - after design refactoring
-    const workerInput: IWorkerInput = {
-      sanitizedBbox: layerBbox,
-      targetResolution: srcRes,
-      fileName: packageName,
+    const workerInput: IWorkerExportInput = {
+      roi,
+      fileNamesTemplates: fileNamesTemplates,
       relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
-      zoomLevel: maxZoom,
       dbId,
+      exportVersion:ExportVersion.ROI,
       version: version,
       cswProductId: resourceId,
       crs: crs ?? DEFAULT_CRS,
@@ -294,7 +309,7 @@ export class CreatePackageManager {
       callbacks: callbacks,
       gpkgEstimatedSize: estimatesGpkgSize,
     };
-    const jobCreated = await this.jobManagerClient.create(workerInput);
+    const jobCreated = await this.jobManagerClient.createExport(workerInput);
     return jobCreated;
   }
 
@@ -395,6 +410,9 @@ export class CreatePackageManager {
     return sanitized;
   }
 
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   private async checkForDuplicate(
     dupParams: JobDuplicationParams,
     callbackUrls: ICallbackTarget[]
@@ -417,6 +435,31 @@ export class CreatePackageManager {
     return undefined;
   }
 
+  private async checkForExportDuplicate(
+    dupParams: JobExportDuplicationParams,
+    callbackUrls: ICallbackTargetExport[]
+  ): Promise<ICallbackExportResponse | ICreateJobResponse | undefined> {
+    let completedExists = await this.checkForExportCompleted(dupParams);
+    if (completedExists) {
+      return completedExists;
+    }
+
+    const processingExists = await this.checkForExportProcessing(dupParams, callbackUrls);
+    if (processingExists) {
+      // For race condition
+      completedExists = await this.checkForExportCompleted(dupParams);
+      if (completedExists) {
+        return completedExists;
+      }
+      return processingExists;
+    }
+
+    return undefined;
+  }
+
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResponse | undefined> {
     this.logger.info(dupParams, `Checking for COMPLETED duplications with parameters`);
     const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
@@ -429,6 +472,21 @@ export class CreatePackageManager {
     }
   }
 
+  private async checkForExportCompleted(dupParams: JobExportDuplicationParams): Promise<ICallbackExportResponse | undefined> {
+    this.logger.info({...dupParams}, `Checking for COMPLETED duplications with parameters`);
+    const responseJob = await this.jobManagerClient.findCompletedExportJob(dupParams);
+    if (responseJob) {
+      await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
+      return {
+        ...responseJob.parameters.callbackParams,
+        status: OperationStatus.COMPLETED,
+      } as ICallbackExportResponse;
+    }
+  }
+
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   private async checkForProcessing(dupParams: JobDuplicationParams, newCallbacks: ICallbackTarget[]): Promise<ICreateJobResponse | undefined> {
     this.logger.info(dupParams, `Checking for PROCESSING duplications with parameters`);
     const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
@@ -443,6 +501,27 @@ export class CreatePackageManager {
     }
   }
 
+  private async checkForExportProcessing(
+    dupParams: JobExportDuplicationParams,
+    newCallbacks: ICallbackTargetExport[]
+  ): Promise<ICreateJobResponse | undefined> {
+    this.logger.info(dupParams, `Checking for PROCESSING duplications with parameters`);
+    const processingJob =
+      (await this.jobManagerClient.findInProgressExportJob(dupParams)) ?? (await this.jobManagerClient.findPendingExportJob(dupParams));
+    if (processingJob) {
+      await this.updateExportCallbackURLs(processingJob, newCallbacks);
+      await this.jobManagerClient.validateAndUpdateExpiration(processingJob.id);
+      return {
+        id: processingJob.id,
+        taskIds: (processingJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[]).map((t) => t.id),
+        status: OperationStatus.IN_PROGRESS,
+      };
+    }
+  }
+
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   private async updateCallbackURLs(processingJob: JobResponse, newCallbacks: ICallbackTarget[]): Promise<void> {
     const callbacks = processingJob.parameters.callbacks;
     for (const newCallback of newCallbacks) {
@@ -478,10 +557,42 @@ export class CreatePackageManager {
     });
   }
 
+  private async updateExportCallbackURLs(processingJob: JobExportResponse, newCallbacks: ICallbackTargetExport[]): Promise<void> {
+    const callbacks = processingJob.parameters.callbacks;
+    for (const newCallback of newCallbacks) {
+      const hasCallback = callbacks.findIndex((callback) => {
+        const exist = callback.url === newCallback.url;
+        if (!exist) {
+          return false;
+        }
+
+        const sameROI = roiBooleanEqual(callback.roi, newCallback.roi);
+        return sameROI;
+      });
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      if (hasCallback === -1) {
+        callbacks.push(newCallback);
+      }
+    }
+    await this.jobManagerClient.updateJob<IJobExportParameters>(processingJob.id, {
+      parameters: processingJob.parameters,
+    });
+  }
+
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   private generatePackageName(productType: string, productId: string, productVersion: string, zoomLevel: number, bbox: BBox): string {
     const numberOfDecimals = 5;
     const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_').replace(/-/g, 'm')).join('');
     return `${productType}_${productId}_${productVersion}_${zoomLevel}_${bboxToString}.gpkg`;
+  }
+
+  private generateExportPackageName(productType: string, productId: string, productVersion: string, featuresRecords: IGeometryRecord[]): string {
+    const maxZoom = Math.max(...featuresRecords.map((feature) => feature.zoomLevel));
+    let currentDateStr = new Date().toJSON();
+    currentDateStr = `${currentDateStr}`.replaceAll('-', '_').replaceAll('.', '_').replaceAll(':', '_');
+    return `${productType}_${productId}_${productVersion.replaceAll('.', '_')}_${maxZoom}_${currentDateStr}.gpkg`;
   }
 
   private extractPolygonParts(layerPolygonParts: FeatureCollection, sanitizedBboxPolygonzied: Feature<Polygon>): FeatureCollection {

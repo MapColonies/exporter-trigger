@@ -5,6 +5,8 @@ import { parse as parsePath } from 'path';
 import { sep } from 'path';
 import checkDiskSpace from 'check-disk-space';
 import { ITileRange } from '@map-colonies/mc-utils';
+import { FeatureCollection } from '@turf/helpers';
+import md5 from 'md5';
 import { IStorageStatusResponse } from './interfaces';
 
 export const getFileSize = async (filePath: string): Promise<number> => {
@@ -71,4 +73,40 @@ export const zoomLevelToResolution = (zoom: number): number => {
     22: 0.000000167638063430786,
   };
   return zoomLevelMapper[zoom];
+};
+
+export const generateGeoIdentifier = (geo: FeatureCollection): string => {
+  const stringifiedGeo = JSON.stringify(geo);
+  const additionalIdentifiers = md5(stringifiedGeo);
+  return additionalIdentifiers;
+};
+
+export const roiBooleanEqual = (fc1: FeatureCollection, fc2: FeatureCollection): boolean => {
+  let equality = false;
+  if (fc1.features.length !== fc2.features.length) {
+    return equality;
+  } else {
+
+    // TODO - consider to optimize and refactor the equality (create interface for comparable)
+    let sortedHashedFc1: string[] = [];
+    fc1.features.forEach((feature) => {
+      const orderedFeature = {type: feature.type, properties: feature.properties, geometry:feature.geometry}
+      sortedHashedFc1.push(md5(JSON.stringify(orderedFeature)));
+    });
+    // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
+    sortedHashedFc1 = sortedHashedFc1.sort();
+
+    let sortedHashedFc2: string[] = [];
+    fc2.features.forEach((feature) => {
+      const orderedFeature = {type: feature.type, properties: feature.properties, geometry:feature.geometry}
+      sortedHashedFc2.push(md5(JSON.stringify(orderedFeature)));
+    });
+    // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
+    sortedHashedFc2 = sortedHashedFc2.sort();
+
+    if (sortedHashedFc1.every((value, index) => value === sortedHashedFc2[index])) {
+      equality = true;
+    }
+    return equality;
+  }
 };

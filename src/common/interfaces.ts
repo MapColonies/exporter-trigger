@@ -27,31 +27,54 @@ export interface ICreatePackage extends IBaseCreatePackage {
   bbox?: BBox | Polygon | MultiPolygon;
 }
 
-export interface ICreatePackageMultiRes extends IBaseCreatePackage {
+export interface ICreatePackageRoi extends IBaseCreatePackage {
   roi?: FeatureCollection;
 }
 
-export interface ICallbackTarget {
+export interface ICallbackBase {
   url: string;
+}
+
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
+export interface ICallbackTarget extends ICallbackBase {
   bbox: BBox | Polygon;
 }
 
-export interface IWorkerInput {
+export interface ICallbackTargetExport extends ICallbackBase {
+  roi: FeatureCollection;
+}
+
+export interface IWorkerInputBase {
   dbId: string;
-  targetResolution: number;
-  fileName: string;
   relativeDirectoryPath: string;
+  exportVersion: ExportVersion;
   priority?: number;
-  callbacks: ICallbackTarget[];
   crs: string;
-  sanitizedBbox: BBox;
-  zoomLevel: number;
   version: string;
   cswProductId: string;
   productType: string;
   batches: ITileRange[];
   sources: IMapSource[];
   gpkgEstimatedSize?: number;
+}
+
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
+export interface IWorkerInput extends IWorkerInputBase {
+  targetResolution: number;
+  fileName: string;
+  callbacks: ICallbackTarget[];
+  sanitizedBbox: BBox;
+  zoomLevel: number;
+}
+
+export interface IWorkerExportInput extends IWorkerInputBase {
+  callbacks: ICallbackTargetExport[];
+  roi: FeatureCollection;
+  fileNamesTemplates: ILinkDefinition;
 }
 
 export interface IBasicResponse {
@@ -64,6 +87,9 @@ export interface ICreateJobResponse {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export interface ICallbackDataBase {
   fileUri: string;
   expirationTime: Date;
@@ -76,14 +102,45 @@ export interface ICallbackDataBase {
   errorReason?: string;
 }
 
+export interface ICallbackDataExportBase {
+  links: ILinkDefinition;
+  expirationTime: Date;
+  fileSize: number;
+  recordCatalogId: string;
+  requestJobId: string;
+  errorReason?: string;
+}
+
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export interface ICallbackData extends ICallbackDataBase {
   bbox: BBox | Polygon | MultiPolygon;
 }
 
+export interface ICallbackExportData extends ICallbackDataExportBase {
+  roi: FeatureCollection;
+}
+
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export interface ICallbackResposne extends ICallbackData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
+export interface ILinkDefinition {
+  dataURI: string;
+  metadataURI: string;
+}
+
+export interface ICallbackExportResponse extends ICallbackExportData {
+  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
+}
+
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export interface JobDuplicationParams {
   resourceId: string;
   version: string;
@@ -93,15 +150,46 @@ export interface JobDuplicationParams {
   sanitizedBbox: BBox;
 }
 
+export interface JobExportDuplicationParams {
+  resourceId: string;
+  version: string;
+  dbId: string;
+  crs: string;
+  roi: FeatureCollection;
+}
+
+export interface IJobParametersBase {
+  relativeDirectoryPath: string;
+  crs: string;
+  callbackParams?: ICallbackExportResponse;
+  fileName: string;
+  gpkgEstimatedSize?: number;
+}
+
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export interface IJobParameters {
   targetResolution: number;
   relativeDirectoryPath: string;
   crs: string;
+  exportVersion: ExportVersion;
   callbacks: ICallbackTarget[];
   sanitizedBbox: BBox;
   zoomLevel: number;
   callbackParams?: ICallbackDataBase;
   fileName: string;
+  gpkgEstimatedSize?: number;
+}
+
+export interface IJobExportParameters {
+  relativeDirectoryPath: string;
+  crs: string;
+  exportVersion: ExportVersion;
+  roi: FeatureCollection;
+  callbacks: ICallbackTargetExport[];
+  callbackParams?: ICallbackExportResponse;
+  fileNamesTemplates: ILinkDefinition;
   gpkgEstimatedSize?: number;
 }
 
@@ -122,6 +210,10 @@ export interface ITaskParameters {
   sources: IMapSource[];
 }
 
+
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export interface IInput {
   jobId: string;
   footprint?: Polygon | MultiPolygon;
@@ -132,9 +224,17 @@ export interface IInput {
   dbId: string;
 }
 
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export interface IJobStatusResponse {
   completedJobs: JobResponse[] | undefined;
   failedJobs: JobResponse[] | undefined;
+}
+
+export interface IExportJobStatusResponse {
+  completedJobs: JobExportResponse[] | undefined;
+  failedJobs: JobExportResponse[] |undefined;
 }
 
 export interface IStorageStatusResponse {
@@ -149,13 +249,32 @@ export interface IStorageEstimation {
   validateStorageSize: boolean;
 }
 
-export interface IGeometryRecord {
-  geometry: Geometry;
+export interface IGeometryRecordBase {
   zoomLevel: number;
-  targetResolution: number;
   sanitizedBox?: BBox | null | undefined;
 }
+export interface IGeometryRecord extends IGeometryRecordBase {
+  geometry?: Geometry;
+  targetResolution: number;
+}
 
+// todo - Temporary enum to define old\new api - will be removed after deleting getMap API
+export enum ExportVersion {
+  GETMAP = 'GETMAP',
+  ROI = 'ROI',
+} 
+
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
 export type TaskResponse = ITaskResponse<ITaskParameters>;
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;
+
+// new API based on multi resolution
+export type JobExportResponse = IJobResponse<IJobExportParameters, ITaskParameters>;
+export type CreateExportJobBody = ICreateJobBody<IJobExportParameters, ITaskParameters>;
+

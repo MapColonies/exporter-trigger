@@ -13,6 +13,7 @@ paths:
         - createGpkg
       summary: Trigger export geopackage process
       operationId: exportTilesToGpkg
+      deprecated: true
       requestBody:
         $ref: '#/components/requestBodies/ExportGetmapBody'
       responses:
@@ -50,14 +51,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-  /create/featureCollection:
+  /create/roi:
     post:
       tags:
         - createGpkg
-      summary: Trigger export based on multi-resolution (FeatureCollection)
-      operationId: exportMultiResTilesToGpkg
+      summary: Trigger export geopackages based on providing Regions of interest (multi-resolution)
+      operationId: byRoi
       requestBody:
-        $ref: '#/components/requestBodies/ExportMultiResolutionBody'
+        $ref: '#/components/requestBodies/ExportByRoiBody'
       responses:
         '200':
           description: OK
@@ -66,7 +67,7 @@ paths:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/createGpkgJobResponse'
-                  - $ref: '#/components/schemas/naiveCacheJobResponse'
+                  - $ref: '#/components/schemas/exportNaiveCacheJobResponse'
                 discriminator:
                   propertyName: response
         '400':
@@ -141,7 +142,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/exportGetMap'
-    ExportMultiResolutionBody:
+    ExportByRoiBody:
       description: Export to gpkg via FeatureCollection
       required: true
       content:
@@ -261,10 +262,6 @@ components:
         - $ref: '#/components/schemas/CommonResponse'
       type: object
       properties:
-        status:
-          type: string
-          enum:
-            - In-Progress
         id:
           type: string
           format: uuid
@@ -319,6 +316,34 @@ components:
         - targetResolution
         - requestId
         - success
+    exportNaiveCacheJobResponse:
+      allOf:
+        - $ref: '#/components/schemas/CommonResponse'
+      type: object
+      properties:
+        links:
+          $ref: '#/components/schemas/callbackLinks'
+        expirationTime:
+          type: string
+          format: date
+        fileSize:
+          type: number
+        recordCatalogId:
+          type: string
+          format: uuid
+        roi:
+          $ref: '#/components/schemas/FeatureCollection'
+        requestId:
+          type: string
+          format: uuid
+      required:
+        - links
+        - expirationTime
+        - fileSize
+        - recordCatalogId
+        - roi
+        - requestId
+        - status
     error:
       type: object
       required:
@@ -473,6 +498,19 @@ components:
             - Polygon
             - MultiPolygon
           description: the geometry type
+    callbackLinks:
+      type: object
+      description: gpkg links - the geoPackage + metadata.json
+      required:
+        - dataURI
+        - metadataURI
+      properties:
+        dataURI:
+          type: string
+          description: Url to download the gpkg
+        metadataURI:
+          type: string
+          description: Url to download the gpkg's metadata.json
     Point2D:
       type: array
       maxItems: 2

@@ -6,7 +6,7 @@ import { NotFoundError } from '@map-colonies/error-types';
 import { getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
-import { ICallbackData, ICallbackDataBase, IJobParameters, IJobStatusResponse, JobResponse } from '../../common/interfaces';
+import { ICallbackData, ICallbackDataBase, ICallbackDataExportBase, ICallbackExportData, IExportJobStatusResponse, IJobParameters, IJobStatusResponse, ILinkDefinition, JobExportResponse, JobResponse } from '../../common/interfaces';
 import { CallbackClient } from '../../clients/callbackClient';
 import { getFileSize } from '../../common/utils';
 import { CreatePackageManager } from '../../createPackage/models/createPackageManager';
@@ -30,9 +30,22 @@ export class TasksManager {
     this.downloadServerUrl = config.get<string>('downloadServerUrl');
   }
 
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   public async getJobsByTaskStatus(): Promise<IJobStatusResponse> {
     const jobs = await this.jobManagerClient.getInProgressJobs();
+    const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
+    const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
+    const jobsStatus = {
+      completedJobs: completedJobs,
+      failedJobs: failedJobs,
+    };
+    return jobsStatus;
+  }
 
+  public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
+    const jobs = await this.jobManagerClient.getInProgressExportJobs();
     const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
     const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
     const jobsStatus = {
@@ -56,6 +69,9 @@ export class TasksManager {
     return statusResponse;
   }
 
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   public async sendCallbacks(job: JobResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataBase | undefined> {
     let fileUri = '';
     let fileRelativePath = '';
@@ -86,6 +102,53 @@ export class TasksManager {
       const callbackPromises: Promise<void>[] = [];
       for (const target of targetCallbacks) {
         const params: ICallbackData = { ...callbackParams, bbox: target.bbox };
+        callbackPromises.push(this.callbackClient.send(target.url, params));
+      }
+
+      const promisesResponse = await Promise.allSettled(callbackPromises);
+      promisesResponse.forEach((response, index) => {
+        if (response.status === 'rejected') {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url }, `Failed to send callback to url`);
+        }
+      });
+
+      return callbackParams;
+    } catch (error) {
+      this.logger.error(error, `Sending callback has failed`);
+    }
+  }
+
+  public async sendExportCallbacks(job: JobExportResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataExportBase | undefined> {
+    
+    let links:ILinkDefinition = {...job.parameters.fileNamesTemplates};
+    try {
+      this.logger.info(`Sending callback for job: ${job.id}`);
+      const packageName = job.parameters.fileNamesTemplates.dataURI;
+      const relativeFilesDirectory = job.parameters.relativeDirectoryPath;
+      const success = errorReason === undefined;
+      let fileSize = 0;
+      if (success) {
+        const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
+        links = {
+          dataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.dataURI}`,
+          metadataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.metadataURI}`
+        }
+        fileSize = await getFileSize(packageFullPath);
+      }
+      const callbackParams: ICallbackDataExportBase = {
+        links,
+        expirationTime: expirationDate,
+        fileSize,
+        recordCatalogId: job.internalId as string,
+        requestJobId: job.id,
+        errorReason,
+      };
+
+      const targetCallbacks = job.parameters.callbacks;
+      const callbackPromises: Promise<void>[] = [];
+      for (const target of targetCallbacks) {
+        const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
         callbackPromises.push(this.callbackClient.send(target.url, params));
       }
 

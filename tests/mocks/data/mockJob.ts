@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { JobResponse } from '../../../src/common/interfaces';
+import { ExportVersion, JobResponse } from '../../../src/common/interfaces';
 
 export const mockJob: JobResponse = {
   id: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
@@ -12,6 +12,7 @@ export const mockJob: JobResponse = {
   parameters: {
     crs: 'EPSG:4326',
     fileName: 'test.gpkg',
+    exportVersion: ExportVersion.GETMAP,
     callbacks: [
       {
         url: 'http://example.getmap.com/callback',

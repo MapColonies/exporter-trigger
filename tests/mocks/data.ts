@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { LayerMetadata } from '@map-colonies/mc-model-types';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { ICreatePackage, IJobParameters, ITaskParameters, IWorkerInput } from '../../src/common/interfaces';
+import { ExportVersion, ICreatePackage, IJobParameters, ITaskParameters, IWorkerInput } from '../../src/common/interfaces';
 
 const layerMetadata = {
   type: 'RECORD_RASTER',
@@ -118,6 +118,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
   parameters: {
     crs: 'EPSG:4326',
     sanitizedBbox: [0, 0, 25, 41],
+    exportVersion: ExportVersion.GETMAP,
     fileName: 'test.gpkg',
     relativeDirectoryPath: 'test',
     zoomLevel: 4,
@@ -189,6 +190,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   parameters: {
     fileName: 'test.gpkg',
     relativeDirectoryPath: 'test',
+    exportVersion: ExportVersion.GETMAP,
     crs: 'EPSG:4326',
     sanitizedBbox: [0, 0, 25, 41],
     zoomLevel: 4,
@@ -234,6 +236,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
 const workerInput: IWorkerInput = {
   fileName: 'test.gpkg',
   relativeDirectoryPath: 'test',
+  exportVersion: ExportVersion.GETMAP,
   sanitizedBbox: [0, 2.999267578125, 25.0048828125, 41.0009765625],
   targetResolution: 0.0000429153442382812,
   zoomLevel: 15,

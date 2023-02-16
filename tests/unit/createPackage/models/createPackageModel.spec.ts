@@ -14,7 +14,7 @@ import {
   createMock,
 } from '../../../mocks/clients/jobManagerWrapper';
 import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalogManagerClient';
-import { ICreateJobResponse, ICreatePackage, IJobParameters, ITaskParameters, JobDuplicationParams } from '../../../../src/common/interfaces';
+import { ExportVersion, ICreateJobResponse, ICreatePackage, IJobParameters, ITaskParameters, JobDuplicationParams } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
 import { completedJob, inProgressJob, layerFromCatalog, userInput } from '../../../mocks/data';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
@@ -281,6 +281,7 @@ describe('CreatePackageManager', () => {
           crs: 'EPSG:4326',
           sanitizedBbox: [0, 0, 25, 41],
           zoomLevel: 4,
+          exportVersion: ExportVersion.GETMAP,
           callbacks: [
             { url: 'http://localhost:6969', bbox: [0, 0, 25, 41] },
             { url: 'http://new-added-callback-url.com', bbox: [-5, 3, 25, 41] },
