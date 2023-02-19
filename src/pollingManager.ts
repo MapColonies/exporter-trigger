@@ -19,8 +19,8 @@ export class PollingManager {
     let existsJobs = false;
     const jobs = await this.taskManager.getJobsByTaskStatus(); // for old getmap api - work with new and will be replaced
     // todo - uncomment when will be replaced the API.
-    // const jobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi, 
-    
+    // const jobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
+
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
     if (jobs.completedJobs?.length != null) {
@@ -28,11 +28,11 @@ export class PollingManager {
       this.logger.info(`Completed jobs detected, running finalize job`);
       for (const job of jobs.completedJobs) {
         if (job.parameters.exportVersion === ExportVersion.GETMAP) {
-          this.logger.info('Execute completed job finalizing on BBOX (GetMap) exporting')
+          this.logger.info('Execute completed job finalizing on BBOX (GetMap) exporting');
           await this.taskManager.finalizeJob(job, expirationDate);
         } else {
           // TODO - implement finalizer for new API
-          this.logger.info('Execute completed job finalizing on ROI exporting')
+          this.logger.info('Execute completed job finalizing on ROI exporting');
         }
       }
     } else if (jobs.failedJobs?.length != null) {
@@ -41,11 +41,11 @@ export class PollingManager {
       for (const job of jobs.failedJobs) {
         const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
         if (job.parameters.exportVersion === ExportVersion.GETMAP) {
-          this.logger.info('Execute completed job finalizing on BBOX (GetMap) exporting')
-          await this.taskManager.finalizeJob(job, expirationDate, false, gpkgFailedErr)
+          this.logger.info('Execute completed job finalizing on BBOX (GetMap) exporting');
+          await this.taskManager.finalizeJob(job, expirationDate, false, gpkgFailedErr);
         } else {
           // TODO - implement finalizer for new API
-          this.logger.info('Execute completed job finalizing on ROI exporting')
+          this.logger.info('Execute completed job finalizing on ROI exporting');
         }
       }
     }

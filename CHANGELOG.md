@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.9.1](https://github.com/MapColonies/exporter-trigger/compare/v2.9.0...v2.9.1) (2023-02-14)
+
+
+### Bug Fixes
+
+* product version in gpkg name ([#54](https://github.com/MapColonies/exporter-trigger/issues/54)) ([79b7107](https://github.com/MapColonies/exporter-trigger/commit/79b7107de724d3632b5eeb1561768bcacd0b0ac1))
+
 ## [2.9.0](https://github.com/MapColonies/exporter-trigger/compare/v2.8.0...v2.9.0) (2023-01-17)
 
 

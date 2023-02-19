@@ -14,7 +14,14 @@ import {
   createMock,
 } from '../../../mocks/clients/jobManagerWrapper';
 import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalogManagerClient';
-import { ExportVersion, ICreateJobResponse, ICreatePackage, IJobParameters, ITaskParameters, JobDuplicationParams } from '../../../../src/common/interfaces';
+import {
+  ExportVersion,
+  ICreateJobResponse,
+  ICreatePackage,
+  IJobParameters,
+  ITaskParameters,
+  JobDuplicationParams,
+} from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
 import { completedJob, inProgressJob, layerFromCatalog, userInput } from '../../../mocks/data';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
@@ -309,7 +316,7 @@ describe('CreatePackageManager', () => {
       expect(findPendingJobMock).toHaveBeenCalledTimes(0);
     });
 
-    it('should throw bad request error when requested resolution is higher then the layer resolution', async () => {
+    it('should throw bad request error when requested resolution is higher than the layer resolution', async () => {
       const layer = { ...layerFromCatalog, metadata: { ...layerFromCatalog.metadata, maxResolutionDeg: 0.072 } };
       findLayerMock.mockResolvedValue(layer);
 

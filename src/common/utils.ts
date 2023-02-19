@@ -86,11 +86,10 @@ export const roiBooleanEqual = (fc1: FeatureCollection, fc2: FeatureCollection):
   if (fc1.features.length !== fc2.features.length) {
     return equality;
   } else {
-
     // TODO - consider to optimize and refactor the equality (create interface for comparable)
     let sortedHashedFc1: string[] = [];
     fc1.features.forEach((feature) => {
-      const orderedFeature = {type: feature.type, properties: feature.properties, geometry:feature.geometry}
+      const orderedFeature = { type: feature.type, properties: feature.properties, geometry: feature.geometry };
       sortedHashedFc1.push(md5(JSON.stringify(orderedFeature)));
     });
     // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
@@ -98,7 +97,7 @@ export const roiBooleanEqual = (fc1: FeatureCollection, fc2: FeatureCollection):
 
     let sortedHashedFc2: string[] = [];
     fc2.features.forEach((feature) => {
-      const orderedFeature = {type: feature.type, properties: feature.properties, geometry:feature.geometry}
+      const orderedFeature = { type: feature.type, properties: feature.properties, geometry: feature.geometry };
       sortedHashedFc2.push(md5(JSON.stringify(orderedFeature)));
     });
     // eslint-disable-next-line @typescript-eslint/require-array-sort-compare

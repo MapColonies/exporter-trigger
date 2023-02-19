@@ -277,8 +277,8 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   /**
- * @deprecated GetMap API - will be deprecated on future
- */
+   * @deprecated GetMap API - will be deprecated on future
+   */
   public async getInProgressJobs(shouldReturnTasks = false): Promise<JobResponse[] | undefined> {
     const queryParams: IFindJob = {
       isCleaned: 'false',
@@ -336,13 +336,23 @@ export class JobManagerWrapper extends JobManagerClient {
   private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
-    return jobs;
+    const exportJobs = jobs?.filter((job) => {
+      if (job.parameters.exportVersion === ExportVersion.GETMAP) {
+        return job;
+      }
+    });
+    return exportJobs;
   }
 
   private async getExportJobs(queryParams: IFindJob): Promise<JobExportResponse[] | undefined> {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
-    return jobs;
+    const exportJobs = jobs?.filter((job) => {
+      if (job.parameters.exportVersion === ExportVersion.ROI) {
+        return job;
+      }
+    });
+    return exportJobs;
   }
 
   /**

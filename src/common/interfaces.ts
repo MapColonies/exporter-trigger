@@ -22,6 +22,9 @@ export interface IBaseCreatePackage {
   priority?: number;
 }
 
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export interface ICreatePackage extends IBaseCreatePackage {
   targetResolution?: number;
   bbox?: BBox | Polygon | MultiPolygon;
@@ -210,7 +213,6 @@ export interface ITaskParameters {
   sources: IMapSource[];
 }
 
-
 /**
  * @deprecated GetMap API - will be deprecated on future
  */
@@ -234,7 +236,7 @@ export interface IJobStatusResponse {
 
 export interface IExportJobStatusResponse {
   completedJobs: JobExportResponse[] | undefined;
-  failedJobs: JobExportResponse[] |undefined;
+  failedJobs: JobExportResponse[] | undefined;
 }
 
 export interface IStorageStatusResponse {
@@ -262,7 +264,7 @@ export interface IGeometryRecord extends IGeometryRecordBase {
 export enum ExportVersion {
   GETMAP = 'GETMAP',
   ROI = 'ROI',
-} 
+}
 
 /**
  * @deprecated GetMap API - will be deprecated on future
@@ -277,4 +279,3 @@ export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;
 // new API based on multi resolution
 export type JobExportResponse = IJobResponse<IJobExportParameters, ITaskParameters>;
 export type CreateExportJobBody = ICreateJobBody<IJobExportParameters, ITaskParameters>;
-

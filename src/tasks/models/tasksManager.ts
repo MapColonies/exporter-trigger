@@ -6,7 +6,18 @@ import { NotFoundError } from '@map-colonies/error-types';
 import { getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
-import { ICallbackData, ICallbackDataBase, ICallbackDataExportBase, ICallbackExportData, IExportJobStatusResponse, IJobParameters, IJobStatusResponse, ILinkDefinition, JobExportResponse, JobResponse } from '../../common/interfaces';
+import {
+  ICallbackData,
+  ICallbackDataBase,
+  ICallbackDataExportBase,
+  ICallbackExportData,
+  IExportJobStatusResponse,
+  IJobParameters,
+  IJobStatusResponse,
+  ILinkDefinition,
+  JobExportResponse,
+  JobResponse,
+} from '../../common/interfaces';
 import { CallbackClient } from '../../clients/callbackClient';
 import { getFileSize } from '../../common/utils';
 import { CreatePackageManager } from '../../createPackage/models/createPackageManager';
@@ -120,8 +131,7 @@ export class TasksManager {
   }
 
   public async sendExportCallbacks(job: JobExportResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataExportBase | undefined> {
-    
-    let links:ILinkDefinition = {...job.parameters.fileNamesTemplates};
+    let links: ILinkDefinition = { ...job.parameters.fileNamesTemplates };
     try {
       this.logger.info(`Sending callback for job: ${job.id}`);
       const packageName = job.parameters.fileNamesTemplates.dataURI;
@@ -132,8 +142,8 @@ export class TasksManager {
         const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
         links = {
           dataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.dataURI}`,
-          metadataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.metadataURI}`
-        }
+          metadataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.metadataURI}`,
+        };
         fileSize = await getFileSize(packageFullPath);
       }
       const callbackParams: ICallbackDataExportBase = {
