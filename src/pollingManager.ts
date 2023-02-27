@@ -25,16 +25,16 @@ export class PollingManager {
     this.logger.debug({ ...getMapJobs, msg: `Handling GetMap jobs` });
     if (getMapJobs.completedJobs?.length != null) {
       existsJobs = true;
-      this.logger.info(`Completed GetMap jobs detected, running finalize job`);
+      this.logger.debug(`GETMAP Completed GetMap jobs detected, running finalize job`);
       for (const job of getMapJobs.completedJobs) {
-        this.logger.info(`Execute completed job finalizing on BBOX (GetMap) exporting for job: ${job.id}`);
+        this.logger.info(`GETMAP Execute completed job finalizing on BBOX (GetMap) exporting for job: ${job.id}`);
         await this.taskManager.finalizeJob(job, expirationDate);
       }
     } else if (getMapJobs.failedJobs?.length != null) {
       existsJobs = true;
-      this.logger.info(`Failed jobs detected, running finalize job`);
+      this.logger.debug(`GETMAP Failed jobs detected, running finalize job`);
       for (const job of getMapJobs.failedJobs) {
-        this.logger.info(`Execute Failed job finalizing on BBOX (GetMap) exporting for job: ${job.id}`);
+        this.logger.info(`GETMAP Execute Failed job finalizing on BBOX (GetMap) exporting for job: ${job.id}`);
         const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
         await this.taskManager.finalizeJob(job, expirationDate, false, gpkgFailedErr);
       }
@@ -43,14 +43,14 @@ export class PollingManager {
     this.logger.debug({ ...roiJobs, msg: `Handling ROI jobs` });
     if (roiJobs.completedJobs?.length != null) {
       existsJobs = true;
-      this.logger.info(`Completed jobs detected, running finalize job`);
+      this.logger.debug(`ROI Completed jobs detected, running finalize job`);
       for (const job of roiJobs.completedJobs) {
         this.logger.info(`Execute completed job finalizing on ROI exporting for job: ${job.id}`);
         await this.taskManager.finalizeExportJob(job, expirationDate);
       }
     } else if (roiJobs.failedJobs?.length != null) {
       existsJobs = true;
-      this.logger.info(`Failed jobs detected, running finalize job`);
+      this.logger.debug(`ROI Failed jobs detected, running finalize job`);
       for (const job of roiJobs.failedJobs) {
         this.logger.info(`Execute failed job finalizing on ROI exporting for job: ${job.id}`);
         const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
