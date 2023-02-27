@@ -281,7 +281,7 @@ export class CreatePackageManager {
       metadataURI: metadataFileName,
     };
     const additionalIdentifiers = generateGeoIdentifier(roi);
-    const packageRelativePath = `${additionalIdentifiers}${separator}${packageName}`
+    const packageRelativePath = `${additionalIdentifiers}${separator}${packageName}`;
     // const packageRelativePath = getGpkgRelativePath(packageName, separator);
     const sources: IMapSource[] = [
       {

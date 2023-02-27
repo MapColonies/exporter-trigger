@@ -161,7 +161,6 @@ export interface JobExportDuplicationParams {
   roi: FeatureCollection;
 }
 
-
 /**
  * @deprecated GetMap API - will be deprecated on future
  */

@@ -253,7 +253,7 @@ export class TasksManager {
     const success = errorReason === undefined;
     let fileSize = 0;
     if (success) {
-      const packageFullPath = concatFsPaths(this.gpkgsLocation, relativeFilesDirectory, packageName)
+      const packageFullPath = concatFsPaths(this.gpkgsLocation, relativeFilesDirectory, packageName);
       // const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
       // Todo - link shouldn't be hard-coded for each of his parts! temporary before webhooks implementation
       links = {

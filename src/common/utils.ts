@@ -10,36 +10,37 @@ import md5 from 'md5';
 import _ from 'lodash';
 import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
 
-const featuresCustomizer = (objectValue: Feature[], otherValue: Feature[]): boolean => { // compare features
+const featuresCustomizer = (objectValue: Feature[], otherValue: Feature[]): boolean => {
+  // compare features
   // https://lodash.com/docs/4.17.15#find
-  
+
   if (!_.isEqual(objectValue.length, otherValue.length)) {
     return false;
   }
-  for(let i = 0; i < objectValue.length; i++) {
-      const isFeatureContained  = _.find(otherValue, objectValue[i]);
-      if (isFeatureContained === undefined) {
-          return false;
-      }
+  for (let i = 0; i < objectValue.length; i++) {
+    const isFeatureContained = _.find(otherValue, objectValue[i]);
+    if (isFeatureContained === undefined) {
+      return false;
+    }
   }
-  for(let i = 0; i < otherValue.length; i++) {
-      const isFeatureContained = _.find(objectValue, otherValue[i]);
-      if (isFeatureContained === undefined) {
-          return false;
-      }
+  for (let i = 0; i < otherValue.length; i++) {
+    const isFeatureContained = _.find(objectValue, otherValue[i]);
+    if (isFeatureContained === undefined) {
+      return false;
+    }
   }
   return true;
-}
+};
 
 const featureCollectionCustomized = (objectValue: FeatureCollection, otherValue: FeatureCollection): boolean => {
   // compare type
   if (!_.isEqual(objectValue.type, otherValue.type)) {
-      return false;
+    return false;
   }
   // compare features
-  const isFeaturesEqual = _.isEqualWith(objectValue.features, otherValue.features, featuresCustomizer)
+  const isFeaturesEqual = _.isEqualWith(objectValue.features, otherValue.features, featuresCustomizer);
   return isFeaturesEqual;
-}
+};
 
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;

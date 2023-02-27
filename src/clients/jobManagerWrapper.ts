@@ -22,7 +22,7 @@ import {
   JobResponse,
   TaskResponse,
 } from '../common/interfaces';
-import { generateGeoIdentifier, roiBooleanEqual } from '../common/utils';
+import { roiBooleanEqual } from '../common/utils';
 //this is the job manager api for find job DO NOT MODIFY
 interface IFindJob {
   resourceId?: string;
@@ -109,8 +109,6 @@ export class JobManagerWrapper extends JobManagerClient {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
 
-    const additionalIdentifiers = generateGeoIdentifier(data.roi);
-
     const jobParameters: IJobExportParameters = {
       roi: data.roi,
       callbacks: data.callbacks,
@@ -175,7 +173,11 @@ export class JobManagerWrapper extends JobManagerClient {
     return undefined;
   }
 
-  public async findExportJob(status: OperationStatus, jobParams: JobExportDuplicationParams, shouldReturnTasks = false): Promise<JobExportResponse | undefined> {
+  public async findExportJob(
+    status: OperationStatus,
+    jobParams: JobExportDuplicationParams,
+    shouldReturnTasks = false
+  ): Promise<JobExportResponse | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
@@ -192,7 +194,6 @@ export class JobManagerWrapper extends JobManagerClient {
 
     return undefined;
   }
-
 
   /**
    * @deprecated The method should not be used
@@ -216,7 +217,6 @@ export class JobManagerWrapper extends JobManagerClient {
     return undefined;
   }
 
-
   /**
    * @deprecated The method should not be used
    */
@@ -238,7 +238,6 @@ export class JobManagerWrapper extends JobManagerClient {
 
     return undefined;
   }
-
 
   public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
     const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);
