@@ -138,7 +138,7 @@ export interface ILinkDefinition {
 }
 
 export interface ICallbackExportResponse extends ICallbackExportData {
-  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
+  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED | OperationStatus.FAILED;
 }
 
 /**
@@ -161,13 +161,6 @@ export interface JobExportDuplicationParams {
   roi: FeatureCollection;
 }
 
-export interface IJobParametersBase {
-  relativeDirectoryPath: string;
-  crs: string;
-  callbackParams?: ICallbackExportResponse;
-  fileName: string;
-  gpkgEstimatedSize?: number;
-}
 
 /**
  * @deprecated GetMap API - will be deprecated on future
@@ -255,9 +248,11 @@ export interface IGeometryRecordBase {
   zoomLevel: number;
   sanitizedBox?: BBox | null | undefined;
 }
+
 export interface IGeometryRecord extends IGeometryRecordBase {
   geometry?: Geometry;
-  targetResolution: number;
+  targetResolutionDeg: number;
+  targetResolutionMeter: number;
 }
 
 // todo - Temporary enum to define old\new api - will be removed after deleting getMap API

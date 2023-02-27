@@ -3,7 +3,7 @@ import { inject, injectable } from 'tsyringe';
 import config from 'config';
 import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
-import { getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
+import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
@@ -11,7 +11,9 @@ import {
   ICallbackDataBase,
   ICallbackDataExportBase,
   ICallbackExportData,
+  ICallbackExportResponse,
   IExportJobStatusResponse,
+  IJobExportParameters,
   IJobParameters,
   IJobStatusResponse,
   ILinkDefinition,
@@ -130,31 +132,9 @@ export class TasksManager {
     }
   }
 
-  public async sendExportCallbacks(job: JobExportResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataExportBase | undefined> {
-    let links: ILinkDefinition = { ...job.parameters.fileNamesTemplates };
+  public async sendExportCallbacks(job: JobExportResponse, callbackParams: ICallbackDataExportBase): Promise<void> {
     try {
-      this.logger.info(`Sending callback for job: ${job.id}`);
-      const packageName = job.parameters.fileNamesTemplates.dataURI;
-      const relativeFilesDirectory = job.parameters.relativeDirectoryPath;
-      const success = errorReason === undefined;
-      let fileSize = 0;
-      if (success) {
-        const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
-        links = {
-          dataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.dataURI}`,
-          metadataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.metadataURI}`,
-        };
-        fileSize = await getFileSize(packageFullPath);
-      }
-      const callbackParams: ICallbackDataExportBase = {
-        links,
-        expirationTime: expirationDate,
-        fileSize,
-        recordCatalogId: job.internalId as string,
-        requestJobId: job.id,
-        errorReason,
-      };
-
+      this.logger.info({ ...job, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
       const callbackPromises: Promise<void>[] = [];
       for (const target of targetCallbacks) {
@@ -169,13 +149,14 @@ export class TasksManager {
           this.logger.error({ reason: response.reason, url: targetCallbacks[index].url }, `Failed to send callback to url`);
         }
       });
-
-      return callbackParams;
     } catch (error) {
-      this.logger.error(error, `Sending callback has failed`);
+      this.logger.error(error, `Sending callback has failed for job: ${job.id}`);
     }
   }
 
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   public async finalizeJob(job: JobResponse, expirationDate: Date, isSuccess = true, reason?: string): Promise<void> {
     let updateJobParams: IUpdateJobBody<IJobParameters> = {
       status: isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED,
@@ -185,7 +166,7 @@ export class TasksManager {
       expirationDate: expirationDate,
     };
     try {
-      this.logger.info(`Finzaling Job: ${job.id}`);
+      this.logger.info(`Finalize Job: ${job.id}`);
       const packageName = job.parameters.fileName;
       if (isSuccess) {
         const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
@@ -202,5 +183,98 @@ export class TasksManager {
       updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams } };
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     }
+  }
+
+  public async finalizeExportJob(job: JobExportResponse, expirationDate: Date, isSuccess = true, reason?: string): Promise<void> {
+    let updateJobParams: IUpdateJobBody<IJobExportParameters> = {
+      reason,
+      /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
+      percentage: isSuccess ? 100 : undefined,
+      status: isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED,
+      expirationDate: expirationDate,
+    };
+    try {
+      this.logger.info({ ...job, msg: `Finalize Job: ${job.id}` });
+      if (isSuccess) {
+        await this.packageManager.createExportJsonMetadata(job); // todo - should we make job to be failed if gpkg exists but not metadata?
+      }
+
+      // create and sending response to callbacks
+      const callbackSendParams = await this.generateCallbackParam(job, expirationDate, reason);
+      await this.sendExportCallbacks(job, callbackSendParams);
+
+      // generate job finally completion with webhook (callback param) data
+      let finalizeStatus = OperationStatus.COMPLETED;
+
+      if (reason !== undefined) {
+        finalizeStatus = OperationStatus.FAILED;
+      }
+
+      const callbackParams: ICallbackExportResponse = {
+        ...callbackSendParams,
+        roi: job.parameters.roi,
+        status: finalizeStatus,
+        errorReason: reason,
+      };
+
+      updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
+      this.logger.info(`Update Job status to ${finalizeStatus} jobId=${job.id}`);
+      // if (reason == null) {
+      //   // todo - don't forget to define cases when failed \ completed
+
+      //   const callbackParams: ICallbackExportResponse = {
+      //     ...callbackSendParams,
+      //     roi: job.parameters.roi,
+      //     status: OperationStatus.COMPLETED,
+      //     errorReason: reason,
+      //   };
+      // updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
+      // this.logger.info(`Update Job status to ${OperationStatus.COMPLETED} jobId=${job.id}`);
+      // } else {
+      // updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED };
+      // this.logger.info(`Update Job status to ${OperationStatus.FAILED} jobId=${job.id}`);
+      // }
+
+      // await this.jobManagerClient.updateJob(job.id, updateJobParams);
+    } catch (error) {
+      this.logger.error(`Could not finalize job: ${job.id} updating failed job status, error: ${(error as Error).message}`);
+      updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED };
+    } finally {
+      await this.jobManagerClient.updateJob(job.id, updateJobParams);
+    }
+  }
+
+  private async generateCallbackParam(job: JobExportResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataExportBase> {
+    let links: ILinkDefinition = { ...job.parameters.fileNamesTemplates }; // default file names in case of failure
+    this.logger.info({ ...job, msg: `generate callback body for job: ${job.id}` });
+
+    const packageName = job.parameters.fileNamesTemplates.dataURI;
+    const relativeFilesDirectory = job.parameters.relativeDirectoryPath;
+    const success = errorReason === undefined;
+    let fileSize = 0;
+    if (success) {
+      const packageFullPath = concatFsPaths(this.gpkgsLocation, relativeFilesDirectory, packageName)
+      // const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
+      // Todo - link shouldn't be hard-coded for each of his parts! temporary before webhooks implementation
+      links = {
+        dataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.dataURI}`,
+        metadataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.metadataURI}`,
+      };
+      try {
+        fileSize = await getFileSize(packageFullPath);
+      } catch {
+        this.logger.error({ msg: `failed getting gpkg file size to ${packageFullPath}` });
+      }
+    }
+    const callbackParams: ICallbackDataExportBase = {
+      links,
+      expirationTime: expirationDate,
+      fileSize,
+      recordCatalogId: job.internalId as string,
+      requestJobId: job.id,
+      errorReason,
+    };
+    this.logger.info({ ...callbackParams, msg: `Finish generating callbackParams for job: ${job.id}` });
+    return callbackParams;
   }
 }

@@ -7,6 +7,7 @@ import {
   BBox,
   bbox as PolygonBbox,
   intersect,
+  combine as featureCombine,
   bboxPolygon,
   FeatureCollection,
   Feature,
@@ -20,7 +21,7 @@ import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types'
 import { isArray, isEmpty } from 'lodash';
 import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
-import { LayerMetadata, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
+import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { feature, featureCollection } from '@turf/helpers';
 import {
   ExportVersion,
@@ -41,8 +42,10 @@ import {
   getGpkgRelativePath,
   getStorageStatus,
   getGpkgNameWithoutExt,
-  zoomLevelToResolution,
   roiBooleanEqual,
+  concatFsPaths,
+  parseFeatureCollection,
+  generateGeoIdentifier,
 } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
@@ -198,25 +201,27 @@ export class CreatePackageManager {
     const layerMetadata = layer.metadata;
     if (!roi) {
       // convert and wrap layer's footprint to featureCollection
-      const layerFeature = feature(layerMetadata.footprint as Geometry);
+      const layerMaxResolutionDeg = layerMetadata.maxResolutionDeg;
+      const layerFeature = feature(layerMetadata.footprint as Geometry, { maxResolutionDeg: layerMaxResolutionDeg });
       roi = featureCollection([layerFeature]);
     }
 
-    let { productId: resourceId, productVersion: version, productType } = layerMetadata;
-    const featuresRecords = this.parseFeatureCollection(roi, layerMetadata);
+    let { productId: resourceId, productVersion: version, productType, maxResolutionDeg: srcRes } = layerMetadata;
+    const featuresRecords = parseFeatureCollection(roi);
     const tileEstimatedSize = this.getTileEstimatedSize(layerMetadata.tileOutputFormat as TileOutputFormat);
 
     resourceId = resourceId as string;
     version = version as string;
     productType = productType as ProductType;
-
-    const srcRes = layerMetadata.maxResolutionDeg as number;
+    srcRes = srcRes as number;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
 
     // ROI vs layer validation section - zoom + geo intersection
     featuresRecords.forEach((record) => {
       if (record.zoomLevel > maxZoom) {
-        throw new BadRequestError(`The requested resolution ${record.targetResolution} is larger then then product resolution ${srcRes}`);
+        throw new BadRequestError(
+          `The requested resolution ${record.targetResolutionDeg} is larger then then product resolution ${srcRes as number}`
+        );
       }
 
       // generate sanitized bbox for each original feature
@@ -252,18 +257,13 @@ export class CreatePackageManager {
     }
 
     const batches: ITileRange[] = [];
-    // const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
     featuresRecords.forEach((record) => {
-      // for (let i = 0; i <= record.zoomLevel; i++) {
-      // const recordBatches = bboxToTileRange(record.sanitizedBox as BBox2d, i);
       const recordBatches = this.generateTileGroups(
         record.geometry as Polygon | MultiPolygon,
         layerMetadata.footprint as Polygon | MultiPolygon,
         record.zoomLevel
       );
-      // batches.push(recordBatches);
       batches.push(...recordBatches);
-      // }
     });
 
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
@@ -280,7 +280,9 @@ export class CreatePackageManager {
       dataURI: packageName,
       metadataURI: metadataFileName,
     };
-    const packageRelativePath = getGpkgRelativePath(packageName, separator);
+    const additionalIdentifiers = generateGeoIdentifier(roi);
+    const packageRelativePath = `${additionalIdentifiers}${separator}${packageName}`
+    // const packageRelativePath = getGpkgRelativePath(packageName, separator);
     const sources: IMapSource[] = [
       {
         path: packageRelativePath,
@@ -300,7 +302,7 @@ export class CreatePackageManager {
     const workerInput: IWorkerExportInput = {
       roi,
       fileNamesTemplates: fileNamesTemplates,
-      relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
+      relativeDirectoryPath: additionalIdentifiers,
       dbId,
       exportVersion: ExportVersion.ROI,
       version: version,
@@ -317,8 +319,11 @@ export class CreatePackageManager {
     return jobCreated;
   }
 
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   public async createJsonMetadata(fullGpkgPath: string, job: JobResponse): Promise<void> {
-    this.logger.info(`Creating metadata.json file for gpkg in path "${fullGpkgPath}" for jobId ${job.id}`);
+    this.logger.info(`Creating metadata.json file for gpkg in path "${this.gpkgsLocation}/${fullGpkgPath}" for jobId ${job.id}`);
     const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
 
     const parsedPath = parsePath(fullGpkgPath);
@@ -336,6 +341,81 @@ export class CreatePackageManager {
 
     const recordMetadata = JSON.stringify(record.metadata);
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
+  }
+
+  public async createExportJsonMetadata(job: JobExportResponse): Promise<void> {
+    this.logger.info(`Creating metadata.json file for gpkg in path "${job.parameters.relativeDirectoryPath}" for jobId ${job.id}`);
+    const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
+    const featuresRecords = parseFeatureCollection(job.parameters.roi);
+
+    const maxResolutionDeg = Math.max(
+      record.metadata.maxResolutionDeg as number,
+      Math.min(...featuresRecords.map((records) => records.targetResolutionDeg))
+    );
+    const maxResolutionMeter = Math.max(
+      record.metadata.maxResolutionMeter as number,
+      Math.min(...featuresRecords.map((records) => records.targetResolutionMeter))
+    );
+
+    const metadataFileName = job.parameters.fileNamesTemplates.metadataURI;
+    const directoryName = job.parameters.relativeDirectoryPath;
+    const metadataFullPath = concatFsPaths(this.gpkgsLocation, directoryName, metadataFileName);
+    let combinedFootprint = undefined;
+    try {
+      const intersectedFeatures = this.featuresFootprintIntersects(
+        job.parameters.roi.features as Feature<Polygon | MultiPolygon>[],
+        record.metadata.footprint as Polygon | MultiPolygon
+      );
+      const fc: FeatureCollection<Polygon | MultiPolygon> = featureCollection(intersectedFeatures);
+      combinedFootprint = featureCombine(fc).features[0].geometry as unknown as MultiPolygon;
+    } catch (error) {
+      this.logger.error(error, `Failed to match features intersection with footprint`);
+    }
+    record.metadata.footprint = combinedFootprint ? combinedFootprint : record.metadata.footprint;
+    record.metadata.maxResolutionDeg = maxResolutionDeg;
+    record.metadata.maxResolutionMeter = maxResolutionMeter;
+
+    const layerPolygonPartFeatures: Feature[] = [];
+    for (const featureRecord of featuresRecords) {
+      for (const feature of (record.metadata.layerPolygonParts as FeatureCollection).features) {
+        const intersectedFeature = intersect(featureRecord.geometry as Polygon | MultiPolygon, feature.geometry as Polygon | MultiPolygon);
+        if (!intersectedFeature) {
+          continue;
+        }
+        if (feature.properties?.Resolution !== undefined) {
+          const maxResolutionDeg = Math.max(featureRecord.targetResolutionDeg, feature.properties.Resolution as number);
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          intersectedFeature.properties = { ...feature.properties, Resolution: maxResolutionDeg };
+        } else {
+          this.logger.error({ ...feature, msg: `LayerPolygonPart not include property of type 'Resolution` });
+          throw new Error(`Layer's LayerPolygonPart value not include property of type 'Resolution`);
+        }
+        layerPolygonPartFeatures.push({ ...intersectedFeature });
+      }
+    }
+    const roiBbox = PolygonBbox(job.parameters.roi);
+    (record.metadata.layerPolygonParts as FeatureCollection) = {
+      ...(record.metadata.layerPolygonParts as FeatureCollection),
+      features: layerPolygonPartFeatures,
+      bbox: roiBbox,
+    };
+    record.metadata.productBoundingBox = roiBbox.join(',');
+    const recordMetadata = JSON.stringify(record.metadata);
+    await fsPromise.writeFile(metadataFullPath, recordMetadata);
+  }
+
+  private featuresFootprintIntersects(
+    features: Feature<Polygon | MultiPolygon>[],
+    footprint: Polygon | MultiPolygon
+  ): Feature<Polygon | MultiPolygon>[] {
+    const intersectedFeatures: Feature<Polygon | MultiPolygon>[] = [];
+    features.forEach((feature) => {
+      const intersected = intersect(feature, footprint);
+      if (intersected !== null) {
+        intersectedFeatures.push(intersected);
+      }
+    });
+    return intersectedFeatures;
   }
 
   private async getFreeStorage(): Promise<number> {
@@ -526,7 +606,7 @@ export class CreatePackageManager {
 
   private async checkForExportCompleted(dupParams: JobExportDuplicationParams): Promise<ICallbackExportResponse | undefined> {
     this.logger.info({ ...dupParams }, `Checking for COMPLETED duplications with parameters`);
-    const responseJob = await this.jobManagerClient.findCompletedExportJob(dupParams);
+    const responseJob = await this.jobManagerClient.findExportJob(OperationStatus.COMPLETED, dupParams);
     if (responseJob) {
       await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
       return {
@@ -559,13 +639,14 @@ export class CreatePackageManager {
   ): Promise<ICreateJobResponse | undefined> {
     this.logger.info(dupParams, `Checking for PROCESSING duplications with parameters`);
     const processingJob =
-      (await this.jobManagerClient.findInProgressExportJob(dupParams)) ?? (await this.jobManagerClient.findPendingExportJob(dupParams));
+      (await this.jobManagerClient.findExportJob(OperationStatus.IN_PROGRESS, dupParams, true)) ??
+      (await this.jobManagerClient.findExportJob(OperationStatus.PENDING, dupParams, true));
     if (processingJob) {
       await this.updateExportCallbackURLs(processingJob, newCallbacks);
       await this.jobManagerClient.validateAndUpdateExpiration(processingJob.id);
       return {
         id: processingJob.id,
-        taskIds: (processingJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[]).map((t) => t.id),
+        taskIds: (processingJob.tasks as unknown as IJobResponse<IJobExportParameters, ITaskParameters>[]).map((t) => t.id),
         status: OperationStatus.IN_PROGRESS,
       };
     }
@@ -675,20 +756,5 @@ export class CreatePackageManager {
     this.logger.debug(`single tile size defined as ${tileOutputFormat} from configuration: ${tileEstimatedSize} bytes`);
 
     return tileEstimatedSize;
-  }
-
-  private parseFeatureCollection(featuresCollection: FeatureCollection, layerMetadata: LayerMetadata): IGeometryRecord[] {
-    const parsedGeoRecord: IGeometryRecord[] = [];
-    featuresCollection.features.forEach((feature) => {
-      if (feature.properties && (feature.properties.zoomLevel as number)) {
-        const targetResolution = zoomLevelToResolution(feature.properties.zoomLevel as number);
-        parsedGeoRecord.push({ geometry: feature.geometry as Geometry, targetResolution, zoomLevel: feature.properties.zoomLevel as number });
-      } else {
-        const targetResolution = layerMetadata.maxResolutionDeg as number;
-        const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
-        parsedGeoRecord.push({ geometry: feature.geometry as Geometry, targetResolution, zoomLevel });
-      }
-    });
-    return parsedGeoRecord;
   }
 }

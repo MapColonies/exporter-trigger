@@ -133,7 +133,7 @@ export class JobManagerWrapper extends JobManagerClient {
       productName: data.cswProductId,
       priority: data.priority,
       status: OperationStatus.IN_PROGRESS,
-      additionalIdentifiers,
+      additionalIdentifiers: data.relativeDirectoryPath,
       tasks: [
         {
           type: this.tilesTaskType,
@@ -154,6 +154,9 @@ export class JobManagerWrapper extends JobManagerClient {
     return createJobResponse;
   }
 
+  /**
+   * @deprecated The method should not be used
+   */
   public async findCompletedJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
@@ -172,14 +175,14 @@ export class JobManagerWrapper extends JobManagerClient {
     return undefined;
   }
 
-  public async findCompletedExportJob(jobParams: JobExportDuplicationParams): Promise<JobExportResponse | undefined> {
+  public async findExportJob(status: OperationStatus, jobParams: JobExportDuplicationParams, shouldReturnTasks = false): Promise<JobExportResponse | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
       isCleaned: 'false',
       type: this.tilesJobType,
-      shouldReturnTasks: 'false',
-      status: OperationStatus.COMPLETED,
+      shouldReturnTasks: shouldReturnTasks ? 'true' : 'false',
+      status,
     };
     const jobs = await this.getExportJobs(queryParams);
     if (jobs) {
@@ -189,6 +192,7 @@ export class JobManagerWrapper extends JobManagerClient {
 
     return undefined;
   }
+
 
   /**
    * @deprecated The method should not be used
@@ -212,23 +216,6 @@ export class JobManagerWrapper extends JobManagerClient {
     return undefined;
   }
 
-  public async findInProgressExportJob(jobParams: JobExportDuplicationParams): Promise<JobExportResponse | undefined> {
-    const queryParams: IFindJob = {
-      resourceId: jobParams.resourceId,
-      version: jobParams.version,
-      isCleaned: 'false',
-      type: this.tilesJobType,
-      shouldReturnTasks: 'true',
-      status: OperationStatus.IN_PROGRESS,
-    };
-    const jobs = await this.getExportJobs(queryParams);
-    if (jobs) {
-      const matchingJob = this.findExportJobWithMatchingParams(jobs, jobParams);
-      return matchingJob;
-    }
-
-    return undefined;
-  }
 
   /**
    * @deprecated The method should not be used
@@ -252,24 +239,6 @@ export class JobManagerWrapper extends JobManagerClient {
     return undefined;
   }
 
-  public async findPendingExportJob(jobParams: JobExportDuplicationParams): Promise<JobExportResponse | undefined> {
-    const queryParams: IFindJob = {
-      resourceId: jobParams.resourceId,
-      version: jobParams.version,
-      isCleaned: 'false',
-      type: this.tilesJobType,
-      shouldReturnTasks: 'true',
-      status: OperationStatus.PENDING,
-    };
-
-    const jobs = await this.getExportJobs(queryParams);
-    if (jobs) {
-      const matchingJob = this.findExportJobWithMatchingParams(jobs, jobParams);
-      return matchingJob;
-    }
-
-    return undefined;
-  }
 
   public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
     const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);

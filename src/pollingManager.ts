@@ -3,7 +3,6 @@ import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
-import { ExportVersion } from './common/interfaces';
 
 export const POLLING_MANGER_SYMBOL = Symbol('tasksFactory');
 
@@ -17,38 +16,48 @@ export class PollingManager {
 
   public async jobStatusPoll(): Promise<boolean> {
     let existsJobs = false;
-    const jobs = await this.taskManager.getJobsByTaskStatus(); // for old getmap api - work with new and will be replaced
-    // todo - uncomment when will be replaced the API.
-    // const jobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
 
+    const getMapJobs = await this.taskManager.getJobsByTaskStatus(); // for old getmap api - will be removed
+    const roiJobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
-    if (jobs.completedJobs?.length != null) {
+
+    this.logger.debug({ ...getMapJobs, msg: `Handling GetMap jobs` });
+    if (getMapJobs.completedJobs?.length != null) {
       existsJobs = true;
-      this.logger.info(`Completed jobs detected, running finalize job`);
-      for (const job of jobs.completedJobs) {
-        if (job.parameters.exportVersion === ExportVersion.GETMAP) {
-          this.logger.info('Execute completed job finalizing on BBOX (GetMap) exporting');
-          await this.taskManager.finalizeJob(job, expirationDate);
-        } else {
-          // TODO - implement finalizer for new API
-          this.logger.info('Execute completed job finalizing on ROI exporting');
-        }
+      this.logger.info(`Completed GetMap jobs detected, running finalize job`);
+      for (const job of getMapJobs.completedJobs) {
+        this.logger.info(`Execute completed job finalizing on BBOX (GetMap) exporting for job: ${job.id}`);
+        await this.taskManager.finalizeJob(job, expirationDate);
       }
-    } else if (jobs.failedJobs?.length != null) {
+    } else if (getMapJobs.failedJobs?.length != null) {
       existsJobs = true;
       this.logger.info(`Failed jobs detected, running finalize job`);
-      for (const job of jobs.failedJobs) {
+      for (const job of getMapJobs.failedJobs) {
+        this.logger.info(`Execute Failed job finalizing on BBOX (GetMap) exporting for job: ${job.id}`);
         const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
-        if (job.parameters.exportVersion === ExportVersion.GETMAP) {
-          this.logger.info('Execute completed job finalizing on BBOX (GetMap) exporting');
-          await this.taskManager.finalizeJob(job, expirationDate, false, gpkgFailedErr);
-        } else {
-          // TODO - implement finalizer for new API
-          this.logger.info('Execute completed job finalizing on ROI exporting');
-        }
+        await this.taskManager.finalizeJob(job, expirationDate, false, gpkgFailedErr);
       }
     }
+
+    this.logger.debug({ ...roiJobs, msg: `Handling ROI jobs` });
+    if (roiJobs.completedJobs?.length != null) {
+      existsJobs = true;
+      this.logger.info(`Completed jobs detected, running finalize job`);
+      for (const job of roiJobs.completedJobs) {
+        this.logger.info(`Execute completed job finalizing on ROI exporting for job: ${job.id}`);
+        await this.taskManager.finalizeExportJob(job, expirationDate);
+      }
+    } else if (roiJobs.failedJobs?.length != null) {
+      existsJobs = true;
+      this.logger.info(`Failed jobs detected, running finalize job`);
+      for (const job of roiJobs.failedJobs) {
+        this.logger.info(`Execute failed job finalizing on ROI exporting for job: ${job.id}`);
+        const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
+        await this.taskManager.finalizeExportJob(job, expirationDate, false, gpkgFailedErr);
+      }
+    }
+
     return existsJobs;
   }
 }

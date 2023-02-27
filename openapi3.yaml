@@ -237,7 +237,7 @@ components:
           features:
             - type: Feature
               properties:
-                zoomLevel: 5
+                maxResolutionDeg: 0.072
               geometry:
                 type: Polygon
                 coordinates:
@@ -378,7 +378,16 @@ components:
             - Feature
         properties:
           type: object
-          nullable: true
+          required:
+            - maxResolutionDeg
+          properties:
+            maxResolutionDeg:
+              type: number
+              minimum: 0.00000009
+              maximum: 0.072
+              format: double
+              description: max resolution of layer in degrees/pixel
+          # nullable: true
         geometry:
           type: object
           nullable: true

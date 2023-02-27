@@ -4,10 +4,42 @@ import { promises as fsPromise } from 'fs';
 import { parse as parsePath } from 'path';
 import { sep } from 'path';
 import checkDiskSpace from 'check-disk-space';
-import { ITileRange } from '@map-colonies/mc-utils';
-import { FeatureCollection } from '@turf/helpers';
+import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionDeg } from '@map-colonies/mc-utils';
+import { Feature, FeatureCollection, Geometry } from '@turf/helpers';
 import md5 from 'md5';
-import { IStorageStatusResponse } from './interfaces';
+import _ from 'lodash';
+import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
+
+const featuresCustomizer = (objectValue: Feature[], otherValue: Feature[]): boolean => { // compare features
+  // https://lodash.com/docs/4.17.15#find
+  
+  if (!_.isEqual(objectValue.length, otherValue.length)) {
+    return false;
+  }
+  for(let i = 0; i < objectValue.length; i++) {
+      const isFeatureContained  = _.find(otherValue, objectValue[i]);
+      if (isFeatureContained === undefined) {
+          return false;
+      }
+  }
+  for(let i = 0; i < otherValue.length; i++) {
+      const isFeatureContained = _.find(objectValue, otherValue[i]);
+      if (isFeatureContained === undefined) {
+          return false;
+      }
+  }
+  return true;
+}
+
+const featureCollectionCustomized = (objectValue: FeatureCollection, otherValue: FeatureCollection): boolean => {
+  // compare type
+  if (!_.isEqual(objectValue.type, otherValue.type)) {
+      return false;
+  }
+  // compare features
+  const isFeaturesEqual = _.isEqualWith(objectValue.features, otherValue.features, featuresCustomizer)
+  return isFeaturesEqual;
+}
 
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;
@@ -30,6 +62,11 @@ export const getGpkgFullPath = (gpkgsLocation: string, packageName: string, sepa
   return packageFullPath;
 };
 
+export const concatFsPaths = (..._dirs: string[]): string => {
+  const fullPath: string = _dirs.join(sep);
+  return fullPath;
+};
+
 export const getStorageStatus = async (gpkgsLocation: string): Promise<IStorageStatusResponse> => {
   return checkDiskSpace(gpkgsLocation);
 };
@@ -46,66 +83,36 @@ export const calculateEstimateGpkgSize = (batches: ITileRange[], tileEstimatedSi
   return gpkgEstimatedSize;
 };
 
-export const zoomLevelToResolution = (zoom: number): number => {
-  const zoomLevelMapper: Record<number, number> = {
-    0: 0.703125,
-    1: 0.3515625,
-    2: 0.17578125,
-    3: 0.087890625,
-    4: 0.0439453125,
-    5: 0.02197265625,
-    6: 0.010986328125,
-    7: 0.0054931640625,
-    8: 0.00274658203125,
-    9: 0.001373291015625,
-    10: 0.0006866455078125,
-    11: 0.00034332275390625,
-    12: 0.000171661376953125,
-    13: 0.0000858306884765625,
-    14: 0.0000429153442382812,
-    15: 0.0000214576721191406,
-    16: 0.0000107288360595703,
-    17: 0.00000536441802978516,
-    18: 0.00000268220901489258,
-    19: 0.00000134110450744629,
-    20: 0.000000670552253723145,
-    21: 0.000000335276126861572,
-    22: 0.000000167638063430786,
-  };
-  return zoomLevelMapper[zoom];
-};
-
+/**
+ * generated unique hashed string value for FeatureCollection geography - notice! features order influence on hashing
+ * @param geo FeatureCollection object
+ * @returns md5 hashed string
+ */
 export const generateGeoIdentifier = (geo: FeatureCollection): string => {
   const stringifiedGeo = JSON.stringify(geo);
   const additionalIdentifiers = md5(stringifiedGeo);
   return additionalIdentifiers;
 };
 
-export const roiBooleanEqual = (fc1: FeatureCollection, fc2: FeatureCollection): boolean => {
-  let equality = false;
-  if (fc1.features.length !== fc2.features.length) {
-    return equality;
-  } else {
-    // TODO - consider to optimize and refactor the equality (create interface for comparable)
-    let sortedHashedFc1: string[] = [];
-    fc1.features.forEach((feature) => {
-      const orderedFeature = { type: feature.type, properties: feature.properties, geometry: feature.geometry };
-      sortedHashedFc1.push(md5(JSON.stringify(orderedFeature)));
-    });
-    // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
-    sortedHashedFc1 = sortedHashedFc1.sort();
-
-    let sortedHashedFc2: string[] = [];
-    fc2.features.forEach((feature) => {
-      const orderedFeature = { type: feature.type, properties: feature.properties, geometry: feature.geometry };
-      sortedHashedFc2.push(md5(JSON.stringify(orderedFeature)));
-    });
-    // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
-    sortedHashedFc2 = sortedHashedFc2.sort();
-
-    if (sortedHashedFc1.every((value, index) => value === sortedHashedFc2[index])) {
-      equality = true;
+export const parseFeatureCollection = (featuresCollection: FeatureCollection): IGeometryRecord[] => {
+  const parsedGeoRecord: IGeometryRecord[] = [];
+  featuresCollection.features.forEach((feature) => {
+    if (feature.properties && (feature.properties.maxResolutionDeg as number)) {
+      const targetResolutionDeg = feature.properties.maxResolutionDeg as number;
+      const zoomLevel = degreesPerPixelToZoomLevel(targetResolutionDeg);
+      const targetResolutionMeter = zoomLevelToResolutionDeg(zoomLevel) as number;
+      parsedGeoRecord.push({
+        geometry: feature.geometry as Geometry,
+        targetResolutionDeg,
+        targetResolutionMeter,
+        zoomLevel,
+      });
     }
-    return equality;
-  }
+  });
+  return parsedGeoRecord;
+};
+
+// todo - add unittest
+export const roiBooleanEqual = (fc1: FeatureCollection, fc2: FeatureCollection): boolean => {
+  return _.isEqualWith(fc1, fc2, featureCollectionCustomized);
 };
