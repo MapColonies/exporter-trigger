@@ -274,15 +274,15 @@ export class CreatePackageManager {
       }
     }
     const separator = this.getSeparator();
-    const packageName = this.generateExportPackageName(productType, resourceId, version, featuresRecords);
-    const metadataFileName = `${getGpkgNameWithoutExt(packageName)}.json`;
+    const prefixPackageName = this.generateExportFileNames(productType, resourceId, version, featuresRecords);
+    const packageName = `${prefixPackageName}.gpkg`;
+    const metadataFileName = `${prefixPackageName}.json`;
     const fileNamesTemplates: ILinkDefinition = {
       dataURI: packageName,
       metadataURI: metadataFileName,
     };
     const additionalIdentifiers = generateGeoIdentifier(roi);
     const packageRelativePath = `${additionalIdentifiers}${separator}${packageName}`;
-    // const packageRelativePath = getGpkgRelativePath(packageName, separator);
     const sources: IMapSource[] = [
       {
         path: packageRelativePath,
@@ -722,11 +722,11 @@ export class CreatePackageManager {
     return `${productType}_${productId}_${productVersionConvention}_${zoomLevel}_${bboxToString}.gpkg`;
   }
 
-  private generateExportPackageName(productType: string, productId: string, productVersion: string, featuresRecords: IGeometryRecord[]): string {
+  private generateExportFileNames(productType: string, productId: string, productVersion: string, featuresRecords: IGeometryRecord[]): string {
     const maxZoom = Math.max(...featuresRecords.map((feature) => feature.zoomLevel));
     let currentDateStr = new Date().toJSON();
     currentDateStr = `${currentDateStr}`.replaceAll('-', '_').replaceAll('.', '_').replaceAll(':', '_');
-    return `${productType}_${productId}_${productVersion.replaceAll('.', '_')}_${maxZoom}_${currentDateStr}.gpkg`;
+    return `${productType}_${productId}_${productVersion.replaceAll('.', '_')}_${maxZoom}_${currentDateStr}`;
   }
 
   private extractPolygonParts(layerPolygonParts: FeatureCollection, sanitizedBboxPolygonzied: Feature<Polygon>): FeatureCollection {
