@@ -134,7 +134,7 @@ export class TasksManager {
 
   public async sendExportCallbacks(job: JobExportResponse, callbackParams: ICallbackDataExportBase): Promise<void> {
     try {
-      this.logger.info({ ...job, msg: `Sending callback for job: ${job.id}` });
+      this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
       const callbackPromises: Promise<void>[] = [];
       for (const target of targetCallbacks) {
