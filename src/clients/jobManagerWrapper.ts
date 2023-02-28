@@ -4,7 +4,7 @@ import { Logger } from '@map-colonies/js-logger';
 import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
 import { JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { getUTCDate } from '@map-colonies/mc-utils';
+import { featureCollectionBooleanEqual, getUTCDate } from '@map-colonies/mc-utils';
 import { SERVICES } from '../common/constants';
 import {
   CreateExportJobBody,
@@ -22,7 +22,6 @@ import {
   JobResponse,
   TaskResponse,
 } from '../common/interfaces';
-import { roiBooleanEqual } from '../common/utils';
 //this is the job manager api for find job DO NOT MODIFY
 interface IFindJob {
   resourceId?: string;
@@ -344,7 +343,7 @@ export class JobManagerWrapper extends JobManagerClient {
         job.internalId === jobParams.dbId &&
         job.version === jobParams.version &&
         job.parameters.crs === jobParams.crs &&
-        roiBooleanEqual(job.parameters.roi, jobParams.roi)
+        featureCollectionBooleanEqual(job.parameters.roi, jobParams.roi)
     );
     return matchingJob;
   }

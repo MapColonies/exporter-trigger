@@ -194,7 +194,7 @@ export class TasksManager {
       expirationDate: expirationDate,
     };
     try {
-      this.logger.info({ ...job, msg: `Finalize Job: ${job.id}` });
+      this.logger.info({ jobId: job.id, isSuccess, msg: `Finalize Job` });
       if (isSuccess) {
         await this.packageManager.createExportJsonMetadata(job); // todo - should we make job to be failed if gpkg exists but not metadata?
       }

@@ -15,7 +15,7 @@ import {
   featureCollection as createFeatureCollection,
 } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
-import { degreesPerPixelToZoomLevel, ITileRange, snapBBoxToTileGrid, TileRanger } from '@map-colonies/mc-utils';
+import { degreesPerPixelToZoomLevel, featureCollectionBooleanEqual, ITileRange, snapBBoxToTileGrid, TileRanger } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { isArray, isEmpty } from 'lodash';
@@ -42,7 +42,6 @@ import {
   getGpkgRelativePath,
   getStorageStatus,
   getGpkgNameWithoutExt,
-  roiBooleanEqual,
   concatFsPaths,
   parseFeatureCollection,
   generateGeoIdentifier,
@@ -348,51 +347,33 @@ export class CreatePackageManager {
     const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
     const featuresRecords = parseFeatureCollection(job.parameters.roi);
 
+    const metadataFileName = job.parameters.fileNamesTemplates.metadataURI;
+    const directoryName = job.parameters.relativeDirectoryPath;
+    const metadataFullPath = concatFsPaths(this.gpkgsLocation, directoryName, metadataFileName);
+
+    const combinedFootprint = this.getExportedPackageFootprint(
+      job.parameters.roi.features as Feature<Polygon | MultiPolygon>[],
+      record.metadata.footprint as Polygon | MultiPolygon
+    );
+    record.metadata.footprint = combinedFootprint ? combinedFootprint : record.metadata.footprint;
+
     const maxResolutionDeg = Math.max(
       record.metadata.maxResolutionDeg as number,
       Math.min(...featuresRecords.map((records) => records.targetResolutionDeg))
     );
+    record.metadata.maxResolutionDeg = maxResolutionDeg;
+
     const maxResolutionMeter = Math.max(
       record.metadata.maxResolutionMeter as number,
       Math.min(...featuresRecords.map((records) => records.targetResolutionMeter))
     );
-
-    const metadataFileName = job.parameters.fileNamesTemplates.metadataURI;
-    const directoryName = job.parameters.relativeDirectoryPath;
-    const metadataFullPath = concatFsPaths(this.gpkgsLocation, directoryName, metadataFileName);
-    let combinedFootprint = undefined;
-    try {
-      const intersectedFeatures = this.featuresFootprintIntersects(
-        job.parameters.roi.features as Feature<Polygon | MultiPolygon>[],
-        record.metadata.footprint as Polygon | MultiPolygon
-      );
-      const fc: FeatureCollection<Polygon | MultiPolygon> = featureCollection(intersectedFeatures);
-      combinedFootprint = featureCombine(fc).features[0].geometry as unknown as MultiPolygon;
-    } catch (error) {
-      this.logger.error(error, `Failed to match features intersection with footprint`);
-    }
-    record.metadata.footprint = combinedFootprint ? combinedFootprint : record.metadata.footprint;
-    record.metadata.maxResolutionDeg = maxResolutionDeg;
     record.metadata.maxResolutionMeter = maxResolutionMeter;
 
-    const layerPolygonPartFeatures: Feature[] = [];
-    for (const featureRecord of featuresRecords) {
-      for (const feature of (record.metadata.layerPolygonParts as FeatureCollection).features) {
-        const intersectedFeature = intersect(featureRecord.geometry as Polygon | MultiPolygon, feature.geometry as Polygon | MultiPolygon);
-        if (!intersectedFeature) {
-          continue;
-        }
-        if (feature.properties?.Resolution !== undefined) {
-          const maxResolutionDeg = Math.max(featureRecord.targetResolutionDeg, feature.properties.Resolution as number);
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          intersectedFeature.properties = { ...feature.properties, Resolution: maxResolutionDeg };
-        } else {
-          this.logger.error({ ...feature, msg: `LayerPolygonPart not include property of type 'Resolution` });
-          throw new Error(`Layer's LayerPolygonPart value not include property of type 'Resolution`);
-        }
-        layerPolygonPartFeatures.push({ ...intersectedFeature });
-      }
-    }
+    const layerPolygonPartFeatures = this.getExportedPackageLayerPolygonParts(
+      featuresRecords,
+      record.metadata.layerPolygonParts as FeatureCollection,
+      job
+    );
     const roiBbox = PolygonBbox(job.parameters.roi);
     (record.metadata.layerPolygonParts as FeatureCollection) = {
       ...(record.metadata.layerPolygonParts as FeatureCollection),
@@ -400,6 +381,8 @@ export class CreatePackageManager {
       bbox: roiBbox,
     };
     record.metadata.productBoundingBox = roiBbox.join(',');
+
+    this.logger.debug({ ...record.metadata, metadataFullPath, jobId: job.id, msg: 'Metadata json file will be written to file' });
     const recordMetadata = JSON.stringify(record.metadata);
     await fsPromise.writeFile(metadataFullPath, recordMetadata);
   }
@@ -699,7 +682,7 @@ export class CreatePackageManager {
           return false;
         }
 
-        const sameROI = roiBooleanEqual(callback.roi, newCallback.roi);
+        const sameROI = featureCollectionBooleanEqual(callback.roi, newCallback.roi);
         return sameROI;
       });
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
@@ -756,5 +739,45 @@ export class CreatePackageManager {
     this.logger.debug(`single tile size defined as ${tileOutputFormat} from configuration: ${tileEstimatedSize} bytes`);
 
     return tileEstimatedSize;
+  }
+
+  // todo - add unittest
+  private getExportedPackageFootprint(features: Feature<Polygon | MultiPolygon>[], footprint: Polygon | MultiPolygon): MultiPolygon | undefined {
+    let combinedFootprint = undefined;
+    try {
+      const intersectedFeatures = this.featuresFootprintIntersects(features, footprint);
+      const fc: FeatureCollection<Polygon | MultiPolygon> = featureCollection(intersectedFeatures);
+      combinedFootprint = featureCombine(fc).features[0].geometry as unknown as MultiPolygon;
+    } catch (error) {
+      this.logger.error(error, `Failed to match features intersection with footprint`);
+    }
+    return combinedFootprint;
+  }
+
+  // todo - add unittest
+  private getExportedPackageLayerPolygonParts(
+    featuresRecords: IGeometryRecord[],
+    layerPolygonParts: FeatureCollection,
+    job: JobExportResponse
+  ): Feature[] {
+    const layerPolygonPartFeatures: Feature[] = [];
+    for (const featureRecord of featuresRecords) {
+      for (const feature of layerPolygonParts.features) {
+        const intersectedFeature = intersect(featureRecord.geometry as Polygon | MultiPolygon, feature.geometry as Polygon | MultiPolygon);
+        if (!intersectedFeature) {
+          continue;
+        }
+        if (feature.properties?.Resolution !== undefined) {
+          const maxResolutionDeg = Math.max(featureRecord.targetResolutionDeg, feature.properties.Resolution as number);
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          intersectedFeature.properties = { ...feature.properties, Resolution: maxResolutionDeg };
+        } else {
+          this.logger.error({ ...feature, jobId: job.id, msg: `LayerPolygonPart not include property of type 'Resolution` });
+          throw new Error(`Layer's LayerPolygonPart value not include property of type 'Resolution`);
+        }
+        layerPolygonPartFeatures.push({ ...intersectedFeature });
+      }
+    }
+    return layerPolygonPartFeatures;
   }
 }

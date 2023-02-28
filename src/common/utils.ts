@@ -113,7 +113,3 @@ export const parseFeatureCollection = (featuresCollection: FeatureCollection): I
   return parsedGeoRecord;
 };
 
-// todo - add unittest
-export const roiBooleanEqual = (fc1: FeatureCollection, fc2: FeatureCollection): boolean => {
-  return _.isEqualWith(fc1, fc2, featureCollectionCustomized);
-};
