@@ -203,6 +203,7 @@ export class CreatePackageManager {
       const layerMaxResolutionDeg = layerMetadata.maxResolutionDeg;
       const layerFeature = feature(layerMetadata.footprint as Geometry, { maxResolutionDeg: layerMaxResolutionDeg });
       roi = featureCollection([layerFeature]);
+      this.logger.info({ msg: `ROI not provided, will use default layer's geometry` });
     }
 
     let { productId: resourceId, productVersion: version, productType, maxResolutionDeg: srcRes } = layerMetadata;
@@ -250,8 +251,16 @@ export class CreatePackageManager {
     const callbacks = callbackURLs.map((url) => <ICallbackTargetExport>{ url, roi });
     const duplicationExist = await this.checkForExportDuplicate(dupParams, callbacks);
     if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
+      const callbackParam = duplicationExist as ICallbackExportResponse;
+      this.logger.info({
+        jobStatus: callbackParam.status,
+        jobId: callbackParam.requestJobId,
+        catalogId: callbackParam.recordCatalogId,
+        msg: `Found relevant cache for export request`,
+      });
       return duplicationExist;
     } else if (duplicationExist) {
+      this.logger.info({ ...duplicationExist, msg: `Found exists relevant In-Progress job for export request` });
       return duplicationExist;
     }
 
@@ -269,7 +278,9 @@ export class CreatePackageManager {
     if (this.storageEstimation.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
       if (!isEnoughStorage) {
-        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+        const message = `There isn't enough free disk space to executing export`;
+        this.logger.error({ estimatesGpkgSize, msg: message });
+        throw new InsufficientStorage(message);
       }
     }
     const separator = this.getSeparator();
@@ -343,7 +354,12 @@ export class CreatePackageManager {
   }
 
   public async createExportJsonMetadata(job: JobExportResponse): Promise<void> {
-    this.logger.info(`Creating metadata.json file for gpkg in path "${job.parameters.relativeDirectoryPath}" for jobId ${job.id}`);
+    this.logger.info({
+      jobId: job.id,
+      metadataRelativeDirectory: job.parameters.relativeDirectoryPath,
+      fileName: job.parameters.fileNamesTemplates.metadataURI,
+      msg: `Creating metadata file`,
+    });
     const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
     const featuresRecords = parseFeatureCollection(job.parameters.roi);
 

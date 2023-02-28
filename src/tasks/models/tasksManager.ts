@@ -150,7 +150,7 @@ export class TasksManager {
         }
       });
     } catch (error) {
-      this.logger.error(error, `Sending callback has failed for job: ${job.id}`);
+      this.logger.error({ error, callbacksUrls: job.parameters.callbacks, msg: `Sending callback has failed for job: ${job.id}` });
     }
   }
 
@@ -218,26 +218,9 @@ export class TasksManager {
       };
 
       updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
-      this.logger.info(`Update Job status to ${finalizeStatus} jobId=${job.id}`);
-      // if (reason == null) {
-      //   // todo - don't forget to define cases when failed \ completed
-
-      //   const callbackParams: ICallbackExportResponse = {
-      //     ...callbackSendParams,
-      //     roi: job.parameters.roi,
-      //     status: OperationStatus.COMPLETED,
-      //     errorReason: reason,
-      //   };
-      // updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
-      // this.logger.info(`Update Job status to ${OperationStatus.COMPLETED} jobId=${job.id}`);
-      // } else {
-      // updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED };
-      // this.logger.info(`Update Job status to ${OperationStatus.FAILED} jobId=${job.id}`);
-      // }
-
-      // await this.jobManagerClient.updateJob(job.id, updateJobParams);
+      this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
     } catch (error) {
-      this.logger.error(`Could not finalize job: ${job.id} updating failed job status, error: ${(error as Error).message}`);
+      this.logger.error({ jobId: job.id, reason: `${(error as Error).message}`, msg: `Could not finalize job` });
       updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED };
     } finally {
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
@@ -254,7 +237,6 @@ export class TasksManager {
     let fileSize = 0;
     if (success) {
       const packageFullPath = concatFsPaths(this.gpkgsLocation, relativeFilesDirectory, packageName);
-      // const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
       // Todo - link shouldn't be hard-coded for each of his parts! temporary before webhooks implementation
       links = {
         dataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.dataURI}`,
@@ -262,8 +244,8 @@ export class TasksManager {
       };
       try {
         fileSize = await getFileSize(packageFullPath);
-      } catch {
-        this.logger.error({ msg: `failed getting gpkg file size to ${packageFullPath}` });
+      } catch (error) {
+        this.logger.error({ jobId: job.id, reason: `${(error as Error).message}`, msg: `failed getting gpkg file size to ${packageFullPath}` });
       }
     }
     const callbackParams: ICallbackDataExportBase = {
@@ -274,7 +256,13 @@ export class TasksManager {
       requestJobId: job.id,
       errorReason,
     };
-    this.logger.info({ ...callbackParams, msg: `Finish generating callbackParams for job: ${job.id}` });
+    this.logger.info({
+      links: callbackParams.links,
+      gpkgSize: callbackParams.fileSize,
+      catalogId: callbackParams.recordCatalogId,
+      msg: `Finish generating callbackParams for job: ${job.id}`,
+    });
+    this.logger.debug({ ...callbackParams, msg: `full callbackParam data` });
     return callbackParams;
   }
 }
