@@ -604,7 +604,7 @@ export class CreatePackageManager {
   }
 
   private async checkForExportCompleted(dupParams: JobExportDuplicationParams): Promise<ICallbackExportResponse | undefined> {
-    this.logger.info({ ...dupParams }, `Checking for COMPLETED duplications with parameters`);
+    this.logger.info({ ...dupParams,roi:undefined, msg: `Checking for COMPLETED duplications with parameters`});
     const responseJob = await this.jobManagerClient.findExportJob(OperationStatus.COMPLETED, dupParams);
     if (responseJob) {
       await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
@@ -636,7 +636,7 @@ export class CreatePackageManager {
     dupParams: JobExportDuplicationParams,
     newCallbacks: ICallbackTargetExport[]
   ): Promise<ICreateJobResponse | undefined> {
-    this.logger.info(dupParams, `Checking for PROCESSING duplications with parameters`);
+    this.logger.info({...dupParams, roi:undefined, msg: `Checking for PROCESSING duplications with parameters`});
     const processingJob =
       (await this.jobManagerClient.findExportJob(OperationStatus.IN_PROGRESS, dupParams, true)) ??
       (await this.jobManagerClient.findExportJob(OperationStatus.PENDING, dupParams, true));
