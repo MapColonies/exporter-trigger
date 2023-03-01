@@ -203,7 +203,14 @@ export class CreatePackageManager {
       const layerMaxResolutionDeg = layerMetadata.maxResolutionDeg;
       const layerFeature = feature(layerMetadata.footprint as Geometry, { maxResolutionDeg: layerMaxResolutionDeg });
       roi = featureCollection([layerFeature]);
-      this.logger.info({ msg: `ROI not provided, will use default layer's geometry` });
+      this.logger.info({
+        catalogId: userInput.dbId,
+        productId: layerMetadata.productId,
+        productVersion: layerMetadata.productVersion,
+        productType: layerMetadata.productType,
+        callbackURLs,
+        msg: `ROI not provided, will use default layer's geometry`,
+      });
     }
 
     let { productId: resourceId, productVersion: version, productType, maxResolutionDeg: srcRes } = layerMetadata;
@@ -279,7 +286,15 @@ export class CreatePackageManager {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
       if (!isEnoughStorage) {
         const message = `There isn't enough free disk space to executing export`;
-        this.logger.error({ estimatesGpkgSize, msg: message });
+        this.logger.error({
+          resourceId,
+          version,
+          dbId,
+          estimatesGpkgSize,
+          minZoomLevel: Math.min(...batches.map((batch) => batch.zoom)),
+          maxZoomLevel: Math.max(...batches.map((batch) => batch.zoom)),
+          msg: message,
+        });
         throw new InsufficientStorage(message);
       }
     }
@@ -369,7 +384,8 @@ export class CreatePackageManager {
 
     const combinedFootprint = this.getExportedPackageFootprint(
       job.parameters.roi.features as Feature<Polygon | MultiPolygon>[],
-      record.metadata.footprint as Polygon | MultiPolygon
+      record.metadata.footprint as Polygon | MultiPolygon,
+      job.id
     );
     record.metadata.footprint = combinedFootprint ? combinedFootprint : record.metadata.footprint;
 
@@ -388,7 +404,7 @@ export class CreatePackageManager {
     const layerPolygonPartFeatures = this.getExportedPackageLayerPolygonParts(
       featuresRecords,
       record.metadata.layerPolygonParts as FeatureCollection,
-      job
+      job.id
     );
     const roiBbox = PolygonBbox(job.parameters.roi);
     (record.metadata.layerPolygonParts as FeatureCollection) = {
@@ -464,7 +480,7 @@ export class CreatePackageManager {
         throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
       }
     } catch (error) {
-      this.logger.error(bboxFromUser, `Failed`);
+      this.logger.error({ bboxFromUser, msg: `Failed with error ${(error as Error).message}` });
       throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
     }
   }
@@ -604,7 +620,7 @@ export class CreatePackageManager {
   }
 
   private async checkForExportCompleted(dupParams: JobExportDuplicationParams): Promise<ICallbackExportResponse | undefined> {
-    this.logger.info({ ...dupParams,roi:undefined, msg: `Checking for COMPLETED duplications with parameters`});
+    this.logger.info({ ...dupParams, roi: undefined, msg: `Checking for COMPLETED duplications with parameters` });
     const responseJob = await this.jobManagerClient.findExportJob(OperationStatus.COMPLETED, dupParams);
     if (responseJob) {
       await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
@@ -636,7 +652,7 @@ export class CreatePackageManager {
     dupParams: JobExportDuplicationParams,
     newCallbacks: ICallbackTargetExport[]
   ): Promise<ICreateJobResponse | undefined> {
-    this.logger.info({...dupParams, roi:undefined, msg: `Checking for PROCESSING duplications with parameters`});
+    this.logger.info({ ...dupParams, roi: undefined, msg: `Checking for PROCESSING duplications with parameters` });
     const processingJob =
       (await this.jobManagerClient.findExportJob(OperationStatus.IN_PROGRESS, dupParams, true)) ??
       (await this.jobManagerClient.findExportJob(OperationStatus.PENDING, dupParams, true));
@@ -758,24 +774,24 @@ export class CreatePackageManager {
   }
 
   // todo - add unittest
-  private getExportedPackageFootprint(features: Feature<Polygon | MultiPolygon>[], footprint: Polygon | MultiPolygon): MultiPolygon | undefined {
+  private getExportedPackageFootprint(
+    features: Feature<Polygon | MultiPolygon>[],
+    footprint: Polygon | MultiPolygon,
+    jobId: string
+  ): MultiPolygon | undefined {
     let combinedFootprint = undefined;
     try {
       const intersectedFeatures = this.featuresFootprintIntersects(features, footprint);
       const fc: FeatureCollection<Polygon | MultiPolygon> = featureCollection(intersectedFeatures);
       combinedFootprint = featureCombine(fc).features[0].geometry as unknown as MultiPolygon;
     } catch (error) {
-      this.logger.error(error, `Failed to match features intersection with footprint`);
+      this.logger.error({ jobId, msg: `Failed to match features intersection with footprint with error: ${(error as Error).message}` });
     }
     return combinedFootprint;
   }
 
   // todo - add unittest
-  private getExportedPackageLayerPolygonParts(
-    featuresRecords: IGeometryRecord[],
-    layerPolygonParts: FeatureCollection,
-    job: JobExportResponse
-  ): Feature[] {
+  private getExportedPackageLayerPolygonParts(featuresRecords: IGeometryRecord[], layerPolygonParts: FeatureCollection, jobId: string): Feature[] {
     const layerPolygonPartFeatures: Feature[] = [];
     for (const featureRecord of featuresRecords) {
       for (const feature of layerPolygonParts.features) {
@@ -788,7 +804,7 @@ export class CreatePackageManager {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           intersectedFeature.properties = { ...feature.properties, Resolution: maxResolutionDeg };
         } else {
-          this.logger.error({ ...feature, jobId: job.id, msg: `LayerPolygonPart not include property of type 'Resolution` });
+          this.logger.error({ ...feature, jobId, msg: `LayerPolygonPart not include property of type 'Resolution` });
           throw new Error(`Layer's LayerPolygonPart value not include property of type 'Resolution`);
         }
         layerPolygonPartFeatures.push({ ...intersectedFeature });
