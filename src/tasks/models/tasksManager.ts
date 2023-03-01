@@ -136,7 +136,7 @@ export class TasksManager {
 
       return callbackParams;
     } catch (error) {
-      this.logger.error({ error: (error as Error).message, msg: `Sending callback has failed` });
+      this.logger.error({ jobId: job.id, error: (error as Error).message, msg: `Sending callback has failed` });
     }
   }
 

@@ -245,6 +245,7 @@ export class CreatePackageManager {
         );
       }
     });
+
     const layerBbox = PolygonBbox(roi); // bounding box of entire ROI
 
     const dupParams: JobExportDuplicationParams = {
@@ -349,7 +350,7 @@ export class CreatePackageManager {
    * @deprecated GetMap API - will be deprecated on future
    */
   public async createJsonMetadata(fullGpkgPath: string, job: JobResponse): Promise<void> {
-    this.logger.info(`Creating metadata.json file for gpkg in path "${this.gpkgsLocation}/${fullGpkgPath}" for jobId ${job.id}`);
+    this.logger.info({jobId: job.id, msg: `Creating metadata.json file for gpkg in path "${this.gpkgsLocation}/${fullGpkgPath}" for jobId ${job.id}`});
     const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
 
     const parsedPath = parsePath(fullGpkgPath);
