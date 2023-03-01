@@ -1,7 +1,6 @@
-import { MultiPolygon, Polygon, BBox, FeatureCollection } from '@turf/turf';
+import { MultiPolygon, Polygon, BBox, FeatureCollection, Geometry } from '@turf/turf';
 import { ICreateJobBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { ITileRange } from '@map-colonies/mc-utils';
-import { Geometry } from '@turf/turf';
 
 export interface IConfig {
   get: <T>(setting: string) => T;

@@ -5,7 +5,7 @@ import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue
 import { NotFoundError } from '@map-colonies/error-types';
 import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
-import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
+import { IFindJob, JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
   ICallbackData,
   ICallbackDataBase,
@@ -33,6 +33,7 @@ export interface ITaskStatusResponse {
 export class TasksManager {
   private readonly gpkgsLocation: string;
   private readonly downloadServerUrl: string;
+  private readonly tilesJobType: string;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
@@ -41,6 +42,7 @@ export class TasksManager {
   ) {
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
     this.downloadServerUrl = config.get<string>('downloadServerUrl');
+    this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
   }
 
   /**
@@ -58,7 +60,13 @@ export class TasksManager {
   }
 
   public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
-    const jobs = await this.jobManagerClient.getInProgressExportJobs();
+    const queryParams: IFindJob = {
+      isCleaned: 'false',
+      type: this.tilesJobType,
+      shouldReturnTasks: 'false',
+      status: OperationStatus.IN_PROGRESS,
+    };
+    const jobs = await this.jobManagerClient.getExportJobs(queryParams);
     const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
     const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
     const jobsStatus = {
@@ -122,13 +130,13 @@ export class TasksManager {
       promisesResponse.forEach((response, index) => {
         if (response.status === 'rejected') {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url }, `Failed to send callback to url`);
+          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
         }
       });
 
       return callbackParams;
     } catch (error) {
-      this.logger.error(error, `Sending callback has failed`);
+      this.logger.error({ error: (error as Error).message, msg: `Sending callback has failed` });
     }
   }
 
@@ -146,11 +154,11 @@ export class TasksManager {
       promisesResponse.forEach((response, index) => {
         if (response.status === 'rejected') {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url }, `Failed to send callback to url`);
+          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
         }
       });
     } catch (error) {
-      this.logger.error({ error, callbacksUrls: job.parameters.callbacks, msg: `Sending callback has failed for job: ${job.id}` });
+      this.logger.error({ error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
     }
   }
 
@@ -166,7 +174,7 @@ export class TasksManager {
       expirationDate: expirationDate,
     };
     try {
-      this.logger.info(`Finalize Job: ${job.id}`);
+      this.logger.info({ jobId: job.id, msg: `Finalize Job` });
       const packageName = job.parameters.fileName;
       if (isSuccess) {
         const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
@@ -175,10 +183,10 @@ export class TasksManager {
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
       updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
 
-      this.logger.info(`Update Job status to success=${String(isSuccess)} jobId=${job.id}`);
+      this.logger.info({ jobId: job.id, status: isSuccess, msg: `Update Job status` });
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     } catch (error) {
-      this.logger.error(`Could not finalize job: ${job.id} updating failed job status, error: ${(error as Error).message}`);
+      this.logger.error({ jobId: job.id, error: (error as Error).message, msg: `Could not finalize job, will updating to status failed` });
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
       updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams } };
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
@@ -196,7 +204,7 @@ export class TasksManager {
     try {
       this.logger.info({ jobId: job.id, isSuccess, msg: `Finalize Job` });
       if (isSuccess) {
-        await this.packageManager.createExportJsonMetadata(job); // todo - should we make job to be failed if gpkg exists but not metadata?
+        await this.packageManager.createExportJsonMetadata(job);
       }
 
       // create and sending response to callbacks
@@ -229,7 +237,7 @@ export class TasksManager {
 
   private async generateCallbackParam(job: JobExportResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataExportBase> {
     let links: ILinkDefinition = { ...job.parameters.fileNamesTemplates }; // default file names in case of failure
-    this.logger.info({ ...job, msg: `generate callback body for job: ${job.id}` });
+    this.logger.info({ jobId: job.id, msg: `generate callback body for job: ${job.id}` });
 
     const packageName = job.parameters.fileNamesTemplates.dataURI;
     const relativeFilesDirectory = job.parameters.relativeDirectoryPath;
@@ -260,6 +268,7 @@ export class TasksManager {
       links: callbackParams.links,
       gpkgSize: callbackParams.fileSize,
       catalogId: callbackParams.recordCatalogId,
+      jobId: job.id,
       msg: `Finish generating callbackParams for job: ${job.id}`,
     });
     this.logger.debug({ ...callbackParams, msg: `full callbackParam data` });

@@ -23,7 +23,7 @@ import {
   TaskResponse,
 } from '../common/interfaces';
 //this is the job manager api for find job DO NOT MODIFY
-interface IFindJob {
+export interface IFindJob {
   resourceId?: string;
   version?: string;
   isCleaned?: string;
@@ -141,7 +141,6 @@ export class JobManagerWrapper extends JobManagerClient {
         },
       ],
     };
-
     const res = await this.createJob<IJobExportParameters, ITaskParameters>(createJobRequest);
     const createJobResponse: ICreateJobResponse = {
       id: res.id,
@@ -257,17 +256,6 @@ export class JobManagerWrapper extends JobManagerClient {
     return jobs;
   }
 
-  public async getInProgressExportJobs(shouldReturnTasks = false): Promise<JobExportResponse[] | undefined> {
-    const queryParams: IFindJob = {
-      isCleaned: 'false',
-      type: this.tilesJobType,
-      shouldReturnTasks: shouldReturnTasks ? 'true' : 'false',
-      status: OperationStatus.IN_PROGRESS,
-    };
-    const jobs = await this.getExportJobs(queryParams);
-    return jobs;
-  }
-
   public async updateJobStatus(jobId: string, status: OperationStatus, reason?: string, catalogId?: string): Promise<void> {
     const updateJobUrl = `/jobs/${jobId}`;
     await this.put(updateJobUrl, {
@@ -297,6 +285,17 @@ export class JobManagerWrapper extends JobManagerClient {
     }
   }
 
+  public async getExportJobs(queryParams: IFindJob): Promise<JobExportResponse[] | undefined> {
+    this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
+    const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
+    const exportJobs = jobs?.filter((job) => {
+      if (job.parameters.exportVersion === ExportVersion.ROI) {
+        return job;
+      }
+    });
+    return exportJobs;
+  }
+
   /**
    * @deprecated GetMap API - will be deprecated on future
    */
@@ -305,17 +304,6 @@ export class JobManagerWrapper extends JobManagerClient {
     const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
     const exportJobs = jobs?.filter((job) => {
       if (job.parameters.exportVersion === ExportVersion.GETMAP) {
-        return job;
-      }
-    });
-    return exportJobs;
-  }
-
-  private async getExportJobs(queryParams: IFindJob): Promise<JobExportResponse[] | undefined> {
-    this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
-    const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
-    const exportJobs = jobs?.filter((job) => {
-      if (job.parameters.exportVersion === ExportVersion.ROI) {
         return job;
       }
     });
