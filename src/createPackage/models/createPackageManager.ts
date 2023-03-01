@@ -268,7 +268,7 @@ export class CreatePackageManager {
       return duplicationExist;
     } else if (duplicationExist) {
       const jobResponse = duplicationExist as ICreateJobResponse;
-      this.logger.info({jobId:jobResponse.id, status:jobResponse.status ,msg: `Found exists relevant In-Progress job for export request` });
+      this.logger.info({ jobId: jobResponse.id, status: jobResponse.status, msg: `Found exists relevant In-Progress job for export request` });
       return duplicationExist;
     }
 
