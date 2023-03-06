@@ -2,6 +2,7 @@ import { CreatePackageManager } from '../../../src/createPackage/models/createPa
 
 const createPackageMock = jest.fn();
 const createJsonMetadataMock = jest.fn();
+const createExportJsonMetadataMock = jest.fn();
 const getSeparatorMock = jest.fn();
 const sanitizeBboxMock = jest.fn();
 const checkForDuplicateMock = jest.fn();
@@ -12,6 +13,7 @@ const updateCallbackURLsMock = jest.fn();
 const packageManagerMock = {
   createPackage: createPackageMock,
   createJsonMetadata: createJsonMetadataMock,
+  createExportJsonMetadata: createExportJsonMetadataMock,
   getSeparator: getSeparatorMock,
   sanitizeBbox: sanitizeBboxMock,
   checkForDuplicate: checkForDuplicateMock,
@@ -30,4 +32,5 @@ export {
   checkForCompletedMock,
   checkForProcessingMock,
   updateCallbackURLsMock,
+  createExportJsonMetadataMock,
 };

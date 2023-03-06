@@ -4,7 +4,7 @@ import { promises as fsPromise } from 'fs';
 import { parse as parsePath } from 'path';
 import { sep } from 'path';
 import checkDiskSpace from 'check-disk-space';
-import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionDeg } from '@map-colonies/mc-utils';
+import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
 import { FeatureCollection, Geometry } from '@turf/helpers';
 import md5 from 'md5';
 import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
@@ -68,7 +68,7 @@ export const parseFeatureCollection = (featuresCollection: FeatureCollection): I
     if (feature.properties && (feature.properties.maxResolutionDeg as number)) {
       const targetResolutionDeg = feature.properties.maxResolutionDeg as number;
       const zoomLevel = degreesPerPixelToZoomLevel(targetResolutionDeg);
-      const targetResolutionMeter = zoomLevelToResolutionDeg(zoomLevel) as number;
+      const targetResolutionMeter = zoomLevelToResolutionMeter(zoomLevel) as number;
       parsedGeoRecord.push({
         geometry: feature.geometry as Geometry,
         targetResolutionDeg,

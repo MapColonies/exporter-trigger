@@ -229,7 +229,7 @@ export class TasksManager {
       this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
     } catch (error) {
       this.logger.error({ jobId: job.id, reason: `${(error as Error).message}`, msg: `Could not finalize job` });
-      updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED };
+      updateJobParams = { ...updateJobParams, reason: JSON.stringify(error as Error), status: OperationStatus.FAILED };
     } finally {
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     }

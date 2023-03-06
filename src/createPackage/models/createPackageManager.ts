@@ -230,7 +230,6 @@ export class CreatePackageManager {
           `The requested resolution ${record.targetResolutionDeg} is larger then then product resolution ${srcRes as number}`
         );
       }
-
       // generate sanitized bbox for each original feature
       record.sanitizedBox = this.sanitizeBbox(
         record.geometry as Polygon | MultiPolygon,
@@ -247,7 +246,6 @@ export class CreatePackageManager {
     });
 
     const layerBbox = PolygonBbox(roi); // bounding box of entire ROI
-
     const dupParams: JobExportDuplicationParams = {
       resourceId,
       version,
@@ -282,7 +280,6 @@ export class CreatePackageManager {
       );
       batches.push(...recordBatches);
     });
-
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
     if (this.storageEstimation.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
@@ -350,7 +347,10 @@ export class CreatePackageManager {
    * @deprecated GetMap API - will be deprecated on future
    */
   public async createJsonMetadata(fullGpkgPath: string, job: JobResponse): Promise<void> {
-    this.logger.info({jobId: job.id, msg: `Creating metadata.json file for gpkg in path "${this.gpkgsLocation}/${fullGpkgPath}" for jobId ${job.id}`});
+    this.logger.info({
+      jobId: job.id,
+      msg: `Creating metadata.json file for gpkg in path "${this.gpkgsLocation}/${fullGpkgPath}" for jobId ${job.id}`,
+    });
     const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
 
     const parsedPath = parsePath(fullGpkgPath);
@@ -383,20 +383,17 @@ export class CreatePackageManager {
     const metadataFileName = job.parameters.fileNamesTemplates.metadataURI;
     const directoryName = job.parameters.relativeDirectoryPath;
     const metadataFullPath = concatFsPaths(this.gpkgsLocation, directoryName, metadataFileName);
-
     const combinedFootprint = this.getExportedPackageFootprint(
       job.parameters.roi.features as Feature<Polygon | MultiPolygon>[],
       record.metadata.footprint as Polygon | MultiPolygon,
       job.id
     );
     record.metadata.footprint = combinedFootprint ? combinedFootprint : record.metadata.footprint;
-
     const maxResolutionDeg = Math.max(
       record.metadata.maxResolutionDeg as number,
       Math.min(...featuresRecords.map((records) => records.targetResolutionDeg))
     );
     record.metadata.maxResolutionDeg = maxResolutionDeg;
-
     const maxResolutionMeter = Math.max(
       record.metadata.maxResolutionMeter as number,
       Math.min(...featuresRecords.map((records) => records.targetResolutionMeter))

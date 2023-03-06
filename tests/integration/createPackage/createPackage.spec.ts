@@ -46,7 +46,7 @@ describe('tiles', function () {
       const body: ICreatePackage = {
         dbId: layerFromCatalog.id,
         bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
-        targetResolution: 0.0000429153442382812,
+        targetResolution: 0.00034332275390625,
         callbackURLs: ['http://example.getmap.com/callback'],
         crs: 'EPSG:4326',
         priority: 0,
@@ -91,7 +91,7 @@ describe('tiles', function () {
       const body: ICreatePackage = {
         dbId: layerFromCatalog.id,
         bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
-        targetResolution: 0.0000429153442382812,
+        targetResolution: 0.00034332275390625,
         callbackURLs: ['http://example.getmap.com/callback'],
         crs: 'EPSG:4326',
         priority: 0,
@@ -157,7 +157,7 @@ describe('tiles', function () {
           ],
         ],
       },
-      targetResolution: 0.0000429153442382812,
+      targetResolution: 0.00034332275390625,
       callbackURLs: ['http://example.getmap.com/callback'],
       crs: 'EPSG:4326',
       priority: 0,
@@ -211,7 +211,7 @@ describe('tiles', function () {
     const body: ICreatePackage = {
       dbId: layerFromCatalog.id,
       bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
-      targetResolution: 0.0000429153442382812,
+      targetResolution: 0.00034332275390625,
       callbackURLs: ['http://example.getmap.com/callback'],
       crs: 'EPSG:4326',
       priority: 0,
@@ -264,7 +264,7 @@ describe('tiles', function () {
       const body: ICreatePackage = {
         dbId: layerFromCatalog.id,
         bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
-        targetResolution: 0.0000429153442382812,
+        targetResolution: 0.00034332275390625,
         callbackURLs: ['http://example.getmap.com/callback'],
         crs: 'EPSG:4326',
         priority: 0,

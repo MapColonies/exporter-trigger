@@ -333,7 +333,7 @@ components:
           format: uuid
         roi:
           $ref: '#/components/schemas/FeatureCollection'
-        requestId:
+        requestJobId:
           type: string
           format: uuid
       required:
@@ -342,7 +342,7 @@ components:
         - fileSize
         - recordCatalogId
         - roi
-        - requestId
+        - requestJobId
         - status
     error:
       type: object

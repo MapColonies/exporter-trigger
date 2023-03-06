@@ -15,6 +15,7 @@ module.exports = {
     '!*/node_modules/',
     '!/vendor/**',
     '!*/common/**',
+    '!*/clients/callbackClient.ts**',
     '!**/controllers/**',
     '!**/routes/**',
     '!<rootDir>/src/*',
@@ -30,10 +31,10 @@ module.exports = {
   testEnvironment: 'node',
   coverageThreshold: {
     global: {
-      branches: 43,
-      functions: 50,
-      lines: 54,
-      statements: 55,
+      branches: 73,
+      functions: 91,
+      lines: 86,
+      statements: 87,
     },
   },
 };
