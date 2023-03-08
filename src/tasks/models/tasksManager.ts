@@ -136,7 +136,7 @@ export class TasksManager {
 
       return callbackParams;
     } catch (error) {
-      this.logger.error({ jobId: job.id, error: (error as Error).message, msg: `Sending callback has failed` });
+      this.logger.error({ jobId: job.id, err: error, reason: (error as Error).message, msg: `Sending callback has failed` });
     }
   }
 
@@ -258,7 +258,7 @@ export class TasksManager {
       try {
         fileSize = await getFileSize(packageFullPath);
       } catch (error) {
-        this.logger.error({ jobId: job.id, reason: `${(error as Error).message}`, msg: `failed getting gpkg file size to ${packageFullPath}` });
+        this.logger.error({ jobId: job.id, err: error, reason: `${(error as Error).message}`, msg: `failed getting gpkg file size to ${packageFullPath}` });
       }
     }
     const callbackParams: ICallbackDataExportBase = {

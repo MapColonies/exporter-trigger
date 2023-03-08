@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { LayerMetadata } from '@map-colonies/mc-model-types';
+import { LayerMetadata, ProductType, RecordType } from '@map-colonies/mc-model-types';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { FeatureCollection } from '@turf/helpers';
 import {
@@ -797,7 +797,7 @@ const inProgressExportJob: IJobResponse<IJobExportParameters, ITaskParameters> =
 const exportJobs = [inProgressExportJob, completedExportJob];
 
 const metadataExportJson = {
-  type: 'RECORD_RASTER',
+  type: RecordType.RECORD_RASTER,
   classification: 'string',
   productName: 'string',
   description: 'string',
@@ -813,7 +813,7 @@ const metadataExportJson = {
   region: ['region1', 'region1'],
   productId: 'string',
   productVersion: '1.0',
-  productType: 'OrthophotoHistory',
+  productType: ProductType.ORTHOPHOTO_HISTORY,
   srsName: 'string',
   maxResolutionDeg: 0.02197265625,
   maxResolutionMeter: 8000,
@@ -890,7 +890,7 @@ const metadataExportJson = {
     ],
   },
   productBoundingBox: '25.120393802953117,-16.979479051947962,37.42414218385065,17.95036866237062',
-};
+} as unknown as LayerMetadata;
 
 const featuresRecordsSampleFc1 = [
   {
