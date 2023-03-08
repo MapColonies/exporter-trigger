@@ -8,7 +8,6 @@ import { container } from 'tsyringe';
 import config from 'config';
 import { DEFAULT_SERVER_PORT, SERVICES } from './common/constants';
 import { PollingManager, POLLING_MANGER_SYMBOL } from './pollingManager';
-
 import { getApp } from './app';
 
 interface IServerConfig {
@@ -38,7 +37,7 @@ const mainPollLoop = async (): Promise<void> => {
     try {
       polledData = await pollingManager.jobStatusPoll();
     } catch (error) {
-      logger.error(error, `Main loop poll error occured`);
+      logger.error(error, `Main loop poll error occurred`);
     } finally {
       if (!polledData) {
         await new Promise((resolve) => setTimeout(resolve, pollingTimout));

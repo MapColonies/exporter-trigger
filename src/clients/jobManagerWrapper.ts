@@ -4,20 +4,26 @@ import { Logger } from '@map-colonies/js-logger';
 import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
 import { JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { getUTCDate } from '@map-colonies/mc-utils';
+import { featureCollectionBooleanEqual, getUTCDate } from '@map-colonies/mc-utils';
 import { SERVICES } from '../common/constants';
 import {
+  CreateExportJobBody,
   CreateJobBody,
+  ExportVersion,
   ICreateJobResponse,
+  IJobExportParameters,
   IJobParameters,
   ITaskParameters,
+  IWorkerExportInput,
   IWorkerInput,
   JobDuplicationParams,
+  JobExportDuplicationParams,
+  JobExportResponse,
   JobResponse,
   TaskResponse,
 } from '../common/interfaces';
 //this is the job manager api for find job DO NOT MODIFY
-interface IFindJob {
+export interface IFindJob {
   resourceId?: string;
   version?: string;
   isCleaned?: string;
@@ -49,6 +55,9 @@ export class JobManagerWrapper extends JobManagerClient {
     this.jobDomain = config.get<string>('jobManager.jobDomain');
   }
 
+  /**
+   * @deprecated The method should not be used
+   */
   public async create(data: IWorkerInput): Promise<ICreateJobResponse> {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
@@ -62,6 +71,7 @@ export class JobManagerWrapper extends JobManagerClient {
       parameters: {
         sanitizedBbox: data.sanitizedBbox,
         targetResolution: data.targetResolution,
+        exportVersion: ExportVersion.GETMAP,
         zoomLevel: data.zoomLevel,
         callbacks: data.callbacks,
         crs: data.crs,
@@ -94,6 +104,55 @@ export class JobManagerWrapper extends JobManagerClient {
     };
   }
 
+  public async createExport(data: IWorkerExportInput): Promise<ICreateJobResponse> {
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
+
+    const jobParameters: IJobExportParameters = {
+      roi: data.roi,
+      callbacks: data.callbacks,
+      crs: data.crs,
+      exportVersion: ExportVersion.ROI,
+      fileNamesTemplates: data.fileNamesTemplates,
+      relativeDirectoryPath: data.relativeDirectoryPath,
+      gpkgEstimatedSize: data.gpkgEstimatedSize,
+    };
+
+    const createJobRequest: CreateExportJobBody = {
+      resourceId: data.cswProductId,
+      version: data.version,
+      type: this.tilesJobType,
+      expirationDate,
+      domain: this.jobDomain,
+      parameters: jobParameters,
+      internalId: data.dbId,
+      productType: data.productType,
+      productName: data.cswProductId,
+      priority: data.priority,
+      status: OperationStatus.IN_PROGRESS,
+      additionalIdentifiers: data.relativeDirectoryPath,
+      tasks: [
+        {
+          type: this.tilesTaskType,
+          parameters: {
+            batches: data.batches,
+            sources: data.sources,
+          },
+        },
+      ],
+    };
+    const res = await this.createJob<IJobExportParameters, ITaskParameters>(createJobRequest);
+    const createJobResponse: ICreateJobResponse = {
+      id: res.id,
+      taskIds: res.taskIds,
+      status: OperationStatus.IN_PROGRESS,
+    };
+    return createJobResponse;
+  }
+
+  /**
+   * @deprecated The method should not be used
+   */
   public async findCompletedJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
@@ -112,6 +171,31 @@ export class JobManagerWrapper extends JobManagerClient {
     return undefined;
   }
 
+  public async findExportJob(
+    status: OperationStatus,
+    jobParams: JobExportDuplicationParams,
+    shouldReturnTasks = false
+  ): Promise<JobExportResponse | undefined> {
+    const queryParams: IFindJob = {
+      resourceId: jobParams.resourceId,
+      version: jobParams.version,
+      isCleaned: 'false',
+      type: this.tilesJobType,
+      shouldReturnTasks: shouldReturnTasks ? 'true' : 'false',
+      status,
+    };
+    const jobs = await this.getExportJobs(queryParams);
+    if (jobs) {
+      const matchingJob = this.findExportJobWithMatchingParams(jobs, jobParams);
+      return matchingJob;
+    }
+
+    return undefined;
+  }
+
+  /**
+   * @deprecated The method should not be used
+   */
   public async findInProgressJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
@@ -131,6 +215,9 @@ export class JobManagerWrapper extends JobManagerClient {
     return undefined;
   }
 
+  /**
+   * @deprecated The method should not be used
+   */
   public async findPendingJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
     const queryParams: IFindJob = {
       resourceId: jobParams.resourceId,
@@ -155,6 +242,9 @@ export class JobManagerWrapper extends JobManagerClient {
     return tasks;
   }
 
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   public async getInProgressJobs(shouldReturnTasks = false): Promise<JobResponse[] | undefined> {
     const queryParams: IFindJob = {
       isCleaned: 'false',
@@ -180,7 +270,7 @@ export class JobManagerWrapper extends JobManagerClient {
     const newExpirationDate = getUTCDate();
     newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
 
-    const job = await this.get<JobResponse | undefined>(getOrUpdateURL);
+    const job = await this.get<JobResponse | JobExportResponse | undefined>(getOrUpdateURL);
     if (job) {
       const oldExpirationDate = new Date(job.expirationDate as Date);
       if (oldExpirationDate < newExpirationDate) {
@@ -195,12 +285,34 @@ export class JobManagerWrapper extends JobManagerClient {
     }
   }
 
-  private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
-    this.logger.debug(queryParams, 'Getting jobs that match these parameters');
-    const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
-    return jobs;
+  public async getExportJobs(queryParams: IFindJob): Promise<JobExportResponse[] | undefined> {
+    this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
+    const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
+    const exportJobs = jobs?.filter((job) => {
+      if (job.parameters.exportVersion === ExportVersion.ROI) {
+        return job;
+      }
+    });
+    return exportJobs;
   }
 
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
+  private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
+    this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
+    const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
+    const exportJobs = jobs?.filter((job) => {
+      if (job.parameters.exportVersion === ExportVersion.GETMAP) {
+        return job;
+      }
+    });
+    return exportJobs;
+  }
+
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
   private findJobWithMatchingParams(jobs: JobResponse[], jobParams: JobDuplicationParams): JobResponse | undefined {
     const matchingJob = jobs.find(
       (job) =>
@@ -209,6 +321,17 @@ export class JobManagerWrapper extends JobManagerClient {
         job.parameters.zoomLevel === jobParams.zoomLevel &&
         job.parameters.crs === jobParams.crs &&
         booleanEqual(bboxPolygon(job.parameters.sanitizedBbox), bboxPolygon(jobParams.sanitizedBbox))
+    );
+    return matchingJob;
+  }
+
+  private findExportJobWithMatchingParams(jobs: JobExportResponse[], jobParams: JobExportDuplicationParams): JobExportResponse | undefined {
+    const matchingJob = jobs.find(
+      (job) =>
+        job.internalId === jobParams.dbId &&
+        job.version === jobParams.version &&
+        job.parameters.crs === jobParams.crs &&
+        featureCollectionBooleanEqual(job.parameters.roi, jobParams.roi)
     );
     return matchingJob;
   }
