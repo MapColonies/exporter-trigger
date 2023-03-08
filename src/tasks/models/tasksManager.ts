@@ -158,7 +158,7 @@ export class TasksManager {
         }
       });
     } catch (error) {
-      this.logger.error({ error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
+      this.logger.error({ err: error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
     }
   }
 
@@ -186,7 +186,12 @@ export class TasksManager {
       this.logger.info({ jobId: job.id, status: isSuccess, msg: `Update Job status` });
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     } catch (error) {
-      this.logger.error({ jobId: job.id, error: (error as Error).message, msg: `Could not finalize job, will updating to status failed` });
+      this.logger.error({
+        jobId: job.id,
+        err: error,
+        errorReason: (error as Error).message,
+        msg: `Could not finalize job, will updating to status failed`,
+      });
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
       updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams } };
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
@@ -228,7 +233,7 @@ export class TasksManager {
       updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
       this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
     } catch (error) {
-      this.logger.error({ jobId: job.id, reason: `${(error as Error).message}`, msg: `Could not finalize job` });
+      this.logger.error({ jobId: job.id, err: error, reason: `${(error as Error).message}`, msg: `Could not finalize job` });
       updateJobParams = { ...updateJobParams, reason: JSON.stringify(error as Error), status: OperationStatus.FAILED };
     } finally {
       await this.jobManagerClient.updateJob(job.id, updateJobParams);

@@ -13,7 +13,7 @@ import {
   IWorkerInput,
 } from '../../src/common/interfaces';
 
-const layerMetadata = {
+const layerMetadata: LayerMetadata = {
   type: 'RECORD_RASTER',
   classification: 'string',
   productName: 'string',
@@ -96,7 +96,7 @@ const layerMetadata = {
   productBoundingBox: '-180,-89.999,0,90',
 } as unknown as LayerMetadata;
 
-const layerMetadataSample = {
+const layerMetadataSample: LayerMetadata = {
   type: 'RECORD_RASTER',
   classification: 'string',
   productName: 'string',
