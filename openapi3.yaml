@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: exporter-trigger
   description: Service that responsible for activating the export geopackage process
-  version: 2.9.1
+  version: 2.10.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -55,7 +55,9 @@ paths:
     post:
       tags:
         - createGpkg
-      summary: Trigger export geopackages based on providing Regions of interest (multi-resolution)
+      summary: >-
+        Trigger export geopackages based on providing Regions of interest
+        (multi-resolution)
       operationId: byRoi
       requestBody:
         $ref: '#/components/requestBodies/ExportByRoiBody'
@@ -94,7 +96,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-
   /taskStatus/{jobId}:
     get:
       tags:
@@ -251,7 +252,6 @@ components:
                       - 32.02539369969462
                     - - 34.82836896556114
                       - 32.03918441418732
-
         callbackURLs:
           - http://example.getmap.com/callback
           - http://example.getmap.com/callback2
@@ -383,11 +383,10 @@ components:
           properties:
             maxResolutionDeg:
               type: number
-              minimum: 0.00000009
+              minimum: 9.e-8
               maximum: 0.072
               format: double
               description: max resolution of layer in degrees/pixel
-          # nullable: true
         geometry:
           type: object
           nullable: true
