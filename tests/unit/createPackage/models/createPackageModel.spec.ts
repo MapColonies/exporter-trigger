@@ -418,7 +418,7 @@ describe('CreatePackageManager', () => {
         expect(fs.promises.writeFile).toHaveBeenCalledWith(expectedFileName, JSON.stringify(metadataExportJson));
       });
 
-      it('should failed on metadata.json file with the correct parameters', async () => {
+      it('should fail on metadata.json creation(because finding layer from catalog)', async () => {
         const concatFsPathsSpy = jest.spyOn(utils, 'concatFsPaths');
         const parseFeatureCollectionSpy = jest.spyOn(utils, 'parseFeatureCollection');
         findLayerMock.mockRejectedValue({ msg: 'Layer Not found' });
