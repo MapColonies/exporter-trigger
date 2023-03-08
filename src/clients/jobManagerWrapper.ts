@@ -4,7 +4,7 @@ import { Logger } from '@map-colonies/js-logger';
 import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
 import { JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { featureCollectionBooleanEqual, getUTCDate } from '@map-colonies/mc-utils';
+import { featureCollectionBooleanEqual, getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { SERVICES } from '../common/constants';
 import {
   CreateExportJobBody,
@@ -47,7 +47,10 @@ export class JobManagerWrapper extends JobManagerClient {
       logger,
       config.get<string>('workerTypes.tiles.jobType'),
       config.get<string>('workerTypes.tiles.taskType'),
-      config.get<string>('jobManager.url')
+      config.get<string>('jobManager.url'),
+      config.get<IHttpRetryConfig>('httpRetry'),
+      undefined,
+      false
     );
     this.expirationDays = config.get<number>('jobManager.expirationDays');
     this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');

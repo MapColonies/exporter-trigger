@@ -7,7 +7,13 @@ import { ICallbackData, ICallbackExportData, IConfig } from '../common/interface
 @singleton()
 export class CallbackClient extends HttpClient {
   public constructor(@inject(SERVICES.LOGGER) logger: Logger, @inject(SERVICES.CONFIG) private readonly config: IConfig) {
-    super(logger, '', 'requestCallback', config.get<IHttpRetryConfig>('httpRetry'));
+    super(
+      logger,
+      '',
+      'requestCallback', 
+      config.get<IHttpRetryConfig>('httpRetry'),
+      false
+    );
   }
 
   public async send(callbackUrl: string, data: ICallbackData | ICallbackExportData): Promise<void> {
