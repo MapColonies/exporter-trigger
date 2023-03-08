@@ -185,6 +185,7 @@ export interface IJobExportParameters {
   callbackParams?: ICallbackExportResponse;
   fileNamesTemplates: ILinkDefinition;
   gpkgEstimatedSize?: number;
+  cleanupData?: ICleanupData;
 }
 
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
@@ -251,6 +252,11 @@ export interface IGeometryRecord extends IGeometryRecordBase {
   geometry?: Geometry;
   targetResolutionDeg: number;
   targetResolutionMeter: number;
+}
+
+export interface ICleanupData {
+  directoryPath?: string;
+  cleanupExpirationTime?: Date;
 }
 
 // todo - Temporary enum to define old\new api - will be removed after deleting getMap API
