@@ -174,11 +174,7 @@ export class TasksManager {
       percentage: isSuccess ? 100 : undefined,
     };
 
-    const cleanupData: ICleanupData = {
-      directoryPath: job.parameters.relativeDirectoryPath,
-      cleanupExpirationTime: expirationDate,
-    };
-
+    const cleanupData: ICleanupData = this.generateCleanupEntity(job.parameters, expirationDate);
     this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
 
     try {
@@ -214,10 +210,7 @@ export class TasksManager {
       status: isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED,
     };
 
-    const cleanupData: ICleanupData = {
-      directoryPath: job.parameters.relativeDirectoryPath,
-      cleanupExpirationTime: expirationDate,
-    };
+    const cleanupData: ICleanupData = this.generateCleanupEntity(job.parameters, expirationDate);
 
     this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
 
@@ -258,6 +251,11 @@ export class TasksManager {
     } finally {
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     }
+  }
+
+  private generateCleanupEntity(jobParam: IJobExportParameters | IJobParameters, expirationDate: Date): ICleanupData {
+    const cleanupData = { directoryPath: jobParam.relativeDirectoryPath, cleanupExpirationTime: expirationDate };
+    return cleanupData;
   }
 
   private async generateCallbackParam(job: JobExportResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataExportBase> {
