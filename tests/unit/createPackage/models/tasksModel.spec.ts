@@ -451,10 +451,10 @@ describe('TasksManager', () => {
           reason: undefined,
           percentage: 100,
           status: OperationStatus.COMPLETED,
-          expirationDate: expirationTime,
           parameters: {
             ...mockCompletedJob.parameters,
             callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.COMPLETED },
+            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTime: expirationTime },
           },
         };
         const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime);
@@ -495,10 +495,10 @@ describe('TasksManager', () => {
           reason: undefined,
           percentage: 100,
           status: OperationStatus.COMPLETED,
-          expirationDate: expirationTime,
           parameters: {
             ...mockCompletedJob.parameters,
             callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.COMPLETED },
+            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTime: expirationTime },
           },
         };
         const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime);
@@ -526,7 +526,10 @@ describe('TasksManager', () => {
           reason: JSON.stringify({ message: 'failed generate metadata.json' }),
           percentage: 100,
           status: OperationStatus.FAILED,
-          expirationDate: expirationTime,
+          parameters: {
+            ...mockCompletedJob.parameters,
+            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTime: expirationTime },
+          },
         };
         const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime);
         await expect(action()).resolves.not.toThrow();
@@ -560,10 +563,10 @@ describe('TasksManager', () => {
           reason: 'testError',
           percentage: undefined,
           status: OperationStatus.FAILED,
-          expirationDate: expirationTime,
           parameters: {
             ...mockCompletedJob.parameters,
             callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.FAILED },
+            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTime: expirationTime },
           },
         };
         const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime, false, 'testError');
