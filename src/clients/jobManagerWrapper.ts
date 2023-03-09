@@ -66,7 +66,6 @@ export class JobManagerWrapper extends JobManagerClient {
       resourceId: data.cswProductId,
       version: data.version,
       type: this.tilesJobType,
-      expirationDate,
       domain: this.jobDomain,
       parameters: {
         sanitizedBbox: data.sanitizedBbox,
@@ -122,7 +121,6 @@ export class JobManagerWrapper extends JobManagerClient {
       resourceId: data.cswProductId,
       version: data.version,
       type: this.tilesJobType,
-      expirationDate,
       domain: this.jobDomain,
       parameters: jobParameters,
       internalId: data.dbId,
@@ -274,9 +272,16 @@ export class JobManagerWrapper extends JobManagerClient {
     if (job) {
       const oldExpirationDate = new Date(job.expirationDate as Date);
       if (oldExpirationDate < newExpirationDate) {
-        this.logger.info({ jobId, oldExpirationDate, newExpirationDate }, 'Will execute update for expirationDate');
+        this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg: 'update expirationDate' });
         await this.put(getOrUpdateURL, {
-          expirationDate: newExpirationDate,
+          parameters: {
+            ...job.parameters,
+            cleanupData: {
+              ...job.parameters.cleanupData,
+              cleanupExpirationTime: newExpirationDate,
+              directoryPath: job.parameters.relativeDirectoryPath,
+            },
+          },
         });
       } else {
         const msg = 'Will not update expiration date, as current expiration date is later than current expiration date';
