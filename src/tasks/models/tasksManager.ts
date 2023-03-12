@@ -174,8 +174,7 @@ export class TasksManager {
       percentage: isSuccess ? 100 : undefined,
     };
 
-    const cleanupData: ICleanupData = this.generateCleanupEntity(job.parameters, expirationDate);
-    this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
+    const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDate);
 
     try {
       this.logger.info({ jobId: job.id, msg: `Finalize Job` });
@@ -210,9 +209,7 @@ export class TasksManager {
       status: isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED,
     };
 
-    const cleanupData: ICleanupData = this.generateCleanupEntity(job.parameters, expirationDate);
-
-    this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
+    const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDate);
 
     try {
       this.logger.info({ jobId: job.id, isSuccess, msg: `Finalize Job` });
@@ -253,8 +250,9 @@ export class TasksManager {
     }
   }
 
-  private generateCleanupEntity(jobParam: IJobExportParameters | IJobParameters, expirationDate: Date): ICleanupData {
-    const cleanupData = { directoryPath: jobParam.relativeDirectoryPath, cleanupExpirationTime: expirationDate };
+  private generateCleanupEntity(job: JobResponse | JobExportResponse, expirationDate: Date): ICleanupData {
+    const cleanupData = { directoryPath: job.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationDate };
+    this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
     return cleanupData;
   }
 

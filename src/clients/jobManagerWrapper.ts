@@ -270,7 +270,7 @@ export class JobManagerWrapper extends JobManagerClient {
 
     const job = await this.get<JobResponse | JobExportResponse | undefined>(getOrUpdateURL);
     if (job) {
-      const oldExpirationDate = new Date(job.parameters.cleanupData?.cleanupExpirationTime as Date);
+      const oldExpirationDate = new Date(job.parameters.cleanupData?.cleanupExpirationTimeUTC as Date);
       if (oldExpirationDate < newExpirationDate) {
         this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg: 'update expirationDate' });
         await this.put(getOrUpdateURL, {
@@ -278,7 +278,7 @@ export class JobManagerWrapper extends JobManagerClient {
             ...job.parameters,
             cleanupData: {
               ...job.parameters.cleanupData,
-              cleanupExpirationTime: newExpirationDate,
+              cleanupExpirationTimeUTC: newExpirationDate,
               directoryPath: job.parameters.relativeDirectoryPath,
             },
           },

@@ -454,7 +454,7 @@ describe('TasksManager', () => {
           parameters: {
             ...mockCompletedJob.parameters,
             callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.COMPLETED },
-            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTime: expirationTime },
+            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
           },
         };
         const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime);
@@ -498,7 +498,7 @@ describe('TasksManager', () => {
           parameters: {
             ...mockCompletedJob.parameters,
             callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.COMPLETED },
-            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTime: expirationTime },
+            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
           },
         };
         const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime);
@@ -528,7 +528,7 @@ describe('TasksManager', () => {
           status: OperationStatus.FAILED,
           parameters: {
             ...mockCompletedJob.parameters,
-            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTime: expirationTime },
+            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
           },
         };
         const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime);
@@ -566,7 +566,7 @@ describe('TasksManager', () => {
           parameters: {
             ...mockCompletedJob.parameters,
             callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.FAILED },
-            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTime: expirationTime },
+            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
           },
         };
         const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime, false, 'testError');

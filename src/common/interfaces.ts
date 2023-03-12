@@ -23,7 +23,7 @@ export interface IBaseCreatePackage {
 
 export interface ICleanupData {
   directoryPath?: string;
-  cleanupExpirationTime?: Date;
+  cleanupExpirationTimeUTC?: Date;
 }
 
 /**

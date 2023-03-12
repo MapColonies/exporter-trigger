@@ -279,7 +279,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
     },
     cleanupData: {
       directoryPath: 'test',
-      cleanupExpirationTime: new Date(),
+      cleanupExpirationTimeUTC: new Date(),
     },
 
     targetResolution: 0.0439453125,
@@ -699,7 +699,7 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
     },
     cleanupData: {
       directoryPath: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
-      cleanupExpirationTime: new Date(),
+      cleanupExpirationTimeUTC: new Date(),
     },
     gpkgEstimatedSize: 187500,
     fileNamesTemplates: {

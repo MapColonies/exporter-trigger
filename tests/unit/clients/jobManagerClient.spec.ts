@@ -136,7 +136,7 @@ describe('JobManagerClient', () => {
           ...completedJob,
           parameters: {
             ...completedJob.parameters,
-            cleanupData: { ...completedJob.parameters.cleanupData, cleanupExpirationTime: testExpirationDate },
+            cleanupData: { ...completedJob.parameters.cleanupData, cleanupExpirationTimeUTC: testExpirationDate },
           },
         });
 
@@ -145,7 +145,7 @@ describe('JobManagerClient', () => {
         expect(get).toHaveBeenCalledTimes(1);
         expect(putFun).toHaveBeenCalledTimes(1);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const expirationParamCall: Date = putFun.mock.calls[0][1].parameters.cleanupData.cleanupExpirationTime;
+        const expirationParamCall: Date = putFun.mock.calls[0][1].parameters.cleanupData.cleanupExpirationTimeUTC;
         expirationParamCall.setSeconds(0, 0);
         expect(JSON.stringify(expirationParamCall)).toBe(JSON.stringify(expectedNewExpirationDate));
       });
@@ -298,7 +298,7 @@ describe('JobManagerClient', () => {
           expect(get).toHaveBeenCalledTimes(1);
           expect(putFun).toHaveBeenCalledTimes(1);
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          const expirationParamCall: Date = putFun.mock.calls[0][1].parameters.cleanupData.cleanupExpirationTime;
+          const expirationParamCall: Date = putFun.mock.calls[0][1].parameters.cleanupData.cleanupExpirationTimeUTC;
           expirationParamCall.setSeconds(0, 0);
           expect(JSON.stringify(expirationParamCall)).toBe(JSON.stringify(expectedNewExpirationDate));
         });
@@ -319,7 +319,7 @@ describe('JobManagerClient', () => {
             ...completedExportJob,
             parameters: {
               ...completedExportJob.parameters,
-              cleanupData: { ...completedExportJob.parameters.cleanupData, cleanupExpirationTime: testExpirationDate },
+              cleanupData: { ...completedExportJob.parameters.cleanupData, cleanupExpirationTimeUTC: testExpirationDate },
             },
           });
 
