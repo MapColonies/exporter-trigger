@@ -88,7 +88,7 @@ export const mockCompletedJob: JobExportResponse = {
   reason: '',
   isCleaned: false,
   priority: 0,
-  expirationDate: new Date(),
+  expirationDate: undefined,
   internalId: '880a9316-0f10-4874-92e2-a62d587a1169',
   producerName: undefined,
   productName: 'test',

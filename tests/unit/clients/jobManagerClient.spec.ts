@@ -6,6 +6,7 @@ import { JobResponse, ICreateJobResponse as JobInProgressResponse, JobExportDupl
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import {
   completedExportJob,
+  completedJob,
   fc1,
   inProgressExportJob,
   inProgressJob,
@@ -131,14 +132,20 @@ describe('JobManagerClient', () => {
         putFun = jest.fn();
         (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
         const jobManager = jobManagerClient as unknown as { get: unknown };
-        jobManager.get = get.mockResolvedValue({ ...inProgressJob, expirationDate: testExpirationDate });
+        jobManager.get = get.mockResolvedValue({
+          ...completedJob,
+          parameters: {
+            ...completedJob.parameters,
+            cleanupData: { ...completedJob.parameters.cleanupData, cleanupExpirationTimeUTC: testExpirationDate },
+          },
+        });
 
-        await jobManagerClient.validateAndUpdateExpiration(inProgressJob.id);
+        await jobManagerClient.validateAndUpdateExpiration(completedJob.id);
 
         expect(get).toHaveBeenCalledTimes(1);
         expect(putFun).toHaveBeenCalledTimes(1);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const expirationParamCall: Date = putFun.mock.calls[0][1].expirationDate;
+        const expirationParamCall: Date = putFun.mock.calls[0][1].parameters.cleanupData.cleanupExpirationTimeUTC;
         expirationParamCall.setSeconds(0, 0);
         expect(JSON.stringify(expirationParamCall)).toBe(JSON.stringify(expectedNewExpirationDate));
       });
@@ -272,7 +279,7 @@ describe('JobManagerClient', () => {
         });
       });
       describe('Update Jobs', () => {
-        it('should successfully update running Export job (already in progress) expirationDate (old expirationDate lower)', async () => {
+        it('should successfully update completed Export job (Naive cache) expirationDate (old expirationDate lower)', async () => {
           const expirationDays: number = configMock.get('jobManager.expirationDays');
           const testExpirationDate = getUTCDate();
           const expectedNewExpirationDate = getUTCDate();
@@ -284,19 +291,19 @@ describe('JobManagerClient', () => {
           putFun = jest.fn();
           (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
           const jobManager = jobManagerClient as unknown as { get: unknown };
-          jobManager.get = get.mockResolvedValue({ ...inProgressExportJob, expirationDate: testExpirationDate });
+          jobManager.get = get.mockResolvedValue({ ...completedExportJob });
 
-          await jobManagerClient.validateAndUpdateExpiration(inProgressExportJob.id);
+          await jobManagerClient.validateAndUpdateExpiration(completedExportJob.id);
 
           expect(get).toHaveBeenCalledTimes(1);
           expect(putFun).toHaveBeenCalledTimes(1);
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          const expirationParamCall: Date = putFun.mock.calls[0][1].expirationDate;
+          const expirationParamCall: Date = putFun.mock.calls[0][1].parameters.cleanupData.cleanupExpirationTimeUTC;
           expirationParamCall.setSeconds(0, 0);
           expect(JSON.stringify(expirationParamCall)).toBe(JSON.stringify(expectedNewExpirationDate));
         });
 
-        it('should not update running Export job (already in progress) expirationDate (old expirationDate higher)', async () => {
+        it('should not update completed Export job (naive cache) expirationDate (old expirationDate higher)', async () => {
           const expirationDays: number = configMock.get('jobManager.expirationDays');
           const testExpirationDate = getUTCDate();
           const expectedNewExpirationDate = getUTCDate();
@@ -308,9 +315,15 @@ describe('JobManagerClient', () => {
           putFun = jest.fn();
           (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
           const jobManager = jobManagerClient as unknown as { get: unknown };
-          jobManager.get = get.mockResolvedValue({ ...inProgressExportJob, expirationDate: testExpirationDate });
+          jobManager.get = get.mockResolvedValue({
+            ...completedExportJob,
+            parameters: {
+              ...completedExportJob.parameters,
+              cleanupData: { ...completedExportJob.parameters.cleanupData, cleanupExpirationTimeUTC: testExpirationDate },
+            },
+          });
 
-          await jobManagerClient.validateAndUpdateExpiration(inProgressExportJob.id);
+          await jobManagerClient.validateAndUpdateExpiration(completedExportJob.id);
 
           expect(get).toHaveBeenCalledTimes(1);
           expect(putFun).toHaveBeenCalledTimes(0);

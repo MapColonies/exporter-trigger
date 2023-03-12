@@ -638,7 +638,6 @@ export class CreatePackageManager {
     const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
     if (processingJob) {
       await this.updateCallbackURLs(processingJob, newCallbacks);
-      await this.jobManagerClient.validateAndUpdateExpiration(processingJob.id);
       return {
         id: processingJob.id,
         taskIds: (processingJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[]).map((t) => t.id),
@@ -657,7 +656,6 @@ export class CreatePackageManager {
       (await this.jobManagerClient.findExportJob(OperationStatus.PENDING, dupParams, true));
     if (processingJob) {
       await this.updateExportCallbackURLs(processingJob, newCallbacks);
-      await this.jobManagerClient.validateAndUpdateExpiration(processingJob.id);
       return {
         id: processingJob.id,
         taskIds: (processingJob.tasks as unknown as IJobResponse<IJobExportParameters, ITaskParameters>[]).map((t) => t.id),

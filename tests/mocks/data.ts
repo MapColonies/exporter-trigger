@@ -277,6 +277,10 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       expirationTime: new Date(),
       targetResolution: 0.0439453125,
     },
+    cleanupData: {
+      directoryPath: 'test',
+      cleanupExpirationTimeUTC: new Date(),
+    },
 
     targetResolution: 0.0439453125,
   },
@@ -692,6 +696,10 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
       requestJobId: 'afbdd5e6-25db-4567-a81f-71e0e7d30761',
       expirationTime: new Date(),
       recordCatalogId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
+    },
+    cleanupData: {
+      directoryPath: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
+      cleanupExpirationTimeUTC: new Date(),
     },
     gpkgEstimatedSize: 187500,
     fileNamesTemplates: {
