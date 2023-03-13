@@ -12,6 +12,7 @@ import {
   ICallbackDataExportBase,
   ICallbackExportData,
   ICallbackExportResponse,
+  ICleanupData,
   IExportJobStatusResponse,
   IJobExportParameters,
   IJobParameters,
@@ -171,8 +172,10 @@ export class TasksManager {
       reason,
       /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
       percentage: isSuccess ? 100 : undefined,
-      expirationDate: expirationDate,
     };
+
+    const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDate);
+
     try {
       this.logger.info({ jobId: job.id, msg: `Finalize Job` });
       const packageName = job.parameters.fileName;
@@ -181,7 +184,7 @@ export class TasksManager {
         await this.packageManager.createJsonMetadata(packageFullPath, job);
       }
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
-      updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
+      updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams, cleanupData } };
 
       this.logger.info({ jobId: job.id, status: isSuccess, msg: `Update Job status` });
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
@@ -193,7 +196,7 @@ export class TasksManager {
         msg: `Could not finalize job, will updating to status failed`,
       });
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
-      updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams } };
+      updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams, cleanupData } };
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     }
   }
@@ -204,8 +207,10 @@ export class TasksManager {
       /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
       percentage: isSuccess ? 100 : undefined,
       status: isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED,
-      expirationDate: expirationDate,
     };
+
+    const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDate);
+
     try {
       this.logger.info({ jobId: job.id, isSuccess, msg: `Finalize Job` });
       if (isSuccess) {
@@ -230,14 +235,25 @@ export class TasksManager {
         errorReason: reason,
       };
 
-      updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams } };
+      updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams, cleanupData } };
       this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
     } catch (error) {
       this.logger.error({ jobId: job.id, err: error, reason: `${(error as Error).message}`, msg: `Could not finalize job` });
-      updateJobParams = { ...updateJobParams, reason: JSON.stringify(error as Error), status: OperationStatus.FAILED };
+      updateJobParams = {
+        ...updateJobParams,
+        reason: JSON.stringify(error as Error),
+        status: OperationStatus.FAILED,
+        parameters: { ...job.parameters, cleanupData },
+      };
     } finally {
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     }
+  }
+
+  private generateCleanupEntity(job: JobResponse | JobExportResponse, expirationDate: Date): ICleanupData {
+    const cleanupData = { directoryPath: job.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationDate };
+    this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
+    return cleanupData;
   }
 
   private async generateCallbackParam(job: JobExportResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataExportBase> {

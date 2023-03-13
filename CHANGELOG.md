@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.11.0](https://github.com/MapColonies/exporter-trigger/compare/v2.10.0...v2.11.0) (2023-03-12)
+
+
+### Features
+
+* first commit for new cleanup managment logic (MAPCO-2877) (MAPCO-2878) ([#56](https://github.com/MapColonies/exporter-trigger/issues/56)) ([d3b47b7](https://github.com/MapColonies/exporter-trigger/commit/d3b47b767067c598a746b42f43bd54e92cab0bf7))
+
 ## [2.10.0](https://github.com/MapColonies/exporter-trigger/compare/v2.9.1...v2.10.0) (2023-03-08)
 
 ### [2.9.1](https://github.com/MapColonies/exporter-trigger/compare/v2.9.0...v2.9.1) (2023-02-14)

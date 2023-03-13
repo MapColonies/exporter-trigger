@@ -21,6 +21,11 @@ export interface IBaseCreatePackage {
   priority?: number;
 }
 
+export interface ICleanupData {
+  directoryPath?: string;
+  cleanupExpirationTimeUTC?: Date;
+}
+
 /**
  * @deprecated GetMap API - will be deprecated on future
  */
@@ -174,6 +179,7 @@ export interface IJobParameters {
   callbackParams?: ICallbackDataBase;
   fileName: string;
   gpkgEstimatedSize?: number;
+  cleanupData?: ICleanupData;
 }
 
 export interface IJobExportParameters {
@@ -185,6 +191,7 @@ export interface IJobExportParameters {
   callbackParams?: ICallbackExportResponse;
   fileNamesTemplates: ILinkDefinition;
   gpkgEstimatedSize?: number;
+  cleanupData?: ICleanupData;
 }
 
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
