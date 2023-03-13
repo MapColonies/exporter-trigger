@@ -3,7 +3,7 @@ import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
-import { IFindJobsRequest, IJobResponse, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { featureCollectionBooleanEqual, getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { SERVICES } from '../common/constants';
 import {
@@ -29,7 +29,6 @@ export class JobManagerWrapper extends JobManagerClient {
   private readonly tilesTaskType: string;
   private readonly expirationDays: number;
   private readonly jobDomain: string;
-  private readonly taskType: string;
 
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
     super(
@@ -37,14 +36,13 @@ export class JobManagerWrapper extends JobManagerClient {
       config.get<string>('workerTypes.tiles.jobType'),
       config.get<string>('jobManager.url'),
       config.get<IHttpRetryConfig>('httpRetry'),
-      undefined,
+      'jobManagerClient',
       false
     );
     this.expirationDays = config.get<number>('jobManager.expirationDays');
     this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
     this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
     this.jobDomain = config.get<string>('jobManager.jobDomain');
-    this.taskType = config.get<string>('workerTypes.tiles.taskType');
   }
 
   /**

@@ -15,13 +15,7 @@ type PycswFindRecordResponse = PycswRecord[] | [undefined];
 @injectable()
 export class RasterCatalogManagerClient extends HttpClient {
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
-    super(
-      logger, 
-      config.get<string>('rasterCatalogManager.url'), 
-      'RasterCatalogManager', 
-      config.get<IHttpRetryConfig>('httpRetry'),
-      false
-    );
+    super(logger, config.get<string>('rasterCatalogManager.url'), 'RasterCatalogManager', config.get<IHttpRetryConfig>('httpRetry'), false);
   }
 
   public async findLayer(id: string): Promise<PycswRecord> {

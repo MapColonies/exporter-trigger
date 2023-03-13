@@ -7,7 +7,7 @@
   },
   "telemetry": {
     "logger": {
-      "level": "debug",
+      "level": "info",
       "prettyPrint": false
     }
   },
