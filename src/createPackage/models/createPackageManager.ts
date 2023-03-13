@@ -285,8 +285,11 @@ export class CreatePackageManager {
     // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
     const batches: ITileRange[] = [];
     featuresRecords.forEach((record) => {
-      const recordBatches = bboxToTileRange(record.sanitizedBox as BBox2d, record.zoomLevel);
-      batches.push(recordBatches);
+      for (let zoom = 0; zoom <= record.zoomLevel; zoom++) {
+        const recordBatches = bboxToTileRange(record.sanitizedBox as BBox2d, zoom);
+        console.log(recordBatches);
+        batches.push(recordBatches);
+      }
     });
     // featuresRecords.forEach((record) => {
     //   const recordBatches = this.generateTileGroups(
