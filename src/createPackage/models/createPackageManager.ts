@@ -18,9 +18,10 @@ import { inject, injectable } from 'tsyringe';
 import {
   degreesPerPixelToZoomLevel,
   featureCollectionBooleanEqual,
-  ITileRange, snapBBoxToTileGrid,
+  ITileRange,
+  snapBBoxToTileGrid,
   TileRanger,
-  bboxToTileRange
+  bboxToTileRange,
 } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
