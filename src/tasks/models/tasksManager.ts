@@ -1,11 +1,11 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import config from 'config';
-import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IFindJobsRequest, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
-import { IFindJob, JobManagerWrapper } from '../../clients/jobManagerWrapper';
+import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
   ICallbackData,
   ICallbackDataBase,
@@ -61,10 +61,10 @@ export class TasksManager {
   }
 
   public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
-    const queryParams: IFindJob = {
-      isCleaned: 'false',
+    const queryParams: IFindJobsRequest = {
+      isCleaned: false,
       type: this.tilesJobType,
-      shouldReturnTasks: 'false',
+      shouldReturnTasks: false,
       status: OperationStatus.IN_PROGRESS,
     };
     const jobs = await this.jobManagerClient.getExportJobs(queryParams);

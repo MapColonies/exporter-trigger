@@ -1,7 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
-import { IFindJob, JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
+import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobResponse, ICreateJobResponse as JobInProgressResponse, JobExportDuplicationParams } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import {
@@ -192,12 +192,12 @@ describe('JobManagerClient', () => {
 
       describe('Get Export Jobs', () => {
         it('should getting jobs that match find params Export job successfully', async () => {
-          const findJobRequest: IFindJob = {
+          const findJobRequest: IFindJobsRequest = {
             resourceId: layerFromCatalog.metadata.productId,
             version: layerFromCatalog.metadata.productVersion,
-            isCleaned: 'false',
+            isCleaned: false,
             status: OperationStatus.IN_PROGRESS,
-            shouldReturnTasks: 'false',
+            shouldReturnTasks: false,
           };
           get = jest.fn();
           (jobManagerClient as unknown as { get: unknown }).get = get.mockResolvedValue([inProgressExportJob]);
@@ -234,9 +234,9 @@ describe('JobManagerClient', () => {
           expect(getExportJobs).toHaveBeenCalledWith({
             resourceId: jobParams.resourceId,
             version: jobParams.version,
-            isCleaned: 'false',
+            isCleaned: false,
             type: tilesJobType,
-            shouldReturnTasks: 'false',
+            shouldReturnTasks: false,
             status: OperationStatus.COMPLETED,
           });
           expect(completedJobs).toBeDefined();
@@ -269,9 +269,9 @@ describe('JobManagerClient', () => {
           expect(getExportJobs).toHaveBeenCalledWith({
             resourceId: jobParams.resourceId,
             version: jobParams.version,
-            isCleaned: 'false',
+            isCleaned: false,
             type: tilesJobType,
-            shouldReturnTasks: 'false',
+            shouldReturnTasks: false,
             status: OperationStatus.IN_PROGRESS,
           });
           expect(inProgressExportJobJobs).toBeDefined();
