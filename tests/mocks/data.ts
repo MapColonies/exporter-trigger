@@ -300,6 +300,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
   tasks: [
     {
       id: '542ebbfd-f4d1-4c77-bd4d-97ca121f0de7',
+      jobId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
       type: 'rasterTilesExporter',
       description: '',
       parameters: {
@@ -357,6 +358,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   tasks: [
     {
       id: '1f765695-338b-4752-b182-a8cbae3c610e',
+      jobId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
       type: 'rasterTilesExporter',
       description: '',
       parameters: {
@@ -720,6 +722,7 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
   tasks: [
     {
       id: '542ebbfd-f4d1-4c77-bd4d-97ca121f0de7',
+      jobId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
       type: 'rasterTilesExporter',
       description: '',
       parameters: {
@@ -776,6 +779,7 @@ const inProgressExportJob: IJobResponse<IJobExportParameters, ITaskParameters> =
   tasks: [
     {
       id: '1f765695-338b-4752-b182-a8cbae3c610e',
+      jobId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
       type: 'rasterTilesExporter',
       description: '',
       parameters: {
