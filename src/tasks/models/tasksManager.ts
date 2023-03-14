@@ -1,12 +1,13 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import config from 'config';
-import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IUpdateJobBody, OperationStatus, IFindJobsRequest } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
-import { IFindJob, JobManagerWrapper } from '../../clients/jobManagerWrapper';
+import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
+  CreateFinalizeTaskBody,
   ICallbackData,
   ICallbackDataBase,
   ICallbackDataExportBase,
@@ -18,7 +19,9 @@ import {
   IJobParameters,
   IJobStatusResponse,
   ILinkDefinition,
+  ITaskFinalizeParameters,
   JobExportResponse,
+  JobFinalizeResponse,
   JobResponse,
 } from '../../common/interfaces';
 import { CallbackClient } from '../../clients/callbackClient';
@@ -60,11 +63,16 @@ export class TasksManager {
     return jobsStatus;
   }
 
+  public async getFinalizeJobById(jobId: string): Promise<JobFinalizeResponse | undefined> {
+    const job = await this.jobManagerClient.getJob<IJobExportParameters, ITaskFinalizeParameters>(jobId);
+    return job;
+  }
+
   public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
-    const queryParams: IFindJob = {
-      isCleaned: 'false',
+    const queryParams: IFindJobsRequest = {
+      isCleaned: false,
       type: this.tilesJobType,
-      shouldReturnTasks: 'false',
+      shouldReturnTasks: false,
       status: OperationStatus.IN_PROGRESS,
     };
     const jobs = await this.jobManagerClient.getExportJobs(queryParams);
@@ -141,7 +149,7 @@ export class TasksManager {
     }
   }
 
-  public async sendExportCallbacks(job: JobExportResponse, callbackParams: ICallbackDataExportBase): Promise<void> {
+  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackDataExportBase): Promise<void> {
     try {
       this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
@@ -201,7 +209,7 @@ export class TasksManager {
     }
   }
 
-  public async finalizeExportJob(job: JobExportResponse, expirationDate: Date, isSuccess = true, reason?: string): Promise<void> {
+  public async finalizeExportJob(job: JobFinalizeResponse, expirationDate: Date, isSuccess = true, reason?: string): Promise<void> {
     let updateJobParams: IUpdateJobBody<IJobExportParameters> = {
       reason,
       /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
@@ -250,13 +258,34 @@ export class TasksManager {
     }
   }
 
-  private generateCleanupEntity(job: JobResponse | JobExportResponse, expirationDate: Date): ICleanupData {
+  public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
+    const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
+    const taskParameters: ITaskFinalizeParameters = {
+      reason,
+      exporterTaskStatus: operationStatus,
+    };
+
+    const createJTaskRequest: CreateFinalizeTaskBody = {
+      type: taskType,
+      parameters: taskParameters,
+      status: OperationStatus.PENDING,
+      blockDuplication: true,
+    };
+
+    await this.jobManagerClient.enqueueTask(job.id, createJTaskRequest);
+  }
+
+  private generateCleanupEntity(job: JobResponse | JobExportResponse | JobFinalizeResponse, expirationDate: Date): ICleanupData {
     const cleanupData = { directoryPath: job.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationDate };
     this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
     return cleanupData;
   }
 
-  private async generateCallbackParam(job: JobExportResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataExportBase> {
+  private async generateCallbackParam(
+    job: JobExportResponse | JobFinalizeResponse,
+    expirationDate: Date,
+    errorReason?: string
+  ): Promise<ICallbackDataExportBase> {
     let links: ILinkDefinition = { ...job.parameters.fileNamesTemplates }; // default file names in case of failure
     this.logger.info({ jobId: job.id, msg: `generate callback body for job: ${job.id}` });
 

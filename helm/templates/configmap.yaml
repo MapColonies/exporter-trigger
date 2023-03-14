@@ -35,4 +35,10 @@ data:
   PNG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.pngTileEstimatedSizeInBytes | quote }}
   STORAGE_FACTOR_BUFFER: {{ .Values.env.estimatedStorageCalculation.storageFactorBuffer | quote }}
   VALIDATE_STORAGE_SIZE: {{ .Values.env.estimatedStorageCalculation.validateStorageSize | quote }}
+  QUEUE_JOB_MANAGER_BASE_URL: {{ .Values.rasterCommon.serviceUrls.jobManager | quote }}
+  QUEUE_HEART_BEAT_MANAGER_BASE_URL: {{ .Values.rasterCommon.serviceUrls.heartbeatManager | quote }}
+  QUEUE_DEQUEUE_INTERVAL_MS: {{ .Values.env.queue.dequeueIntervalMs | quote }}
+  QUEUE_HEART_BEAT_INTERVAL_MS: {{ .Values.env.queue.heartbeatIntervalMs | quote }}
+  QUEUE_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.new.jobType | quote }}
+  QUEUE_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.new.splitTilesTaskType | quote }}
 {{- end }}

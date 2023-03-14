@@ -1,5 +1,5 @@
 import { MultiPolygon, Polygon, BBox, FeatureCollection, Geometry } from '@turf/turf';
-import { ICreateJobBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { ITileRange } from '@map-colonies/mc-utils';
 
 export interface IConfig {
@@ -194,6 +194,11 @@ export interface IJobExportParameters {
   cleanupData?: ICleanupData;
 }
 
+export interface ITaskFinalizeParameters {
+  reason?: string;
+  exporterTaskStatus: OperationStatus;
+}
+
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
 
 export interface IMapSource {
@@ -254,6 +259,15 @@ export interface IGeometryRecordBase {
   sanitizedBox?: BBox | null | undefined;
 }
 
+export interface IQueueConfig {
+  jobManagerBaseUrl: string;
+  heartbeatManagerBaseUrl: string;
+  dequeueIntervalMs: number;
+  heartbeatIntervalMs: number;
+  jobType: string;
+  tilesTaskType: string;
+}
+
 export interface IGeometryRecord extends IGeometryRecordBase {
   geometry?: Geometry;
   targetResolutionDeg: number;
@@ -279,3 +293,5 @@ export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;
 // new API based on multi resolution
 export type JobExportResponse = IJobResponse<IJobExportParameters, ITaskParameters>;
 export type CreateExportJobBody = ICreateJobBody<IJobExportParameters, ITaskParameters>;
+export type CreateFinalizeTaskBody = ICreateTaskBody<ITaskFinalizeParameters>;
+export type JobFinalizeResponse = IJobResponse<IJobExportParameters, ITaskFinalizeParameters>;

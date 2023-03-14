@@ -9,6 +9,7 @@ global:
 rasterCommon:
   serviceUrls:
     catalogManager: "http://catalog-raster-dev-raster-catalog-manager"
+    heartbeatManager: "http://heartbeat-raster-dev-raster-heartbeat-manager"
     jobManager: "http://job-manager-raster-dev-discrete-ingestion-db"
     downloadServer: "http://files-server-raster-dev-files-server"
   jobManagement:
@@ -99,6 +100,9 @@ env:
     pngTileEstimatedSizeInBytes: 12500
     storageFactorBuffer: 1.25
     validateStorageSize: true
+  queue:
+    dequeueIntervalMs: 1000
+    heartbeatIntervalMs: 300
 
 resources:
   enabled: true

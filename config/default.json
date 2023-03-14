@@ -42,7 +42,19 @@
     "tiles": {
       "jobType": "rasterTilesExporter",
       "taskType": "rasterTilesExporter"
+    },
+    "finalize": {
+      "jobType": "rasterTilesExporter",
+      "taskType": "rasterFinalizeExporter"
     }
+  },
+  "queue": {
+    "jobManagerBaseUrl": "http://job-manager-job-manager",
+    "heartbeatManagerBaseUrl": "http://heartbeat-manager-heartbeat",
+    "dequeueIntervalMs": 1000,
+    "heartbeatIntervalMs": 300,
+    "jobType": "rasterTilesExporter",
+    "tilesTaskType": "rasterFinalizeExporter"
   },
   "storageEstimation": {
     "jpegTileEstimatedSizeInBytes": 12500,

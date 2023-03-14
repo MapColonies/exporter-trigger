@@ -34,12 +34,14 @@ const mainPollLoop = async (): Promise<void> => {
   //eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (isRunning) {
     let polledData = false;
+    let finalizePolledData = false;
     try {
       polledData = await pollingManager.jobStatusPoll();
+      finalizePolledData = await pollingManager.jobFinalizePoll();
     } catch (error) {
       logger.error(error, `Main loop poll error occurred`);
     } finally {
-      if (!polledData) {
+      if (!polledData || !finalizePolledData) {
         await new Promise((resolve) => setTimeout(resolve, pollingTimout));
       }
     }

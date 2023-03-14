@@ -85,6 +85,20 @@
       "__format": "boolean"
     }
   },
+  "queue": {
+    "jobManagerBaseUrl": "QUEUE_JOB_MANAGER_BASE_URL",
+    "heartbeatManagerBaseUrl": "QUEUE_HEART_BEAT_MANAGER_BASE_URL",
+    "dequeueIntervalMs": {
+      "__name": "QUEUE_DEQUEUE_INTERVAL_MS",
+      "__format": "number"
+    },
+    "heartbeatIntervalMs": {
+      "__name": "QUEUE_HEART_BEAT_INTERVAL_MS",
+      "__format": "number"
+    },
+    "jobType": "QUEUE_JOB_TYPE",
+    "tilesTaskType": "QUEUE_TASK_TYPE"
+  },
   "tilesProvider": "TILES_PROVIDER",
   "gpkgsLocation": "GPKGS_LOCATION",
   "downloadServerUrl": "DOWNLOAD_SERVER_URL",

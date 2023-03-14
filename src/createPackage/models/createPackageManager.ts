@@ -36,6 +36,7 @@ import {
   IWorkerExportInput,
   JobExportDuplicationParams,
   JobExportResponse,
+  JobFinalizeResponse,
 } from '../../common/interfaces';
 import {
   calculateEstimateGpkgSize,
@@ -370,7 +371,7 @@ export class CreatePackageManager {
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
   }
 
-  public async createExportJsonMetadata(job: JobExportResponse): Promise<void> {
+  public async createExportJsonMetadata(job: JobExportResponse | JobFinalizeResponse): Promise<void> {
     this.logger.info({
       jobId: job.id,
       metadataRelativeDirectory: job.parameters.relativeDirectoryPath,

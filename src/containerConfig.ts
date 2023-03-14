@@ -10,6 +10,7 @@ import { createPackageRouterFactory, CREATE_PACKAGE_ROUTER_SYMBOL } from './crea
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { tasksRouterFactory, TASKS_ROUTER_SYMBOL } from './tasks/routes/tasksRouter';
 import { PollingManager, POLLING_MANGER_SYMBOL } from './pollingManager';
+import { IQueueConfig } from './common/interfaces';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -18,6 +19,7 @@ export interface RegisterOptions {
 
 export const registerExternalValues = (options?: RegisterOptions): DependencyContainer => {
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
+  const queueConfig = config.get<IQueueConfig>('queue');
   // @ts-expect-error the signature is wrong
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
@@ -31,6 +33,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
   const dependencies: InjectionObject<unknown>[] = [
     { token: SERVICES.CONFIG, provider: { useValue: config } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
+    { token: SERVICES.QUEUE_CONFIG, provider: { useValue: queueConfig } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: SERVICES.METER, provider: { useValue: meter } },
     { token: CREATE_PACKAGE_ROUTER_SYMBOL, provider: { useFactory: createPackageRouterFactory } },

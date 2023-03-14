@@ -3,7 +3,7 @@ import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
-import { JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { JobManagerClient, OperationStatus, IFindJobsRequest } from '@map-colonies/mc-priority-queue';
 import { featureCollectionBooleanEqual, getUTCDate } from '@map-colonies/mc-utils';
 import { SERVICES } from '../common/constants';
 import {
@@ -23,17 +23,17 @@ import {
   TaskResponse,
 } from '../common/interfaces';
 //this is the job manager api for find job DO NOT MODIFY
-export interface IFindJob {
-  resourceId?: string;
-  version?: string;
-  isCleaned?: string;
-  status?: string;
-  type?: string;
-  shouldReturnTasks?: string;
-  fromDate?: Date;
-  tillData?: Date;
-  productType?: string;
-}
+// export interface IFindJob {
+//   resourceId?: string;
+//   version?: string;
+//   isCleaned?: string;
+//   status?: string;
+//   type?: string;
+//   shouldReturnTasks?: string;
+//   fromDate?: Date;
+//   tillData?: Date;
+//   productType?: string;
+// }
 
 @injectable()
 export class JobManagerWrapper extends JobManagerClient {
@@ -43,12 +43,7 @@ export class JobManagerWrapper extends JobManagerClient {
   private readonly jobDomain: string;
 
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
-    super(
-      logger,
-      config.get<string>('workerTypes.tiles.jobType'),
-      config.get<string>('workerTypes.tiles.taskType'),
-      config.get<string>('jobManager.url')
-    );
+    super(logger, config.get<string>('workerTypes.tiles.jobType'), config.get<string>('jobManager.url'));
     this.expirationDays = config.get<number>('jobManager.expirationDays');
     this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
     this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
@@ -152,15 +147,15 @@ export class JobManagerWrapper extends JobManagerClient {
    * @deprecated The method should not be used
    */
   public async findCompletedJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
-    const queryParams: IFindJob = {
+    const queryParams: IFindJobsRequest = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
-      isCleaned: 'false',
+      isCleaned: false,
       type: this.tilesJobType,
-      shouldReturnTasks: 'false',
+      shouldReturnTasks: false,
       status: OperationStatus.COMPLETED,
     };
-    const jobs = await this.getJobs(queryParams);
+    const jobs = await this.getGetMapJobs(queryParams);
     if (jobs) {
       const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);
       return matchingJob;
@@ -174,12 +169,12 @@ export class JobManagerWrapper extends JobManagerClient {
     jobParams: JobExportDuplicationParams,
     shouldReturnTasks = false
   ): Promise<JobExportResponse | undefined> {
-    const queryParams: IFindJob = {
+    const queryParams: IFindJobsRequest = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
-      isCleaned: 'false',
+      isCleaned: false,
       type: this.tilesJobType,
-      shouldReturnTasks: shouldReturnTasks ? 'true' : 'false',
+      shouldReturnTasks,
       status,
     };
     const jobs = await this.getExportJobs(queryParams);
@@ -195,16 +190,16 @@ export class JobManagerWrapper extends JobManagerClient {
    * @deprecated The method should not be used
    */
   public async findInProgressJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
-    const queryParams: IFindJob = {
+    const queryParams: IFindJobsRequest = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
-      isCleaned: 'false',
+      isCleaned: false,
       type: this.tilesJobType,
-      shouldReturnTasks: 'true',
+      shouldReturnTasks: true,
       status: OperationStatus.IN_PROGRESS,
     };
 
-    const jobs = await this.getJobs(queryParams);
+    const jobs = await this.getGetMapJobs(queryParams);
     if (jobs) {
       const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);
       return matchingJob;
@@ -217,16 +212,16 @@ export class JobManagerWrapper extends JobManagerClient {
    * @deprecated The method should not be used
    */
   public async findPendingJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
-    const queryParams: IFindJob = {
+    const queryParams: IFindJobsRequest = {
       resourceId: jobParams.resourceId,
       version: jobParams.version,
-      isCleaned: 'false',
+      isCleaned: false,
       type: this.tilesJobType,
-      shouldReturnTasks: 'true',
+      shouldReturnTasks: true,
       status: OperationStatus.PENDING,
     };
 
-    const jobs = await this.getJobs(queryParams);
+    const jobs = await this.getGetMapJobs(queryParams);
     if (jobs) {
       const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);
       return matchingJob;
@@ -244,13 +239,13 @@ export class JobManagerWrapper extends JobManagerClient {
    * @deprecated GetMap API - will be deprecated on future
    */
   public async getInProgressJobs(shouldReturnTasks = false): Promise<JobResponse[] | undefined> {
-    const queryParams: IFindJob = {
-      isCleaned: 'false',
+    const queryParams: IFindJobsRequest = {
+      isCleaned: false,
       type: this.tilesJobType,
-      shouldReturnTasks: shouldReturnTasks ? 'true' : 'false',
+      shouldReturnTasks,
       status: OperationStatus.IN_PROGRESS,
     };
-    const jobs = await this.getJobs(queryParams);
+    const jobs = await this.getGetMapJobs(queryParams);
     return jobs;
   }
 
@@ -290,7 +285,7 @@ export class JobManagerWrapper extends JobManagerClient {
     }
   }
 
-  public async getExportJobs(queryParams: IFindJob): Promise<JobExportResponse[] | undefined> {
+  public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
     const exportJobs = jobs?.filter((job) => {
@@ -304,7 +299,7 @@ export class JobManagerWrapper extends JobManagerClient {
   /**
    * @deprecated GetMap API - will be deprecated on future
    */
-  private async getJobs(queryParams: IFindJob): Promise<JobResponse[] | undefined> {
+  private async getGetMapJobs(queryParams: IFindJobsRequest): Promise<JobResponse[] | undefined> {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
     const exportJobs = jobs?.filter((job) => {
