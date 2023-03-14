@@ -50,6 +50,7 @@
     "storageFactorBuffer": 1.25,
     "validateStorageSize": true
   },
+  "disableHttpClientLogs": false,
   "tilesProvider": "S3",
   "gpkgsLocation": "/app/tiles_outputs/gpkgs",
   "downloadServerUrl": "http://download-service",

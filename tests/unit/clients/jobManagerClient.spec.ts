@@ -1,7 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
-import { IFindJob, JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
+import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobResponse, ICreateJobResponse as JobInProgressResponse, JobExportDuplicationParams } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import {
@@ -19,7 +19,7 @@ import {
 let jobManagerClient: JobManagerWrapper;
 let postFun: jest.Mock;
 let putFun: jest.Mock;
-let getJobs: jest.Mock;
+let getGetMapJobs: jest.Mock;
 let get: jest.Mock;
 let getExportJobs: jest.Mock;
 
@@ -60,11 +60,10 @@ describe('JobManagerClient', () => {
        * @deprecated GetMap API - will be deprecated on future
        */
       it('should findCompletedJobs successfully', async () => {
-        getJobs = jest.fn();
+        getGetMapJobs = jest.fn();
 
-        const jobManager = jobManagerClient as unknown as { getJobs: unknown };
-        jobManager.getJobs = getJobs.mockResolvedValue(jobs);
-
+        const jobManager = jobManagerClient as unknown as { getGetMapJobs: unknown };
+        jobManager.getGetMapJobs = getGetMapJobs.mockResolvedValue(jobs);
         const completedJobs = await jobManagerClient.findCompletedJob({
           resourceId: jobs[0].resourceId,
           version: jobs[0].version,
@@ -73,8 +72,7 @@ describe('JobManagerClient', () => {
           crs: 'EPSG:4326',
           sanitizedBbox: jobs[0].parameters.sanitizedBbox,
         });
-
-        expect(getJobs).toHaveBeenCalledTimes(1);
+        expect(getGetMapJobs).toHaveBeenCalledTimes(1);
         expect(completedJobs).toBeDefined();
       });
 
@@ -82,10 +80,10 @@ describe('JobManagerClient', () => {
        * @deprecated GetMap API - will be deprecated on future
        */
       it('should findInProgressJob successfully', async () => {
-        getJobs = jest.fn();
+        getGetMapJobs = jest.fn();
 
-        const jobManager = jobManagerClient as unknown as { getJobs: unknown };
-        jobManager.getJobs = getJobs.mockResolvedValue(jobs);
+        const jobManager = jobManagerClient as unknown as { getGetMapJobs: unknown };
+        jobManager.getGetMapJobs = getGetMapJobs.mockResolvedValue(jobs);
 
         const completedJobs = await jobManagerClient.findInProgressJob({
           resourceId: jobs[0].resourceId,
@@ -96,7 +94,7 @@ describe('JobManagerClient', () => {
           sanitizedBbox: jobs[0].parameters.sanitizedBbox,
         });
 
-        expect(getJobs).toHaveBeenCalledTimes(1);
+        expect(getGetMapJobs).toHaveBeenCalledTimes(1);
         expect(completedJobs).toBeDefined();
       });
 
@@ -104,15 +102,15 @@ describe('JobManagerClient', () => {
        * @deprecated GetMap API - will be deprecated on future
        */
       it('should get In-Progress jobs status successfully', async () => {
-        getJobs = jest.fn();
+        getGetMapJobs = jest.fn();
         const jobs: JobResponse[] = [];
         jobs.push(inProgressJob);
-        const jobManager = jobManagerClient as unknown as { getJobs: unknown };
-        jobManager.getJobs = getJobs.mockResolvedValue(jobs);
+        const jobManager = jobManagerClient as unknown as { getGetMapJobs: unknown };
+        jobManager.getGetMapJobs = getGetMapJobs.mockResolvedValue(jobs);
 
         const result = await jobManagerClient.getInProgressJobs();
 
-        expect(getJobs).toHaveBeenCalledTimes(1);
+        expect(getGetMapJobs).toHaveBeenCalledTimes(1);
         expect(result).toBeDefined();
         expect(result).toEqual(jobs);
       });
@@ -192,12 +190,12 @@ describe('JobManagerClient', () => {
 
       describe('Get Export Jobs', () => {
         it('should getting jobs that match find params Export job successfully', async () => {
-          const findJobRequest: IFindJob = {
+          const findJobRequest: IFindJobsRequest = {
             resourceId: layerFromCatalog.metadata.productId,
             version: layerFromCatalog.metadata.productVersion,
-            isCleaned: 'false',
+            isCleaned: false,
             status: OperationStatus.IN_PROGRESS,
-            shouldReturnTasks: 'false',
+            shouldReturnTasks: false,
           };
           get = jest.fn();
           (jobManagerClient as unknown as { get: unknown }).get = get.mockResolvedValue([inProgressExportJob]);
@@ -234,9 +232,9 @@ describe('JobManagerClient', () => {
           expect(getExportJobs).toHaveBeenCalledWith({
             resourceId: jobParams.resourceId,
             version: jobParams.version,
-            isCleaned: 'false',
+            isCleaned: false,
             type: tilesJobType,
-            shouldReturnTasks: 'false',
+            shouldReturnTasks: false,
             status: OperationStatus.COMPLETED,
           });
           expect(completedJobs).toBeDefined();
@@ -269,9 +267,9 @@ describe('JobManagerClient', () => {
           expect(getExportJobs).toHaveBeenCalledWith({
             resourceId: jobParams.resourceId,
             version: jobParams.version,
-            isCleaned: 'false',
+            isCleaned: false,
             type: tilesJobType,
-            shouldReturnTasks: 'false',
+            shouldReturnTasks: false,
             status: OperationStatus.IN_PROGRESS,
           });
           expect(inProgressExportJobJobs).toBeDefined();
