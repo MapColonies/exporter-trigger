@@ -99,6 +99,10 @@
     "jobType": "QUEUE_JOB_TYPE",
     "tilesTaskType": "QUEUE_TASK_TYPE"
   },
+  "disableHttpClientLogs": {
+    "__name": "DISABLE_HTTP_CLIENT_LOGS",
+    "__format": "boolean"
+  },
   "tilesProvider": "TILES_PROVIDER",
   "gpkgsLocation": "GPKGS_LOCATION",
   "downloadServerUrl": "DOWNLOAD_SERVER_URL",

@@ -1,7 +1,7 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import config from 'config';
-import { IUpdateJobBody, OperationStatus, IFindJobsRequest } from '@map-colonies/mc-priority-queue';
+import { IFindJobsRequest, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
