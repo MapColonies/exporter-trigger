@@ -62,6 +62,7 @@ describe('Export by ROI', function () {
       findLayerSpy.mockResolvedValue(layerFromCatalog);
       checkForExportDuplicateSpy.mockResolvedValue(undefined);
       validateFreeSpaceSpy.mockResolvedValue(true);
+      // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
       // generateTileGroupsSpy.mockReturnValue([]);
       createJobSpy.mockResolvedValue({ id: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
 
@@ -69,6 +70,7 @@ describe('Export by ROI', function () {
       expect(resposne).toSatisfyApiSpec();
       expect(findLayerSpy).toHaveBeenCalledTimes(1);
       expect(checkForExportDuplicateSpy).toHaveBeenCalledTimes(1);
+      // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
       // expect(generateTileGroupsSpy).toHaveBeenCalledTimes(2);
       expect(createJobSpy).toHaveBeenCalledTimes(1);
       expect(resposne.status).toBe(httpStatusCodes.OK);
@@ -94,6 +96,7 @@ describe('Export by ROI', function () {
       };
       const callbacks = [{ url: 'http://example.getmap.com/callback', roi: layerDefaultRoi }];
 
+      // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
       // generateTileGroupsSpy.mockReturnValue([]);
       findLayerSpy.mockResolvedValue(layerFromCatalog);
       createJobSpy.mockResolvedValue({ id: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812', taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'] });
@@ -105,6 +108,7 @@ describe('Export by ROI', function () {
       expect(resposne).toSatisfyApiSpec();
       expect(findLayerSpy).toHaveBeenCalledTimes(1);
       expect(createJobSpy).toHaveBeenCalledTimes(1);
+      // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
       // expect(generateTileGroupsSpy).toHaveBeenCalledTimes(1);
       expect(checkForExportDuplicateSpy).toHaveBeenCalledTimes(1);
       expect(checkForExportDuplicateSpy).toHaveBeenCalledWith(dupParams, callbacks);

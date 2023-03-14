@@ -288,7 +288,6 @@ export class CreatePackageManager {
     featuresRecords.forEach((record) => {
       for (let zoom = 0; zoom <= record.zoomLevel; zoom++) {
         const recordBatches = bboxToTileRange(record.sanitizedBox as BBox2d, zoom);
-        console.log(recordBatches);
         batches.push(recordBatches);
       }
     });
