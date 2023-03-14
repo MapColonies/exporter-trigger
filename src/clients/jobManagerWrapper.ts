@@ -37,7 +37,7 @@ export class JobManagerWrapper extends JobManagerClient {
       config.get<string>('jobManager.url'),
       config.get<IHttpRetryConfig>('httpRetry'),
       'jobManagerClient',
-      false
+      config.get<boolean>('disableHttpClientLogs')
     );
     this.expirationDays = config.get<number>('jobManager.expirationDays');
     this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');

@@ -65,6 +65,7 @@ const registerDefaultConfig = (): void => {
         taskType: 'rasterTilesExporter',
       },
     },
+    disableHttpClientLogs: false,
     tilesProvider: 'S3',
     gpkgsLocation: '/app/tiles_outputs/gpkgs',
     downloadServerUrl: 'http://download-service',

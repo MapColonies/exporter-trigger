@@ -82,6 +82,7 @@ env:
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
   pollingTimeoutMS: 2000
+  disableHttpClientLogs: false
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
