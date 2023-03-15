@@ -15,7 +15,14 @@ import {
   featureCollection as createFeatureCollection,
 } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
-import { degreesPerPixelToZoomLevel, featureCollectionBooleanEqual, ITileRange, snapBBoxToTileGrid, TileRanger } from '@map-colonies/mc-utils';
+import {
+  degreesPerPixelToZoomLevel,
+  featureCollectionBooleanEqual,
+  ITileRange,
+  snapBBoxToTileGrid,
+  TileRanger,
+  bboxToTileRange,
+} from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import { isArray, isEmpty } from 'lodash';
@@ -143,7 +150,12 @@ export class CreatePackageManager {
       return duplicationExist;
     }
 
-    const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
+    // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
+    const batches: ITileRange[] = [];
+    for (let i = 0; i <= zoomLevel; i++) {
+      batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
+    }
+    // const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
     if (this.storageEstimation.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
@@ -271,15 +283,22 @@ export class CreatePackageManager {
       return duplicationExist;
     }
 
+    // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
     const batches: ITileRange[] = [];
     featuresRecords.forEach((record) => {
-      const recordBatches = this.generateTileGroups(
-        record.geometry as Polygon | MultiPolygon,
-        layerMetadata.footprint as Polygon | MultiPolygon,
-        record.zoomLevel
-      );
-      batches.push(...recordBatches);
+      for (let zoom = 0; zoom <= record.zoomLevel; zoom++) {
+        const recordBatches = bboxToTileRange(record.sanitizedBox as BBox2d, zoom);
+        batches.push(recordBatches);
+      }
     });
+    // featuresRecords.forEach((record) => {
+    //   const recordBatches = this.generateTileGroups(
+    //     record.geometry as Polygon | MultiPolygon,
+    //     layerMetadata.footprint as Polygon | MultiPolygon,
+    //     record.zoomLevel
+    //   );
+    //   batches.push(...recordBatches);
+    // });
     const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
     if (this.storageEstimation.validateStorageSize) {
       const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
