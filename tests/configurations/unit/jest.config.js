@@ -18,9 +18,13 @@ module.exports = {
     '!*/common/tracing.ts',
     '!*/common/constants.ts',
     '!*/clients/callbackClient.ts**',
+    '!*/clients/queueClient.ts**',
     '!**/controllers/**',
     '!**/routes/**',
-    '!<rootDir>/src/*',
+    '!<rootDir>/src/index.ts',
+    '!<rootDir>/src/containerConfig.ts',
+    '!<rootDir>/src/app.ts',
+    '!<rootDir>/src/serverBuilder.ts',
   ],
   coverageDirectory: '<rootDir>/coverage',
   reporters: [
@@ -33,10 +37,10 @@ module.exports = {
   testEnvironment: 'node',
   coverageThreshold: {
     global: {
-      branches: 74,
+      branches: 78,
       functions: 91,
-      lines: 87,
-      statements: 87,
+      lines: 88,
+      statements: 89,
     },
   },
 };
