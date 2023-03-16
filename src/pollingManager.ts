@@ -31,16 +31,15 @@ export class PollingManager {
     const roiJobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
-
     this.logger.debug({ ...getMapJobs, msg: `Handling GetMap jobs` });
-    if (getMapJobs.completedJobs?.length != null) {
+    if (getMapJobs.completedJobs && getMapJobs.completedJobs.length > 0) {
       existsJobs = true;
       this.logger.debug({ msg: `GETMAP Completed GetMap jobs detected, running finalize job` });
       for (const job of getMapJobs.completedJobs) {
         this.logger.info({ jobId: job.id, msg: `GETMAP Execute completed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
         await this.taskManager.finalizeJob(job, expirationDate);
       }
-    } else if (getMapJobs.failedJobs?.length != null) {
+    } else if (getMapJobs.failedJobs && getMapJobs.failedJobs.length > 0) {
       existsJobs = true;
       this.logger.debug({ msg: `GETMAP Failed jobs detected, running finalize job` });
       for (const job of getMapJobs.failedJobs) {
@@ -51,21 +50,19 @@ export class PollingManager {
     }
 
     this.logger.debug({ ...roiJobs, msg: `Handling ROI jobs` });
-    if (roiJobs.completedJobs?.length != null) {
+    if (roiJobs.completedJobs && roiJobs.completedJobs.length > 0) {
       existsJobs = true;
       this.logger.debug({ msg: `ROI Completed jobs detected, running finalize job` });
       for (const job of roiJobs.completedJobs) {
         this.logger.info({ jobId: job.id, msg: `Execute completed job finalizing task creation on ROI exporting for job: ${job.id}` });
-        // await this.taskManager.finalizeExportJob(job, expirationDate);
         await this.taskManager.createFinalizeTask(job, this.finalizeTaskType);
       }
-    } else if (roiJobs.failedJobs?.length != null) {
+    } else if (roiJobs.failedJobs && roiJobs.failedJobs.length > 0) {
       existsJobs = true;
       this.logger.debug({ msg: `ROI Failed jobs detected, running finalize job` });
       for (const job of roiJobs.failedJobs) {
         this.logger.info({ jobId: job.id, msg: `Execute failed job finalizing task creation on ROI exporting for job: ${job.id}` });
         const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
-        // await this.taskManager.finalizeExportJob(job, expirationDate, false, gpkgFailedErr);
         await this.taskManager.createFinalizeTask(job, this.finalizeTaskType, false, gpkgFailedErr);
       }
     }
@@ -84,20 +81,27 @@ export class PollingManager {
       const taskId = finalizeTask.id;
       try {
         this.logger.info({ jobId: finalizeTask.jobId, taskId: finalizeTask.id, msg: `Found new finalize task` });
-        const job = (await this.taskManager.getFinalizeJobById(finalizeTask.jobId )) as JobFinalizeResponse;
+        const job = (await this.taskManager.getFinalizeJobById(finalizeTask.jobId)) as JobFinalizeResponse;
 
         if (attempts <= this.finalizeAttempts) {
           const isSuccess = finalizeTask.parameters.exporterTaskStatus === OperationStatus.COMPLETED ? true : false;
           const errReason = finalizeTask.parameters.reason;
           await this.taskManager.finalizeExportJob(job, expirationDate, isSuccess, errReason);
-          await this.queueClient.queueHandlerForFinalizeTasks.ack(jobId, taskId);
+          if (isSuccess) {
+            this.logger.info({ jobId, taskId, msg: `success finalization. close task as completed` });
+            await this.queueClient.queueHandlerForFinalizeTasks.ack(jobId, taskId);
+          } else {
+            this.logger.warn({ jobId, taskId, exportingErr: errReason, msg: `Failure exporting finalization, will execute finalize task deletion` });
+            await this.queueClient.queueHandlerForFinalizeTasks.reject(jobId, taskId, false);
+            await this.taskManager.deleteTaskById(jobId, taskId);
+          }
           this.logger.info({ jobId, taskId, finalizingParams: { expirationDate, isSuccess, errReason }, msg: `Finish successfully finalizing job` });
         } else {
           this.logger.warn({ jobId, taskId, msg: `Failed finalizing job, reached to max attempts of ${attempts}\\${this.finalizeAttempts}` });
           await this.queueClient.queueHandlerForFinalizeTasks.reject(jobId, taskId, false);
         }
       } catch (error) {
-        this.logger.error({ jobId, taskId,err: error, msg: `Failed finalizing job - [${(error as Error).message}]` });
+        this.logger.error({ jobId, taskId, err: error, msg: `Failed finalizing job - [${(error as Error).message}]` });
         await this.queueClient.queueHandlerForFinalizeTasks.reject(jobId, taskId, false);
       }
     }

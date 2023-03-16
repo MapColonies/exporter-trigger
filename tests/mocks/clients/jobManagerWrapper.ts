@@ -11,6 +11,7 @@ const updateJobMock = jest.fn();
 const validateAndUpdateExpirationMock = jest.fn();
 const getExportJobsMock = jest.fn();
 const findExportJobMock = jest.fn();
+const deleteTaskByIdMock = jest.fn();
 
 const jobManagerWrapperMock = {
   createJob: createJobMock,
@@ -24,6 +25,7 @@ const jobManagerWrapperMock = {
   updateJob: updateJobMock,
   getExportJobs: getExportJobsMock,
   validateAndUpdateExpiration: validateAndUpdateExpirationMock,
+  deleteTaskById: deleteTaskByIdMock,
 } as unknown as JobManagerWrapper;
 
 export {
@@ -39,4 +41,5 @@ export {
   getInProgressJobsMock as getInProgressJobsMock,
   updateJobMock,
   getExportJobsMock,
+  deleteTaskByIdMock,
 };

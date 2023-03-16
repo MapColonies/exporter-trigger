@@ -68,6 +68,10 @@ export class TasksManager {
     return job;
   }
 
+  public async deleteTaskById(jobId: string, taskId: string): Promise<void> {
+    await this.jobManagerClient.deleteTaskById(jobId, taskId);
+  }
+
   public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
@@ -265,14 +269,13 @@ export class TasksManager {
       exporterTaskStatus: operationStatus,
     };
 
-    const createJTaskRequest: CreateFinalizeTaskBody = {
+    const createTaskRequest: CreateFinalizeTaskBody = {
       type: taskType,
       parameters: taskParameters,
       status: OperationStatus.PENDING,
       blockDuplication: true,
     };
-
-    await this.jobManagerClient.enqueueTask(job.id, createJTaskRequest);
+    await this.jobManagerClient.enqueueTask(job.id, createTaskRequest);
   }
 
   private generateCleanupEntity(job: JobResponse | JobExportResponse | JobFinalizeResponse, expirationDate: Date): ICleanupData {

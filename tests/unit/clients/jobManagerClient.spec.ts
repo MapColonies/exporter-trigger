@@ -22,6 +22,7 @@ let putFun: jest.Mock;
 let getGetMapJobs: jest.Mock;
 let get: jest.Mock;
 let getExportJobs: jest.Mock;
+let deleteFun: jest.Mock;
 
 describe('JobManagerClient', () => {
   describe('#createJob', () => {
@@ -334,6 +335,16 @@ describe('JobManagerClient', () => {
           const response = await jobManagerClient.getTasksByJobId(inProgressExportJob.id);
           expect(get).toHaveBeenCalledTimes(1);
           expect(response).toBeDefined();
+        });
+      });
+      describe('delete tasks by job id and task id', () => {
+        it('should pass deletion on provided taskId', async () => {
+          deleteFun = jest.fn();
+          (jobManagerClient as unknown as { delete: unknown }).delete = deleteFun.mockResolvedValue(undefined);
+          const jobId = '66100582-f190-4f95-a3f8-1459eb96d4da';
+          const taskId = 'e7c0ac78-3e5d-4995-bdfd-8e8b83262949';
+          await jobManagerClient.deleteTaskById(jobId, taskId);
+          expect(deleteFun).toHaveBeenCalledTimes(1);
         });
       });
     });

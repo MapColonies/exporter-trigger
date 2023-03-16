@@ -4,11 +4,13 @@ import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue
 import { NotFoundError } from '@map-colonies/error-types';
 import { ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
 import {
+  CreateFinalizeTaskBody,
   ICallbackDataBase,
   ICallbackDataExportBase,
   IJobExportParameters,
   ITaskParameters,
   JobExportResponse,
+  JobFinalizeResponse,
   JobResponse,
   TaskResponse,
 } from '../../../../src/common/interfaces';
@@ -283,7 +285,7 @@ describe('TasksManager', () => {
 
     describe('#getJobsByTaskStatus', () => {
       it('should return completed job with no failed jobs', async () => {
-        const jobs: JobExportResponse[] = [];
+        const jobs: JobFinalizeResponse[] = [];
         const completedMockJob = { ...mockCompletedJob, completedTasks: 1 };
         jobs.push(completedMockJob);
         getExportJobsMock.mockResolvedValue(jobs);
@@ -296,7 +298,7 @@ describe('TasksManager', () => {
       });
 
       it('should return failed job with no completed jobs', async () => {
-        const jobs: JobExportResponse[] = [];
+        const jobs: JobFinalizeResponse[] = [];
         const failedMockJob = { ...mockCompletedJob, failedTasks: 1 };
         jobs.push(failedMockJob);
         getExportJobsMock.mockResolvedValue(jobs);
@@ -309,7 +311,7 @@ describe('TasksManager', () => {
       });
 
       it('should return completed job and failed job', async () => {
-        const jobs: JobExportResponse[] = [];
+        const jobs: JobFinalizeResponse[] = [];
         const completedMockJob = { ...mockCompletedJob, completedTasks: 1 };
         const failedMockJob = { ...mockCompletedJob, failedTasks: 1 };
         jobs.push(completedMockJob, failedMockJob);
@@ -323,7 +325,7 @@ describe('TasksManager', () => {
       });
 
       it('should return an empty jobs response if task is in progress', async () => {
-        const jobs: JobExportResponse[] = [];
+        const jobs: JobFinalizeResponse[] = [];
 
         const inProgressMockJob = { ...mockCompletedJob, inProgressTasks: 1 };
         jobs.push(inProgressMockJob);
@@ -337,7 +339,7 @@ describe('TasksManager', () => {
       });
 
       it('should return an empty jobs response if task is in pending', async () => {
-        const jobs: JobExportResponse[] = [];
+        const jobs: JobFinalizeResponse[] = [];
         const pendingMockJob = { ...mockCompletedJob, pendingTasks: 1 };
         jobs.push(pendingMockJob);
         getExportJobsMock.mockResolvedValue(jobs);
@@ -350,7 +352,7 @@ describe('TasksManager', () => {
       });
 
       it('should return an empty jobs response if task is in expired', async () => {
-        const jobs: JobExportResponse[] = [];
+        const jobs: JobFinalizeResponse[] = [];
         const expiredMockJob = { ...mockCompletedJob, expiredTasks: 1 };
         jobs.push(expiredMockJob);
         getExportJobsMock.mockResolvedValue(jobs);
@@ -363,7 +365,7 @@ describe('TasksManager', () => {
       });
 
       it('should return an empty jobs response if task is in aborted', async () => {
-        const jobs: JobExportResponse[] = [];
+        const jobs: JobFinalizeResponse[] = [];
         const abortedMockJob = { ...mockCompletedJob, abortedTasks: 1 };
         jobs.push(abortedMockJob);
         getExportJobsMock.mockResolvedValue(jobs);
@@ -420,6 +422,52 @@ describe('TasksManager', () => {
         const action = async () => tasksManager.sendExportCallbacks(mockCompletedJob, callbackData);
         await expect(action()).resolves.not.toThrow();
         expect(sendMock).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe('#getFinalizeJobById', () => {
+      it('should get job that included finalize task', async () => {
+        const getJob = jest.fn();
+        (jobManagerWrapperMock as unknown as { getJob: unknown }).getJob = getJob.mockResolvedValue({ mockCompletedJob });
+        await tasksManager.getFinalizeJobById(mockCompletedJob.id);
+        expect(getJob).toHaveBeenCalledTimes(1);
+        expect(getJob).toHaveBeenCalledWith(mockCompletedJob.id);
+      });
+    });
+
+    describe('#createFinalizeTask', () => {
+      it('should create new success finalize task', async () => {
+        const finalizeTaskType = configMock.get<string>('workerTypes.finalize.taskType');
+        const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
+          type: finalizeTaskType,
+          parameters: { exporterTaskStatus: OperationStatus.COMPLETED },
+          status: OperationStatus.PENDING,
+          blockDuplication: true,
+        };
+
+        const enqueueTask = jest.fn();
+        (jobManagerWrapperMock as unknown as { enqueueTask: unknown }).enqueueTask = enqueueTask.mockResolvedValue(undefined);
+        const mockJobFinalized = JSON.parse(JSON.stringify(mockCompletedJob)) as JobExportResponse;
+        await tasksManager.createFinalizeTask(mockJobFinalized, finalizeTaskType);
+        expect(enqueueTask).toHaveBeenCalledTimes(1);
+        expect(enqueueTask).toHaveBeenCalledWith(mockCompletedJob.id, expectedCreateTaskRequest);
+      });
+
+      it('should create new not success finalize task', async () => {
+        const finalizeTaskType = configMock.get<string>('workerTypes.finalize.taskType');
+        const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
+          type: finalizeTaskType,
+          parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED },
+          status: OperationStatus.PENDING,
+          blockDuplication: true,
+        };
+
+        const enqueueTask = jest.fn();
+        (jobManagerWrapperMock as unknown as { enqueueTask: unknown }).enqueueTask = enqueueTask.mockResolvedValue(undefined);
+        const mockJobFinalized = JSON.parse(JSON.stringify(mockCompletedJob)) as JobExportResponse;
+        await tasksManager.createFinalizeTask(mockJobFinalized, finalizeTaskType, false, 'GPKG corrupted');
+        expect(enqueueTask).toHaveBeenCalledTimes(1);
+        expect(enqueueTask).toHaveBeenCalledWith(mockCompletedJob.id, expectedCreateTaskRequest);
       });
     });
 

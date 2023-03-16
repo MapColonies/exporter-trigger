@@ -253,11 +253,15 @@ export class JobManagerWrapper extends JobManagerClient {
     });
   }
 
+  public async deleteTaskById(jobId: string, taskId: string): Promise<void> {
+    const deleteTaskUrl = `/jobs/${jobId}/tasks/${taskId}`;
+    await this.delete(deleteTaskUrl);
+  }
+
   public async validateAndUpdateExpiration(jobId: string): Promise<void> {
     const getOrUpdateURL = `/jobs/${jobId}`;
     const newExpirationDate = getUTCDate();
     newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
-
     const job = await this.get<JobResponse | JobExportResponse | undefined>(getOrUpdateURL);
     if (job) {
       const oldExpirationDate = new Date(job.parameters.cleanupData?.cleanupExpirationTimeUTC as Date);
