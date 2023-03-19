@@ -1,7 +1,10 @@
 import { Logger } from '@map-colonies/js-logger';
 import { RequestHandler } from 'express';
+import { InvalidPathError, NoMatchError } from 'check-disk-space';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
+import { HttpError } from '@map-colonies/error-types';
+import httpStatusCodes from 'http-status-codes';
 import { SERVICES } from '../../common/constants';
 import { StorageManager } from '../models/storageManager';
 import { IStorageStatusResponse } from '../../common/interfaces'
@@ -17,7 +20,12 @@ export class StorageController {
       const storageStatus = await this.storageManager.getStorage();
       return res.status(httpStatus.OK).json(storageStatus);
     } catch (err) {
-      next(err);
+      let error = err;
+      if(err instanceof InvalidPathError || err instanceof NoMatchError) {
+        error = new HttpError(err, httpStatusCodes.NOT_FOUND);
+      }
+      console.log(JSON.stringify(err));
+      next(error);
     }
   };
 }

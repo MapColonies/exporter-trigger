@@ -25,7 +25,7 @@ describe('Storage', () => {
      * @deprecated GetMap API - will be deprecated on future
      */
     describe('#getStorage', () => {
-      it.only('should return storage status', async () => {
+      it('should return storage status', async () => {
         const storageStatusResponse: IStorageStatusResponse = {
           free: 1000,
           size: 1000
