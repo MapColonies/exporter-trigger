@@ -9,7 +9,7 @@ import { SERVICES } from '../../common/constants';
 import { StorageManager } from '../models/storageManager';
 import { IStorageStatusResponse } from '../../common/interfaces';
 
-type GetTaskByJobIdHandler = RequestHandler<{ jobId: string }, IStorageStatusResponse, string>;
+type GetStorageHandler = RequestHandler<{ jobId: string }, IStorageStatusResponse, string>;
 
 @injectable()
 export class StorageController {
@@ -18,7 +18,7 @@ export class StorageController {
     @inject(StorageManager) private readonly storageManager: StorageManager
   ) {}
 
-  public getStorage: GetTaskByJobIdHandler = async (req, res, next) => {
+  public getStorage: GetStorageHandler = async (req, res, next) => {
     try {
       const storageStatus = await this.storageManager.getStorage();
       return res.status(httpStatus.OK).json(storageStatus);
