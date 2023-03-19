@@ -19,9 +19,6 @@ describe('Storage', () => {
   });
 
   describe('GetStorage', () => {
-    /**
-     * @deprecated GetMap API - will be deprecated on future
-     */
     describe('#getStorage', () => {
       it('should return storage status', async () => {
         const storageStatusResponse: IStorageStatusResponse = {
