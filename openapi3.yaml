@@ -11,7 +11,7 @@ paths:
     get:
       tags:
         - storage
-      summary: Get free, in-use and total storage size for exporting (in bytes)
+      summary: Get free and total storage size for exporting (in bytes)
       operationId: getStorage
       responses:
         '200':
