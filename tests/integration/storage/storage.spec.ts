@@ -28,8 +28,8 @@ describe('storage', function () {
     it('should return 200 status code and the storage details', async function () {
       const storageStatusResponse: IStorageStatusResponse = {
         free: 1000,
-        size: 1000
-      }
+        size: 1000,
+      };
 
       getStorageSpy.mockResolvedValue(storageStatusResponse);
 

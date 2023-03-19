@@ -7,13 +7,16 @@ import { HttpError } from '@map-colonies/error-types';
 import httpStatusCodes from 'http-status-codes';
 import { SERVICES } from '../../common/constants';
 import { StorageManager } from '../models/storageManager';
-import { IStorageStatusResponse } from '../../common/interfaces'
+import { IStorageStatusResponse } from '../../common/interfaces';
 
 type GetTaskByJobIdHandler = RequestHandler<{ jobId: string }, IStorageStatusResponse, string>;
 
 @injectable()
 export class StorageController {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(StorageManager) private readonly storageManager: StorageManager) {}
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(StorageManager) private readonly storageManager: StorageManager
+  ) {}
 
   public getStorage: GetTaskByJobIdHandler = async (req, res, next) => {
     try {
@@ -21,7 +24,7 @@ export class StorageController {
       return res.status(httpStatus.OK).json(storageStatus);
     } catch (err) {
       let error = err;
-      if(err instanceof InvalidPathError || err instanceof NoMatchError) {
+      if (err instanceof InvalidPathError || err instanceof NoMatchError) {
         error = new HttpError(err, httpStatusCodes.NOT_FOUND);
       }
       console.log(JSON.stringify(err));
