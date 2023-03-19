@@ -7,6 +7,31 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 paths:
+  /storage:
+    get:
+      tags:
+        - storage
+      summary: Get free, in-use and total storage size for exporting (in bytes)
+      operationId: getStorage
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageResponse'
+        '404':
+          description: Could not find requested path
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalError'
   /create:
     post:
       tags:
@@ -151,6 +176,17 @@ components:
           schema:
             $ref: '#/components/schemas/exportFromFeatures'
   schemas:
+    StorageResponse:
+      type: object
+      description: Response for storage request (in bytes)
+      required:
+        - free
+        - size
+      properties:
+        free:
+          type: number
+        size:
+          type: number
     CommonResponse:
       type: object
       required:
