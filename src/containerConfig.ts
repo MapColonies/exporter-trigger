@@ -10,6 +10,7 @@ import { createPackageRouterFactory, CREATE_PACKAGE_ROUTER_SYMBOL } from './crea
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { tasksRouterFactory, TASKS_ROUTER_SYMBOL } from './tasks/routes/tasksRouter';
 import { PollingManager, POLLING_MANGER_SYMBOL } from './pollingManager';
+import { storageRouterFactory, STORAGE_ROUTER_SYMBOL } from './storage/routes/storageRouter';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -33,6 +34,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: SERVICES.METER, provider: { useValue: meter } },
+    { token: STORAGE_ROUTER_SYMBOL, provider: { useFactory: storageRouterFactory } },
     { token: CREATE_PACKAGE_ROUTER_SYMBOL, provider: { useFactory: createPackageRouterFactory } },
     { token: TASKS_ROUTER_SYMBOL, provider: { useFactory: tasksRouterFactory } },
     { token: POLLING_MANGER_SYMBOL, provider: { useClass: PollingManager } },
