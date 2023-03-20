@@ -20,12 +20,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StorageResponse'
-        '404':
-          description: Could not find requested path
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
         '500':
           description: Internal Server Error
           content:
