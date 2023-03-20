@@ -13,7 +13,6 @@ import { FinalizationManager, FINALIZATION_MANGER_SYMBOL } from './finalizationM
 import { IQueueConfig, IExternalClientsConfig } from './common/interfaces';
 import { storageRouterFactory, STORAGE_ROUTER_SYMBOL } from './storage/routes/storageRouter';
 
-
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
   useChild?: boolean;
