@@ -17,10 +17,10 @@ export class RasterCatalogManagerClient extends HttpClient {
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
     super(
       logger,
-      config.get<string>('rasterCatalogManager.url'),
+      config.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url'),
       'RasterCatalogManager',
-      config.get<IHttpRetryConfig>('httpRetry'),
-      config.get<boolean>('disableHttpClientLogs')
+      config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
+      config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
     );
   }
 

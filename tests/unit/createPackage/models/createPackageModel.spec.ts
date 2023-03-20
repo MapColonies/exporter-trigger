@@ -299,7 +299,7 @@ describe('CreatePackageManager', () => {
           sanitizedBbox: expectedsanitizedBbox,
           crs: userInput.crs as string,
         };
-        const expirationDays: number = configMock.get('jobManager.expirationDays');
+        const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
         const testExpirationDate = new Date();
         testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
         findLayerMock.mockResolvedValue(layerFromCatalog);
@@ -422,8 +422,8 @@ describe('CreatePackageManager', () => {
         const concatFsPathsSpy = jest.spyOn(utils, 'concatFsPaths');
         const parseFeatureCollectionSpy = jest.spyOn(utils, 'parseFeatureCollection');
         findLayerMock.mockRejectedValue({ msg: 'Layer Not found' });
-        const action = async () => createPackageManager.createExportJsonMetadata(completedExportJob);
-        await expect(action()).rejects.toStrictEqual({ msg: 'Layer Not found' });
+        const result = await createPackageManager.createExportJsonMetadata(completedExportJob);
+        expect(result).toBe(false);
         expect(parseFeatureCollectionSpy).toHaveBeenCalledTimes(0);
         expect(concatFsPathsSpy).toHaveBeenCalledTimes(0);
         expect(fs.promises.writeFile).toHaveBeenCalledTimes(0);
@@ -646,7 +646,7 @@ describe('CreatePackageManager', () => {
           crs: userInput.crs as string,
           roi: fc1,
         };
-        const expirationDays: number = configMock.get('jobManager.expirationDays');
+        const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
         const testExpirationDate = new Date();
         testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
         const testPycswRecord = JSON.parse(JSON.stringify(pycswRecord));

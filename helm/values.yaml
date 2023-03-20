@@ -91,7 +91,7 @@ env:
     enabled: false
     url: http://localhost:55681/v1/metrics
   jobManager:
-    expirationDays: 30
+    cleanupExpirationDays: 30
   httpRetry:
     attempts: 5
     delay: exponential
@@ -104,6 +104,8 @@ env:
   queue:
     dequeueIntervalMs: 1000
     heartbeatIntervalMs: 300
+    jobType: tilesExport
+    taskType: tilesFinalize
 
 resources:
   enabled: true

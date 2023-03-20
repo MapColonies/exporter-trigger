@@ -21,13 +21,20 @@ export class QueueClient {
       this.queueConfig.jobManagerBaseUrl,
       this.queueConfig.heartbeatManagerBaseUrl,
       this.queueConfig.dequeueIntervalMs,
-      this.queueConfig.heartbeatIntervalMs
+      this.queueConfig.heartbeatIntervalMs,
+      config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
+      undefined,
+      undefined,
+      config.get<boolean>('externalClientsConfig.disableHttpClientLogs'),
+      config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
     );
     this.jobsClient = new JobManagerClient(
       logger,
       this.queueConfig.jobType,
       this.queueConfig.jobManagerBaseUrl,
-      config.get<IHttpRetryConfig>('httpRetry')
+      config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
+      undefined,
+      config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
     );
   }
 }

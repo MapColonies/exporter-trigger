@@ -7,7 +7,8 @@ const getTaskStatusByJobIdMock = jest.fn();
 const sendCallbacksMock = jest.fn();
 const sendExportCallbacksMock = jest.fn();
 const finalizeJobMock = jest.fn();
-const finalizeExportJobMock = jest.fn();
+const finalizeGPKGSuccessMock = jest.fn();
+const finalizeGPKGFailureMock = jest.fn();
 const createFinalizeTaskMock = jest.fn();
 const deleteTaskByIdMock = jest.fn();
 
@@ -19,7 +20,8 @@ const taskManagerMock = {
   sendCallbacks: sendCallbacksMock,
   sendExportCallbacks: sendExportCallbacksMock,
   finalizeJob: finalizeJobMock,
-  finalizeExportJob: finalizeExportJobMock,
+  finalizeGPKGSuccess: finalizeGPKGSuccessMock,
+  finalizeGPKGFailure: finalizeGPKGFailureMock,
   createFinalizeTask: createFinalizeTaskMock,
   deleteTaskById: deleteTaskByIdMock,
 } as unknown as TasksManager;
@@ -33,7 +35,8 @@ export {
   sendCallbacksMock,
   sendExportCallbacksMock,
   finalizeJobMock,
-  finalizeExportJobMock,
+  finalizeGPKGSuccessMock,
+  finalizeGPKGFailureMock,
   createFinalizeTaskMock,
   deleteTaskByIdMock,
 };

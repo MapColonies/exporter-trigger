@@ -33,16 +33,16 @@ export class JobManagerWrapper extends JobManagerClient {
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
     super(
       logger,
-      config.get<string>('workerTypes.tiles.jobType'),
-      config.get<string>('jobManager.url'),
-      config.get<IHttpRetryConfig>('httpRetry'),
+      config.get<string>('externalClientsConfig.workerTypes.tiles.jobType'),
+      config.get<string>('externalClientsConfig.clientsUrls.jobManager.url'),
+      config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
       'jobManagerClient',
-      config.get<boolean>('disableHttpClientLogs')
+      config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
     );
-    this.expirationDays = config.get<number>('jobManager.expirationDays');
-    this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
-    this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
-    this.jobDomain = config.get<string>('jobManager.jobDomain');
+    this.expirationDays = config.get<number>('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
+    this.tilesJobType = config.get<string>('externalClientsConfig.workerTypes.tiles.jobType');
+    this.tilesTaskType = config.get<string>('externalClientsConfig.workerTypes.tiles.taskType');
+    this.jobDomain = config.get<string>('externalClientsConfig.clientsUrls.jobManager.jobDomain');
   }
 
   /**

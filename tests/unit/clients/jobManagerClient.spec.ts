@@ -120,7 +120,7 @@ describe('JobManagerClient', () => {
        * @deprecated GetMap API - will be deprecated on future
        */
       it('should successfully update job expirationDate (old expirationDate lower)', async () => {
-        const expirationDays: number = configMock.get('jobManager.expirationDays');
+        const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
         const testExpirationDate = getUTCDate();
         const expectedNewExpirationDate = getUTCDate();
         testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
@@ -153,7 +153,7 @@ describe('JobManagerClient', () => {
        * @deprecated GetMap API - will be deprecated on future
        */
       it('should not update job expirationDate (old expirationDate higher)', async () => {
-        const expirationDays: number = configMock.get('jobManager.expirationDays');
+        const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
         const testExpirationDate = getUTCDate();
         const expectedNewExpirationDate = getUTCDate();
         testExpirationDate.setDate(testExpirationDate.getDate() + 2 * expirationDays);
@@ -208,7 +208,7 @@ describe('JobManagerClient', () => {
 
       describe('Find Job by Status', () => {
         it('should findExportCompletedJobs successfully', async () => {
-          const tilesJobType = configMock.get<string>('workerTypes.tiles.jobType');
+          const tilesJobType = configMock.get<string>('externalClientsConfig.workerTypes.tiles.jobType');
           getExportJobs = jest.fn();
           const jobManager = jobManagerClient as unknown as { getExportJobs: unknown };
           jobManager.getExportJobs = getExportJobs.mockResolvedValue([completedExportJob]);
@@ -243,7 +243,7 @@ describe('JobManagerClient', () => {
         });
 
         it('should findExportInProgressJobs successfully', async () => {
-          const tilesJobType = configMock.get<string>('workerTypes.tiles.jobType');
+          const tilesJobType = configMock.get<string>('externalClientsConfig.workerTypes.tiles.jobType');
           getExportJobs = jest.fn();
           const jobManager = jobManagerClient as unknown as { getExportJobs: unknown };
           jobManager.getExportJobs = getExportJobs.mockResolvedValue([inProgressExportJob]);
@@ -279,7 +279,7 @@ describe('JobManagerClient', () => {
       });
       describe('Update Jobs', () => {
         it('should successfully update completed Export job (Naive cache) expirationDate (old expirationDate lower)', async () => {
-          const expirationDays: number = configMock.get('jobManager.expirationDays');
+          const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
           const testExpirationDate = getUTCDate();
           const expectedNewExpirationDate = getUTCDate();
           testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
@@ -303,7 +303,7 @@ describe('JobManagerClient', () => {
         });
 
         it('should not update completed Export job (naive cache) expirationDate (old expirationDate higher)', async () => {
-          const expirationDays: number = configMock.get('jobManager.expirationDays');
+          const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
           const testExpirationDate = getUTCDate();
           const expectedNewExpirationDate = getUTCDate();
           testExpirationDate.setDate(testExpirationDate.getDate() + 2 * expirationDays);

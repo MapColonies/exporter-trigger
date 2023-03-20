@@ -9,8 +9,8 @@ import { tracing } from './common/tracing';
 import { createPackageRouterFactory, CREATE_PACKAGE_ROUTER_SYMBOL } from './createPackage/routes/createPackageRouter';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { tasksRouterFactory, TASKS_ROUTER_SYMBOL } from './tasks/routes/tasksRouter';
-import { PollingManager, POLLING_MANGER_SYMBOL } from './pollingManager';
-import { IQueueConfig } from './common/interfaces';
+import { FinalizationManager, FINALIZATION_MANGER_SYMBOL } from './finalizationManager';
+import { IQueueConfig, IExternalClientsConfig } from './common/interfaces';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -19,7 +19,15 @@ export interface RegisterOptions {
 
 export const registerExternalValues = (options?: RegisterOptions): DependencyContainer => {
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
-  const queueConfig = config.get<IQueueConfig>('queue');
+  const externalClientsConfig = config.get<IExternalClientsConfig>('externalClientsConfig');
+  const queueConfig: IQueueConfig = {
+    jobManagerBaseUrl: externalClientsConfig.clientsUrls.jobManager.url,
+    heartbeatManagerBaseUrl: externalClientsConfig.clientsUrls.heartbeatManager.url,
+    dequeueIntervalMs: externalClientsConfig.clientsUrls.jobManager.dequeueIntervalMs,
+    heartbeatIntervalMs: externalClientsConfig.clientsUrls.heartbeatManager.heartbeatIntervalMs,
+    jobType: externalClientsConfig.workerTypes.finalize.jobType,
+    tilesTaskType: externalClientsConfig.workerTypes.finalize.taskType,
+  };
   // @ts-expect-error the signature is wrong
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
@@ -38,7 +46,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.METER, provider: { useValue: meter } },
     { token: CREATE_PACKAGE_ROUTER_SYMBOL, provider: { useFactory: createPackageRouterFactory } },
     { token: TASKS_ROUTER_SYMBOL, provider: { useFactory: tasksRouterFactory } },
-    { token: POLLING_MANGER_SYMBOL, provider: { useClass: PollingManager } },
+    { token: FINALIZATION_MANGER_SYMBOL, provider: { useClass: FinalizationManager } },
     {
       token: 'onSignal',
       provider: {

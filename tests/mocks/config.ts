@@ -46,26 +46,6 @@ const registerDefaultConfig = (): void => {
         },
       },
     },
-    httpRetry: {
-      attempts: 5,
-      delay: 'exponential',
-      shouldResetTimeout: true,
-    },
-    jobManager: {
-      url: 'http://job-manager-job-manager',
-      jobDomain: 'testDomain',
-      expirationDays: 30,
-    },
-    rasterCatalogManager: {
-      url: 'http://raster-catalog-manager',
-    },
-    workerTypes: {
-      tiles: {
-        jobType: 'rasterTilesExporter',
-        taskType: 'rasterTilesExporter',
-      },
-    },
-    disableHttpClientLogs: false,
     tilesProvider: 'S3',
     gpkgsLocation: '/app/tiles_outputs/gpkgs',
     downloadServerUrl: 'http://download-service',
@@ -75,6 +55,39 @@ const registerDefaultConfig = (): void => {
       pngTileEstimatedSizeInBytes: 12500,
       storageFactorBuffer: 1.25,
       validateStorageSize: true,
+    },
+    externalClientsConfig: {
+      clientsUrls: {
+        jobManager: {
+          url: 'http://raster-catalog-manager',
+          jobDomain: 'RASTER',
+          cleanupExpirationDays: 30,
+          dequeueIntervalMs: 1000,
+        },
+        rasterCatalogManager: {
+          url: 'http://job-manager-job-manager',
+        },
+        heartbeatManager: {
+          url: 'http://heartbeat-manager-heartbeat-manager',
+          heartbeatIntervalMs: 300,
+        },
+      },
+      workerTypes: {
+        tiles: {
+          jobType: 'rasterTilesExporter',
+          taskType: 'rasterTilesExporter',
+        },
+        finalize: {
+          jobType: 'rasterTilesExporter',
+          taskType: 'rasterFinalizeExporter',
+        },
+      },
+      httpRetry: {
+        attempts: 5,
+        delay: 'exponential',
+        shouldResetTimeout: true,
+      },
+      disableHttpClientLogs: false,
     },
   };
   setConfigValues(config);

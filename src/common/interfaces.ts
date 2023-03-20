@@ -1,6 +1,6 @@
 import { MultiPolygon, Polygon, BBox, FeatureCollection, Geometry } from '@turf/turf';
 import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { ITileRange } from '@map-colonies/mc-utils';
+import { IHttpRetryConfig, ITileRange } from '@map-colonies/mc-utils';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -259,15 +259,6 @@ export interface IGeometryRecordBase {
   sanitizedBox?: BBox | null | undefined;
 }
 
-export interface IQueueConfig {
-  jobManagerBaseUrl: string;
-  heartbeatManagerBaseUrl: string;
-  dequeueIntervalMs: number;
-  heartbeatIntervalMs: number;
-  jobType: string;
-  tilesTaskType: string;
-}
-
 export interface IGeometryRecord extends IGeometryRecordBase {
   geometry?: Geometry;
   targetResolutionDeg: number;
@@ -295,3 +286,46 @@ export type JobExportResponse = IJobResponse<IJobExportParameters, ITaskParamete
 export type CreateExportJobBody = ICreateJobBody<IJobExportParameters, ITaskParameters>;
 export type CreateFinalizeTaskBody = ICreateTaskBody<ITaskFinalizeParameters>;
 export type JobFinalizeResponse = IJobResponse<IJobExportParameters, ITaskFinalizeParameters>;
+
+export interface IQueueConfig {
+  jobManagerBaseUrl: string;
+  heartbeatManagerBaseUrl: string;
+  dequeueIntervalMs: number;
+  heartbeatIntervalMs: number;
+  jobType: string;
+  tilesTaskType: string;
+}
+
+export interface IClientBase {
+  url: string;
+}
+export interface IJobManager extends IClientBase {
+  jobDomain: 'string';
+  cleanupExpirationDays: number;
+  dequeueIntervalMs: number;
+}
+
+export interface IRasterCatalogManager extends IClientBase {}
+
+export interface IHeartbeatManager extends IClientBase {
+  heartbeatIntervalMs: number;
+}
+
+export interface IJobTaskType {
+  jobType: string;
+  taskType: string;
+}
+
+export interface IExternalClientsConfig {
+  clientsUrls: {
+    jobManager: IJobManager;
+    rasterCatalogManager: IRasterCatalogManager;
+    heartbeatManager: IHeartbeatManager;
+  };
+  workerTypes: {
+    tiles: IJobTaskType;
+    finalize: IJobTaskType;
+  };
+  httpRetry: IHttpRetryConfig;
+  disableHttpClientLogs: boolean;
+}

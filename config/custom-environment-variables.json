@@ -39,34 +39,6 @@
       }
     }
   },
-  "httpRetry": {
-    "attempts": {
-      "__name": "HTTP_RETRY_ATTEMPTS",
-      "__format": "number"
-    },
-    "delay": "HTTP_RETRY_DELAY",
-    "shouldResetTimeout": {
-      "__name": "HTTP_RETRY_SHOULD_RESET_TIMEOUT",
-      "__format": "boolean"
-    }
-  },
-  "jobManager": {
-    "url": "JOB_MANAGER_URL",
-    "jobDomain": "JOB_DOMAIN",
-    "expirationDays": {
-      "__name": "JOB_MANAGER_EXPIRATION_DAYS",
-      "__format": "number"
-    }
-  },
-  "rasterCatalogManager": {
-    "url": "RASTER_CATALOG_MANAGER_URL"
-  },
-  "workerTypes": {
-    "tiles": {
-      "jobType": "WORKER_TYPES_TILES_JOB_TYPE",
-      "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
-    }
-  },
   "storageEstimation": {
     "jpegTileEstimatedSizeInBytes": {
       "__name": "JPEG_TILE_ESTIMATED_SIZE_IN_BYTES",
@@ -85,29 +57,62 @@
       "__format": "boolean"
     }
   },
-  "queue": {
-    "jobManagerBaseUrl": "QUEUE_JOB_MANAGER_BASE_URL",
-    "heartbeatManagerBaseUrl": "QUEUE_HEART_BEAT_MANAGER_BASE_URL",
-    "dequeueIntervalMs": {
-      "__name": "QUEUE_DEQUEUE_INTERVAL_MS",
-      "__format": "number"
-    },
-    "heartbeatIntervalMs": {
-      "__name": "QUEUE_HEART_BEAT_INTERVAL_MS",
-      "__format": "number"
-    },
-    "jobType": "QUEUE_JOB_TYPE",
-    "tilesTaskType": "QUEUE_TASK_TYPE"
-  },
-  "disableHttpClientLogs": {
-    "__name": "DISABLE_HTTP_CLIENT_LOGS",
-    "__format": "boolean"
-  },
   "tilesProvider": "TILES_PROVIDER",
   "gpkgsLocation": "GPKGS_LOCATION",
   "downloadServerUrl": "DOWNLOAD_SERVER_URL",
   "pollingTimeoutMS": {
     "__name": "POLLING_TIMEOUT_MS",
     "__format": "number"
+  },
+  "externalClientsConfig": {
+    "clientsUrls": {
+      "jobManager": {
+        "url": "JOB_MANAGER_URL",
+        "jobDomain": "JOB_DOMAIN",
+        "cleanupExpirationDays": {
+          "__name": "JOB_MANAGER_CLEANUP_EXPIRATION_DAYS",
+          "__format": "number"
+        },
+        "dequeueIntervalMs": {
+          "__name": "QUEUE_DEQUEUE_INTERVAL_MS",
+          "__format": "number"
+        }
+      },
+      "rasterCatalogManager": {
+        "url": "RASTER_CATALOG_MANAGER_URL"
+      },
+      "heartbeatManager": {
+        "url": "QUEUE_HEART_BEAT_MANAGER_BASE_URL",
+        "heartbeatIntervalMs": {
+          "__name": "QUEUE_HEART_BEAT_INTERVAL_MS",
+          "__format": "number"
+        }
+      }
+    },
+    "workerTypes": {
+      "tiles": {
+        "jobType": "WORKER_TYPES_TILES_JOB_TYPE",
+        "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
+      },
+      "finalize": {
+        "jobType": "QUEUE_JOB_TYPE",
+        "taskType": "QUEUE_TASK_TYPE"
+      }
+    },
+    "httpRetry": {
+      "attempts": {
+        "__name": "HTTP_RETRY_ATTEMPTS",
+        "__format": "number"
+      },
+      "delay": "HTTP_RETRY_DELAY",
+      "shouldResetTimeout": {
+        "__name": "HTTP_RETRY_SHOULD_RESET_TIMEOUT",
+        "__format": "boolean"
+      }
+    },
+    "disableHttpClientLogs": {
+      "__name": "DISABLE_HTTP_CLIENT_LOGS",
+      "__format": "boolean"
+    }
   }
 }

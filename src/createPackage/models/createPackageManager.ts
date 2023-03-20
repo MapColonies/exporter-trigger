@@ -390,52 +390,61 @@ export class CreatePackageManager {
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
   }
 
-  public async createExportJsonMetadata(job: JobExportResponse | JobFinalizeResponse): Promise<void> {
+  public async createExportJsonMetadata(job: JobExportResponse | JobFinalizeResponse): Promise<boolean> {
+    let successGeneration = true;
     this.logger.info({
       jobId: job.id,
       metadataRelativeDirectory: job.parameters.relativeDirectoryPath,
       fileName: job.parameters.fileNamesTemplates.metadataURI,
       msg: `Creating metadata file`,
     });
-    const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
-    const featuresRecords = parseFeatureCollection(job.parameters.roi);
+    try {
+      const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
+      const featuresRecords = parseFeatureCollection(job.parameters.roi);
 
-    const metadataFileName = job.parameters.fileNamesTemplates.metadataURI;
-    const directoryName = job.parameters.relativeDirectoryPath;
-    const metadataFullPath = concatFsPaths(this.gpkgsLocation, directoryName, metadataFileName);
-    const combinedFootprint = this.getExportedPackageFootprint(
-      job.parameters.roi.features as Feature<Polygon | MultiPolygon>[],
-      record.metadata.footprint as Polygon | MultiPolygon,
-      job.id
-    );
-    record.metadata.footprint = combinedFootprint ? combinedFootprint : record.metadata.footprint;
-    const maxResolutionDeg = Math.max(
-      record.metadata.maxResolutionDeg as number,
-      Math.min(...featuresRecords.map((records) => records.targetResolutionDeg))
-    );
-    record.metadata.maxResolutionDeg = maxResolutionDeg;
-    const maxResolutionMeter = Math.max(
-      record.metadata.maxResolutionMeter as number,
-      Math.min(...featuresRecords.map((records) => records.targetResolutionMeter))
-    );
-    record.metadata.maxResolutionMeter = maxResolutionMeter;
+      const metadataFileName = job.parameters.fileNamesTemplates.metadataURI;
+      const directoryName = job.parameters.relativeDirectoryPath;
+      const metadataFullPath = concatFsPaths(this.gpkgsLocation, directoryName, metadataFileName);
+      const combinedFootprint = this.getExportedPackageFootprint(
+        job.parameters.roi.features as Feature<Polygon | MultiPolygon>[],
+        record.metadata.footprint as Polygon | MultiPolygon,
+        job.id
+      );
+      record.metadata.footprint = combinedFootprint ? combinedFootprint : record.metadata.footprint;
+      const maxResolutionDeg = Math.max(
+        record.metadata.maxResolutionDeg as number,
+        Math.min(...featuresRecords.map((records) => records.targetResolutionDeg))
+      );
+      record.metadata.maxResolutionDeg = maxResolutionDeg;
+      const maxResolutionMeter = Math.max(
+        record.metadata.maxResolutionMeter as number,
+        Math.min(...featuresRecords.map((records) => records.targetResolutionMeter))
+      );
+      record.metadata.maxResolutionMeter = maxResolutionMeter;
 
-    const layerPolygonPartFeatures = this.getExportedPackageLayerPolygonParts(
-      featuresRecords,
-      record.metadata.layerPolygonParts as FeatureCollection,
-      job.id
-    );
-    const roiBbox = PolygonBbox(job.parameters.roi);
-    (record.metadata.layerPolygonParts as FeatureCollection) = {
-      ...(record.metadata.layerPolygonParts as FeatureCollection),
-      features: layerPolygonPartFeatures,
-      bbox: roiBbox,
-    };
-    record.metadata.productBoundingBox = roiBbox.join(',');
+      const layerPolygonPartFeatures = this.getExportedPackageLayerPolygonParts(
+        featuresRecords,
+        record.metadata.layerPolygonParts as FeatureCollection,
+        job.id
+      );
+      const roiBbox = PolygonBbox(job.parameters.roi);
+      (record.metadata.layerPolygonParts as FeatureCollection) = {
+        ...(record.metadata.layerPolygonParts as FeatureCollection),
+        features: layerPolygonPartFeatures,
+        bbox: roiBbox,
+      };
+      record.metadata.productBoundingBox = roiBbox.join(',');
 
-    this.logger.debug({ ...record.metadata, metadataFullPath, jobId: job.id, msg: 'Metadata json file will be written to file' });
-    const recordMetadata = JSON.stringify(record.metadata);
-    await fsPromise.writeFile(metadataFullPath, recordMetadata);
+      this.logger.debug({ ...record.metadata, metadataFullPath, jobId: job.id, msg: 'Metadata json file will be written to file' });
+      const recordMetadata = JSON.stringify(record.metadata);
+
+      await fsPromise.writeFile(metadataFullPath, recordMetadata);
+      return successGeneration;
+    } catch (error) {
+      this.logger.error({ err: error, jobId: job.id, errReason: (error as Error).message, msg: `Failed on creating metadata json file` });
+      successGeneration = false;
+      return successGeneration;
+    }
   }
 
   private featuresFootprintIntersects(

@@ -1,13 +1,12 @@
 import { sep } from 'path';
 import jsLogger from '@map-colonies/js-logger';
-import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
 import {
   CreateFinalizeTaskBody,
   ICallbackDataBase,
   ICallbackDataExportBase,
-  IJobExportParameters,
   ITaskParameters,
   JobExportResponse,
   JobFinalizeResponse,
@@ -437,7 +436,7 @@ describe('TasksManager', () => {
 
     describe('#createFinalizeTask', () => {
       it('should create new success finalize task', async () => {
-        const finalizeTaskType = configMock.get<string>('workerTypes.finalize.taskType');
+        const finalizeTaskType = configMock.get<string>('externalClientsConfig.workerTypes.finalize.taskType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
           parameters: { exporterTaskStatus: OperationStatus.COMPLETED },
@@ -454,7 +453,7 @@ describe('TasksManager', () => {
       });
 
       it('should create new not success finalize task', async () => {
-        const finalizeTaskType = configMock.get<string>('workerTypes.finalize.taskType');
+        const finalizeTaskType = configMock.get<string>('externalClientsConfig.workerTypes.finalize.taskType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
           parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED },
@@ -471,16 +470,15 @@ describe('TasksManager', () => {
       });
     });
 
-    describe('#FinalizingExportJob', () => {
+    describe('#FinalizingSuccessExportJob', () => {
       let sendCallbacksSpy: jest.SpyInstance;
 
-      it('should successfully finalize a job with status completed', async () => {
+      it('should successfully generate finalize a job data with status completed - and invoke relative callbacks', async () => {
         const downloadUrl = configMock.get<string>('downloadServerUrl');
         const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
         getFileSizeSpy.mockResolvedValue(2000);
         const expirationTime = new Date();
-        createExportJsonMetadataMock.mockResolvedValue({});
-        updateJobMock.mockResolvedValue({});
+        createExportJsonMetadataMock.mockResolvedValue(true);
         sendCallbacksSpy = jest.spyOn(tasksManager, 'sendExportCallbacks');
 
         const expectedCallbackParamData: ICallbackDataExportBase = {
@@ -505,111 +503,37 @@ describe('TasksManager', () => {
             cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
           },
         };
-        const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime);
-        await expect(action()).resolves.not.toThrow();
+        const results = await tasksManager.finalizeGPKGSuccess(mockCompletedJob, expirationTime);
         expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(1);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const updateRequest = updateJobMock.mock.calls[0][1] as IUpdateJobBody<IJobExportParameters>;
         expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
         expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
-        expect(updateRequest).toStrictEqual(expectedUpdateRequest);
+        expect(results).toStrictEqual(expectedUpdateRequest);
       });
 
-      it('should successfully finalize a job with status completed even if gpkg file size was failed', async () => {
-        const downloadUrl = configMock.get<string>('downloadServerUrl');
+      it('should generate finalize a job data with status failed - and invoke relative callbacks', async () => {
         const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
-        getFileSizeSpy.mockRejectedValue({ message: 'failed getting file size' });
+        getFileSizeSpy.mockResolvedValue(0);
         const expirationTime = new Date();
-        createExportJsonMetadataMock.mockResolvedValue({});
-        updateJobMock.mockResolvedValue({});
+        createExportJsonMetadataMock.mockResolvedValue(false);
         sendCallbacksSpy = jest.spyOn(tasksManager, 'sendExportCallbacks');
 
         const expectedCallbackParamData: ICallbackDataExportBase = {
           expirationTime,
           fileSize: 0,
           links: {
-            dataURI: `${downloadUrl}/downloads/${mockCompletedJob.parameters.relativeDirectoryPath}/${mockCompletedJob.parameters.fileNamesTemplates.dataURI}`,
-            metadataURI: `${downloadUrl}/downloads/${mockCompletedJob.parameters.relativeDirectoryPath}/${mockCompletedJob.parameters.fileNamesTemplates.metadataURI}`,
+            dataURI: `${mockCompletedJob.parameters.fileNamesTemplates.dataURI}`,
+            metadataURI: `${mockCompletedJob.parameters.fileNamesTemplates.metadataURI}`,
           },
           recordCatalogId: mockCompletedJob.internalId as string,
           requestJobId: mockCompletedJob.id,
-          errorReason: undefined,
+          errorReason: 'Failed on metadata.json creation',
         };
 
         const expectedUpdateRequest = {
-          reason: undefined,
-          percentage: 100,
-          status: OperationStatus.COMPLETED,
-          parameters: {
-            ...mockCompletedJob.parameters,
-            callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.COMPLETED },
-            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
-          },
-        };
-        const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime);
-        await expect(action()).resolves.not.toThrow();
-        expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(1);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const updateRequest = updateJobMock.mock.calls[0][1] as IUpdateJobBody<IJobExportParameters>;
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
-        expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
-        expect(updateRequest).toStrictEqual(expectedUpdateRequest);
-      });
-
-      it('should successfully finalize a job with status failed due to error while create json metadata file', async () => {
-        const expirationTime = new Date();
-        const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
-        getFileSizeSpy.mockResolvedValue(0);
-        createExportJsonMetadataMock.mockRejectedValue({ message: 'failed generate metadata.json' });
-        updateJobMock.mockResolvedValue({});
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendExportCallbacks');
-
-        const expectedUpdateRequest = {
-          reason: JSON.stringify({ message: 'failed generate metadata.json' }),
-          percentage: 100,
-          status: OperationStatus.FAILED,
-          parameters: {
-            ...mockCompletedJob.parameters,
-            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
-          },
-        };
-        const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime);
-        await expect(action()).resolves.not.toThrow();
-        expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(1);
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(0);
-        expect(getFileSizeSpy).toHaveBeenCalledTimes(0);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const updateRequest = updateJobMock.mock.calls[0][1] as IUpdateJobBody<IJobExportParameters>;
-        expect(updateRequest).toStrictEqual(expectedUpdateRequest);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should successfully finalize a job with status failed with failure of process callbackParam failure', async () => {
-        const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
-        getFileSizeSpy.mockRejectedValue({ message: 'failed getting file size' });
-        const expirationTime = new Date();
-        createExportJsonMetadataMock.mockResolvedValue({});
-        updateJobMock.mockResolvedValue({});
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendExportCallbacks');
-
-        const expectedCallbackParamData: ICallbackDataExportBase = {
-          expirationTime,
-          fileSize: 0,
-          links: mockCompletedJob.parameters.fileNamesTemplates,
-          recordCatalogId: mockCompletedJob.internalId as string,
-          requestJobId: mockCompletedJob.id,
-          errorReason: 'testError',
-        };
-
-        const expectedUpdateRequest = {
-          reason: 'testError',
-          percentage: undefined,
+          reason: 'Failed on metadata.json creation',
+          percentage: 0,
           status: OperationStatus.FAILED,
           parameters: {
             ...mockCompletedJob.parameters,
@@ -617,17 +541,54 @@ describe('TasksManager', () => {
             cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
           },
         };
-        const action = async () => tasksManager.finalizeExportJob(mockCompletedJob, expirationTime, false, 'testError');
-        await expect(action()).resolves.not.toThrow();
-        expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(0);
+        const results = await tasksManager.finalizeGPKGSuccess(mockCompletedJob, expirationTime);
+        expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(1);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const updateRequest = updateJobMock.mock.calls[0][1] as IUpdateJobBody<IJobExportParameters>;
         expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
         expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
-        expect(updateRequest).toStrictEqual(expectedUpdateRequest);
+        expect(results).toStrictEqual(expectedUpdateRequest);
+      });
+    });
+
+    describe('#FinalizingFailureExportJob', () => {
+      let sendCallbacksSpy: jest.SpyInstance;
+
+      it('should generate finalize a job data for failed exported job with status failed - and invoke relative callbacks', async () => {
+        const exportingErrorMsg = 'Failed on generating gpkg';
+        const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
+        getFileSizeSpy.mockResolvedValue(0);
+        const expirationTime = new Date();
+        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendExportCallbacks');
+
+        const expectedCallbackParamData: ICallbackDataExportBase = {
+          expirationTime,
+          fileSize: 0,
+          links: {
+            dataURI: `${mockCompletedJob.parameters.fileNamesTemplates.dataURI}`,
+            metadataURI: `${mockCompletedJob.parameters.fileNamesTemplates.metadataURI}`,
+          },
+          recordCatalogId: mockCompletedJob.internalId as string,
+          requestJobId: mockCompletedJob.id,
+          errorReason: exportingErrorMsg,
+        };
+
+        const expectedUpdateRequest = {
+          reason: exportingErrorMsg,
+          percentage: 0,
+          status: OperationStatus.FAILED,
+          parameters: {
+            ...mockCompletedJob.parameters,
+            callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.FAILED },
+            cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
+          },
+        };
+        const results = await tasksManager.finalizeGPKGFailure(mockCompletedJob, expirationTime, exportingErrorMsg);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
+        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
+        expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
+        expect(results).toStrictEqual(expectedUpdateRequest);
       });
     });
   });
