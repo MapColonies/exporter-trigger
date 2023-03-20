@@ -41,8 +41,8 @@ describe('storage', function () {
     });
   });
 
-  describe('Sad Path', function () {
-    it('should return 404 status code because of invalid path', async function () {
+  describe('Bad Path', function () {
+    it('should return 500 status code because of invalid path', async function () {
       getStorageSpy.mockImplementation(() => {
         throw new InvalidPathError();
       });
@@ -50,10 +50,10 @@ describe('storage', function () {
       const resposne = await requestSender.getStorage();
       expect(resposne).toSatisfyApiSpec();
       expect(getStorageSpy).toHaveBeenCalledTimes(1);
-      expect(resposne.status).toBe(httpStatusCodes.NOT_FOUND);
+      expect(resposne.status).toBe(httpStatusCodes.INTERNAL_SERVER_ERROR);
     });
 
-    it('should return 404 status code because of no match on path', async function () {
+    it('should return 500 status code because of no match on path', async function () {
       getStorageSpy.mockImplementation(() => {
         throw new NoMatchError();
       });
@@ -61,7 +61,7 @@ describe('storage', function () {
       const resposne = await requestSender.getStorage();
       expect(resposne).toSatisfyApiSpec();
       expect(getStorageSpy).toHaveBeenCalledTimes(1);
-      expect(resposne.status).toBe(httpStatusCodes.NOT_FOUND);
+      expect(resposne.status).toBe(httpStatusCodes.INTERNAL_SERVER_ERROR);
     });
   });
 });
