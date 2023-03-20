@@ -25,9 +25,8 @@ export class StorageController {
     } catch (err) {
       let error = err;
       if (err instanceof InvalidPathError || err instanceof NoMatchError) {
-        error = new HttpError(err, httpStatusCodes.NOT_FOUND);
+        error = new HttpError(err, httpStatusCodes.INTERNAL_SERVER_ERROR, "Bad path configuration for GPKG location");
       }
-      console.log(JSON.stringify(err));
       next(error);
     }
   };
