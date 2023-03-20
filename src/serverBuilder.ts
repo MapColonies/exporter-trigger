@@ -9,6 +9,7 @@ import { Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
+import { STORAGE_ROUTER_SYMBOL } from './storage/routes/storageRouter';
 import { CREATE_PACKAGE_ROUTER_SYMBOL } from './createPackage/routes/createPackageRouter';
 import { TASKS_ROUTER_SYMBOL } from './tasks/routes/tasksRouter';
 
@@ -19,6 +20,7 @@ export class ServerBuilder {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(STORAGE_ROUTER_SYMBOL) private readonly createStorageRouter: Router,
     @inject(CREATE_PACKAGE_ROUTER_SYMBOL) private readonly createPackageRouter: Router,
     @inject(TASKS_ROUTER_SYMBOL) private readonly tasksRouter: Router
   ) {
@@ -40,6 +42,7 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
+    this.serverInstance.use('/storage', this.createStorageRouter);
     this.serverInstance.use('/create', this.createPackageRouter);
     this.serverInstance.use('/', this.tasksRouter);
     this.buildDocsRoutes();
