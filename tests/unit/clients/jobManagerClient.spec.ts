@@ -120,7 +120,7 @@ describe('JobManagerClient', () => {
        * @deprecated GetMap API - will be deprecated on future
        */
       it('should successfully update job expirationDate (old expirationDate lower)', async () => {
-        const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
+        const expirationDays: number = configMock.get('cleanupExpirationDays');
         const testExpirationDate = getUTCDate();
         const expectedNewExpirationDate = getUTCDate();
         testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
@@ -153,7 +153,7 @@ describe('JobManagerClient', () => {
        * @deprecated GetMap API - will be deprecated on future
        */
       it('should not update job expirationDate (old expirationDate higher)', async () => {
-        const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
+        const expirationDays: number = configMock.get('cleanupExpirationDays');
         const testExpirationDate = getUTCDate();
         const expectedNewExpirationDate = getUTCDate();
         testExpirationDate.setDate(testExpirationDate.getDate() + 2 * expirationDays);
@@ -279,7 +279,7 @@ describe('JobManagerClient', () => {
       });
       describe('Update Jobs', () => {
         it('should successfully update completed Export job (Naive cache) expirationDate (old expirationDate lower)', async () => {
-          const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
+          const expirationDays: number = configMock.get('cleanupExpirationDays');
           const testExpirationDate = getUTCDate();
           const expectedNewExpirationDate = getUTCDate();
           testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
@@ -303,7 +303,7 @@ describe('JobManagerClient', () => {
         });
 
         it('should not update completed Export job (naive cache) expirationDate (old expirationDate higher)', async () => {
-          const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
+          const expirationDays: number = configMock.get('cleanupExpirationDays');
           const testExpirationDate = getUTCDate();
           const expectedNewExpirationDate = getUTCDate();
           testExpirationDate.setDate(testExpirationDate.getDate() + 2 * expirationDays);

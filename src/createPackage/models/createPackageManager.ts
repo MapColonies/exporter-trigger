@@ -391,7 +391,6 @@ export class CreatePackageManager {
   }
 
   public async createExportJsonMetadata(job: JobExportResponse | JobFinalizeResponse): Promise<boolean> {
-    let successGeneration = true;
     this.logger.info({
       jobId: job.id,
       metadataRelativeDirectory: job.parameters.relativeDirectoryPath,
@@ -439,11 +438,10 @@ export class CreatePackageManager {
       const recordMetadata = JSON.stringify(record.metadata);
 
       await fsPromise.writeFile(metadataFullPath, recordMetadata);
-      return successGeneration;
+      return true;
     } catch (error) {
       this.logger.error({ err: error, jobId: job.id, errReason: (error as Error).message, msg: `Failed on creating metadata json file` });
-      successGeneration = false;
-      return successGeneration;
+      return false;
     }
   }
 
@@ -799,7 +797,6 @@ export class CreatePackageManager {
     return tileEstimatedSize;
   }
 
-  // todo - add unittest
   private getExportedPackageFootprint(
     features: Feature<Polygon | MultiPolygon>[],
     footprint: Polygon | MultiPolygon,
@@ -816,7 +813,6 @@ export class CreatePackageManager {
     return combinedFootprint;
   }
 
-  // todo - add unittest
   private getExportedPackageLayerPolygonParts(featuresRecords: IGeometryRecord[], layerPolygonParts: FeatureCollection, jobId: string): Feature[] {
     const layerPolygonPartFeatures: Feature[] = [];
     for (const featureRecord of featuresRecords) {

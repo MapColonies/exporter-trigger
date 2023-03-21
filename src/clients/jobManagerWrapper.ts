@@ -39,7 +39,7 @@ export class JobManagerWrapper extends JobManagerClient {
       'jobManagerClient',
       config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
     );
-    this.expirationDays = config.get<number>('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
+    this.expirationDays = config.get<number>('cleanupExpirationDays');
     this.tilesJobType = config.get<string>('externalClientsConfig.workerTypes.tiles.jobType');
     this.tilesTaskType = config.get<string>('externalClientsConfig.workerTypes.tiles.taskType');
     this.jobDomain = config.get<string>('externalClientsConfig.clientsUrls.jobManager.jobDomain');

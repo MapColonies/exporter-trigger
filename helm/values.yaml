@@ -82,16 +82,15 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  pollingTimeoutMS: 2000
+  finalizePollingTimeMS: 2000
   disableHttpClientLogs: false
+  cleanupExpirationDays: 30
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
-  jobManager:
-    cleanupExpirationDays: 30
   httpRetry:
     attempts: 5
     delay: exponential
@@ -102,10 +101,9 @@ env:
     storageFactorBuffer: 1.25
     validateStorageSize: true
   queue:
-    dequeueIntervalMs: 1000
+    dequeueFinalizeIntervalMs: 1000
     heartbeatIntervalMs: 300
-    jobType: tilesExport
-    taskType: tilesFinalize
+    finalizeTaskType: tilesFinalize
 
 resources:
   enabled: true

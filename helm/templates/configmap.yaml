@@ -20,7 +20,7 @@ data:
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   {{ end }}
   JOB_MANAGER_URL: {{ .Values.rasterCommon.serviceUrls.jobManager | quote }}
-  JOB_MANAGER_CLEANUP_EXPIRATION_DAYS: {{ .Values.env.jobManager.cleanupExpirationDays | quote }}
+  CLEANUP_EXPIRATION_DAYS: {{ .Values.env.cleanupExpirationDays | quote }}
   RASTER_CATALOG_MANAGER_URL: {{ .Values.rasterCommon.serviceUrls.catalogManager | quote }}
   JOB_DOMAIN: {{ .Values.rasterCommon.jobManagement.jobDomain | quote }}
   WORKER_TYPES_TILES_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.jobType | quote }}
@@ -31,15 +31,14 @@ data:
   DISABLE_HTTP_CLIENT_LOGS: {{ .Values.env.disableHttpClientLogs | quote }}
   TILES_PROVIDER: {{ .Values.rasterCommon.storage.tilesStorageProvider | quote }}
   DOWNLOAD_SERVER_URL: {{ .Values.rasterCommon.serviceUrls.downloadServer | quote }}
-  POLLING_TIMEOUT_MS: {{ .Values.env.pollingTimeoutMS | quote }}
+  FINALIZE_POLLING_TIMEOUT_MS: {{ .Values.env.finalizePollingTimeMS | quote }}
   JPEG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.jpegTileEstimatedSizeInBytes | quote }}
   PNG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.pngTileEstimatedSizeInBytes | quote }}
   STORAGE_FACTOR_BUFFER: {{ .Values.env.estimatedStorageCalculation.storageFactorBuffer | quote }}
   VALIDATE_STORAGE_SIZE: {{ .Values.env.estimatedStorageCalculation.validateStorageSize | quote }}
   QUEUE_JOB_MANAGER_BASE_URL: {{ .Values.rasterCommon.serviceUrls.jobManager | quote }}
   QUEUE_HEART_BEAT_MANAGER_BASE_URL: {{ .Values.rasterCommon.serviceUrls.heartbeatManager | quote }}
-  QUEUE_DEQUEUE_INTERVAL_MS: {{ .Values.env.queue.dequeueIntervalMs | quote }}
+  QUEUE_DEQUEUE_FINALIZE_INTERVAL_MS: {{ .Values.env.queue.dequeueFinalizeIntervalMs | quote }}
   QUEUE_HEART_BEAT_INTERVAL_MS: {{ .Values.env.queue.heartbeatIntervalMs | quote }}
-  QUEUE_JOB_TYPE: {{ .Values.env.queue.jobType | quote }}
-  QUEUE_TASK_TYPE: {{ .Values.env.queue.taskType | quote }}
+  QUEUE_TASK_TYPE: {{ .Values.env.queue.finalizeTaskType | quote }}
 {{- end }}

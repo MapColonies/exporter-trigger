@@ -210,25 +210,19 @@ export class TasksManager {
   }
 
   public async finalizeGPKGSuccess(job: JobFinalizeResponse, expirationDateUTC: Date): Promise<IUpdateJobBody<IJobExportParameters>> {
-    let updateJobParams: IUpdateJobBody<IJobExportParameters> = {
-      /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
-      percentage: 100,
-      status: OperationStatus.COMPLETED,
-    };
+    // initialization to mutual finalized params
     const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDateUTC);
-
     let reason = undefined;
-    // generate job finally completion with webhook (callback param) data
     let finalizeStatus = OperationStatus.COMPLETED;
 
-    this.logger.info({ jobId: job.id, msg: `Finalize success Job` });
+    this.logger.info({ jobId: job.id, msg: `Finalizing successful GPKG creation task` });
     const successMetadataCreation = await this.packageManager.createExportJsonMetadata(job);
     if (!successMetadataCreation) {
       reason = 'Failed on metadata.json creation';
       finalizeStatus = OperationStatus.FAILED;
-      updateJobParams = { ...updateJobParams, percentage: 0 };
       this.logger.error({ jobId: job.id, err: reason, finalizeStatus, msg: `Failed on metadata.json creation, Could not finalize success job` });
     }
+
     // create and sending response to callbacks
     const callbackSendParams = await this.generateCallbackParam(job, expirationDateUTC, reason);
 
@@ -242,10 +236,11 @@ export class TasksManager {
     };
 
     this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
-    updateJobParams = {
-      ...updateJobParams,
+    const updateJobParams = {
       reason: reason ?? undefined,
       status: finalizeStatus,
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      percentage: finalizeStatus === OperationStatus.COMPLETED ? 100 : 0,
       parameters: { ...job.parameters, callbackParams, cleanupData },
     };
 
@@ -256,7 +251,7 @@ export class TasksManager {
     const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDateUTC);
 
     // generate job finally completion with webhook (callback param) data
-    this.logger.info({ jobId: job.id, msg: `Finalize Failure Job` });
+    this.logger.info({ jobId: job.id, msg: `Finalizing failure GPKG creation task` });
     // create and sending response to callbacks
     const callbackSendParams = await this.generateCallbackParam(job, expirationDateUTC, reason);
 
@@ -294,7 +289,12 @@ export class TasksManager {
       status: OperationStatus.PENDING,
       blockDuplication: true,
     };
-    await this.jobManagerClient.enqueueTask(job.id, createTaskRequest);
+    //to protect race condition of multi-triggers, protection on crash while enqueue same task
+    try {
+      await this.jobManagerClient.enqueueTask(job.id, createTaskRequest);
+    } catch (error) {
+      this.logger.warn({ jobId: job.id, err: error, msg: `failed on enqueue new finalize task` });
+    }
   }
 
   private generateCleanupEntity(job: JobResponse | JobExportResponse | JobFinalizeResponse, expirationDate: Date): ICleanupData {

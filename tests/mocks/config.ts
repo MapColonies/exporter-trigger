@@ -49,7 +49,8 @@ const registerDefaultConfig = (): void => {
     tilesProvider: 'S3',
     gpkgsLocation: '/app/tiles_outputs/gpkgs',
     downloadServerUrl: 'http://download-service',
-    pollingTimeoutMS: 2000,
+    finalizePollingTimeMS: 2000,
+    cleanupExpirationDays: 30,
     storageEstimation: {
       jpegTileEstimatedSizeInBytes: 12500,
       pngTileEstimatedSizeInBytes: 12500,
@@ -61,8 +62,7 @@ const registerDefaultConfig = (): void => {
         jobManager: {
           url: 'http://raster-catalog-manager',
           jobDomain: 'RASTER',
-          cleanupExpirationDays: 30,
-          dequeueIntervalMs: 1000,
+          dequeueFinalizeIntervalMs: 1000,
         },
         rasterCatalogManager: {
           url: 'http://job-manager-job-manager',
@@ -78,7 +78,6 @@ const registerDefaultConfig = (): void => {
           taskType: 'rasterTilesExporter',
         },
         finalize: {
-          jobType: 'rasterTilesExporter',
           taskType: 'rasterFinalizeExporter',
         },
       },

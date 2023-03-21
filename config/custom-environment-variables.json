@@ -57,11 +57,15 @@
       "__format": "boolean"
     }
   },
+  "cleanupExpirationDays": {
+    "__name": "CLEANUP_EXPIRATION_DAYS",
+    "__format": "number"
+  },
   "tilesProvider": "TILES_PROVIDER",
   "gpkgsLocation": "GPKGS_LOCATION",
   "downloadServerUrl": "DOWNLOAD_SERVER_URL",
-  "pollingTimeoutMS": {
-    "__name": "POLLING_TIMEOUT_MS",
+  "finalizePollingTimeMS": {
+    "__name": "FINALIZE_POLLING_TIMEOUT_MS",
     "__format": "number"
   },
   "externalClientsConfig": {
@@ -69,12 +73,8 @@
       "jobManager": {
         "url": "JOB_MANAGER_URL",
         "jobDomain": "JOB_DOMAIN",
-        "cleanupExpirationDays": {
-          "__name": "JOB_MANAGER_CLEANUP_EXPIRATION_DAYS",
-          "__format": "number"
-        },
-        "dequeueIntervalMs": {
-          "__name": "QUEUE_DEQUEUE_INTERVAL_MS",
+        "dequeueFinalizeIntervalMs": {
+          "__name": "QUEUE_DEQUEUE_FINALIZE_INTERVAL_MS",
           "__format": "number"
         }
       },
@@ -95,7 +95,6 @@
         "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
       },
       "finalize": {
-        "jobType": "QUEUE_JOB_TYPE",
         "taskType": "QUEUE_TASK_TYPE"
       }
     },

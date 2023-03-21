@@ -22,7 +22,7 @@ export class FinalizationManager {
     @inject(QueueClient) private readonly queueClient: QueueClient,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper
   ) {
-    this.expirationDays = config.get<number>('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
+    this.expirationDays = config.get<number>('cleanupExpirationDays');
     this.finalizeTaskType = config.get<string>('externalClientsConfig.workerTypes.finalize.taskType');
     this.finalizeAttempts = config.get<number>('externalClientsConfig.httpRetry.attempts');
   }
@@ -32,15 +32,15 @@ export class FinalizationManager {
 
     const getMapJobs = await this.taskManager.getJobsByTaskStatus(); // for old getmap api - will be removed
     const roiJobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
+    const expirationDateUTC = getUTCDate();
+    expirationDateUTC.setDate(expirationDateUTC.getDate() + this.expirationDays);
     this.logger.debug({ ...getMapJobs, msg: `Handling GetMap jobs` });
     if (getMapJobs.completedJobs && getMapJobs.completedJobs.length > 0) {
       existsJobs = true;
       this.logger.debug({ msg: `GETMAP Completed GetMap jobs detected, running finalize job` });
       for (const job of getMapJobs.completedJobs) {
         this.logger.info({ jobId: job.id, msg: `GETMAP Execute completed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
-        await this.taskManager.finalizeJob(job, expirationDate);
+        await this.taskManager.finalizeJob(job, expirationDateUTC);
       }
     } else if (getMapJobs.failedJobs && getMapJobs.failedJobs.length > 0) {
       existsJobs = true;
@@ -48,7 +48,7 @@ export class FinalizationManager {
       for (const job of getMapJobs.failedJobs) {
         this.logger.info({ jobId: job.id, msg: `GETMAP Execute Failed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
         const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
-        await this.taskManager.finalizeJob(job, expirationDate, false, gpkgFailedErr);
+        await this.taskManager.finalizeJob(job, expirationDateUTC, false, gpkgFailedErr);
       }
     }
 

@@ -20,7 +20,7 @@ export class QueueClient {
       this.queueConfig.jobType,
       this.queueConfig.jobManagerBaseUrl,
       this.queueConfig.heartbeatManagerBaseUrl,
-      this.queueConfig.dequeueIntervalMs,
+      this.queueConfig.dequeueFinalizeIntervalMs,
       this.queueConfig.heartbeatIntervalMs,
       config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
       undefined,

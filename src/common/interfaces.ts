@@ -290,7 +290,7 @@ export type JobFinalizeResponse = IJobResponse<IJobExportParameters, ITaskFinali
 export interface IQueueConfig {
   jobManagerBaseUrl: string;
   heartbeatManagerBaseUrl: string;
-  dequeueIntervalMs: number;
+  dequeueFinalizeIntervalMs: number;
   heartbeatIntervalMs: number;
   jobType: string;
   tilesTaskType: string;
@@ -299,10 +299,10 @@ export interface IQueueConfig {
 export interface IClientBase {
   url: string;
 }
+
 export interface IJobManager extends IClientBase {
-  jobDomain: 'string';
-  cleanupExpirationDays: number;
-  dequeueIntervalMs: number;
+  jobDomain: string;
+  dequeueFinalizeIntervalMs: number;
 }
 
 export interface IRasterCatalogManager extends IClientBase {}

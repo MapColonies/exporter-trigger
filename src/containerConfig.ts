@@ -24,9 +24,9 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
   const queueConfig: IQueueConfig = {
     jobManagerBaseUrl: externalClientsConfig.clientsUrls.jobManager.url,
     heartbeatManagerBaseUrl: externalClientsConfig.clientsUrls.heartbeatManager.url,
-    dequeueIntervalMs: externalClientsConfig.clientsUrls.jobManager.dequeueIntervalMs,
+    dequeueFinalizeIntervalMs: externalClientsConfig.clientsUrls.jobManager.dequeueFinalizeIntervalMs,
     heartbeatIntervalMs: externalClientsConfig.clientsUrls.heartbeatManager.heartbeatIntervalMs,
-    jobType: externalClientsConfig.workerTypes.finalize.jobType,
+    jobType: externalClientsConfig.workerTypes.tiles.jobType,
     tilesTaskType: externalClientsConfig.workerTypes.finalize.taskType,
   };
   // @ts-expect-error the signature is wrong

@@ -28,7 +28,7 @@ server.listen(port, () => {
   logger.info(`App started on port ${port}`);
 });
 const mainPollLoop = async (): Promise<void> => {
-  const pollingTimout = config.get<number>('pollingTimeoutMS');
+  const pollingTimout = config.get<number>('finalizePollingTimeMS');
   const isRunning = true;
   logger.info({ msg: 'Running job status poll' });
   //eslint-disable-next-line @typescript-eslint/no-unnecessary-condition

@@ -299,7 +299,7 @@ describe('CreatePackageManager', () => {
           sanitizedBbox: expectedsanitizedBbox,
           crs: userInput.crs as string,
         };
-        const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
+        const expirationDays: number = configMock.get('cleanupExpirationDays');
         const testExpirationDate = new Date();
         testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
         findLayerMock.mockResolvedValue(layerFromCatalog);
@@ -646,7 +646,7 @@ describe('CreatePackageManager', () => {
           crs: userInput.crs as string,
           roi: fc1,
         };
-        const expirationDays: number = configMock.get('externalClientsConfig.clientsUrls.jobManager.cleanupExpirationDays');
+        const expirationDays: number = configMock.get('cleanupExpirationDays');
         const testExpirationDate = new Date();
         testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
         const testPycswRecord = JSON.parse(JSON.stringify(pycswRecord));
