@@ -76,6 +76,10 @@
         "dequeueFinalizeIntervalMs": {
           "__name": "QUEUE_DEQUEUE_FINALIZE_INTERVAL_MS",
           "__format": "number"
+        },
+        "finalizeTasksAttempts": {
+          "__name": "FINALIZE_TASKS_ATTEMPTS",
+          "__format": "number"
         }
       },
       "rasterCatalogManager": {
@@ -89,14 +93,10 @@
         }
       }
     },
-    "workerTypes": {
-      "tiles": {
-        "jobType": "WORKER_TYPES_TILES_JOB_TYPE",
-        "taskType": "WORKER_TYPES_TILES_TASK_TYPE"
-      },
-      "finalize": {
-        "taskType": "QUEUE_TASK_TYPE"
-      }
+    "exportJobAndTaskTypes": {
+      "jobType": "EXPORT_JOB_TYPE",
+      "taskTilesType": "TILES_TASK_TYPE",
+      "taskFinalizeType": "FINALIZE_TASK_TYPE"
     },
     "httpRetry": {
       "attempts": {

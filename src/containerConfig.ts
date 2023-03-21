@@ -26,8 +26,8 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     heartbeatManagerBaseUrl: externalClientsConfig.clientsUrls.heartbeatManager.url,
     dequeueFinalizeIntervalMs: externalClientsConfig.clientsUrls.jobManager.dequeueFinalizeIntervalMs,
     heartbeatIntervalMs: externalClientsConfig.clientsUrls.heartbeatManager.heartbeatIntervalMs,
-    jobType: externalClientsConfig.workerTypes.tiles.jobType,
-    tilesTaskType: externalClientsConfig.workerTypes.finalize.taskType,
+    jobType: externalClientsConfig.exportJobAndTaskTypes.jobType,
+    tilesTaskType: externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType,
   };
   // @ts-expect-error the signature is wrong
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

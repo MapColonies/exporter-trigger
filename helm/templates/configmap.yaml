@@ -23,8 +23,8 @@ data:
   CLEANUP_EXPIRATION_DAYS: {{ .Values.env.cleanupExpirationDays | quote }}
   RASTER_CATALOG_MANAGER_URL: {{ .Values.rasterCommon.serviceUrls.catalogManager | quote }}
   JOB_DOMAIN: {{ .Values.rasterCommon.jobManagement.jobDomain | quote }}
-  WORKER_TYPES_TILES_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.jobType | quote }}
-  WORKER_TYPES_TILES_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.taskType | quote }}
+  EXPORT_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.jobType | quote }}
+  TILES_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.taskTilesType | quote }}
   HTTP_RETRY_ATTEMPTS: {{ .Values.env.httpRetry.attempts | quote }}
   HTTP_RETRY_DELAY: {{ .Values.env.httpRetry.delay | quote }}
   HTTP_RETRY_SHOULD_RESET_TIMEOUT: {{ .Values.env.httpRetry.shouldResetTimeout | quote }}
@@ -40,5 +40,6 @@ data:
   QUEUE_HEART_BEAT_MANAGER_BASE_URL: {{ .Values.rasterCommon.serviceUrls.heartbeatManager | quote }}
   QUEUE_DEQUEUE_FINALIZE_INTERVAL_MS: {{ .Values.env.queue.dequeueFinalizeIntervalMs | quote }}
   QUEUE_HEART_BEAT_INTERVAL_MS: {{ .Values.env.queue.heartbeatIntervalMs | quote }}
-  QUEUE_TASK_TYPE: {{ .Values.env.queue.finalizeTaskType | quote }}
+  FINALIZE_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.taskFinalizeType | quote }}
+  FINALIZE_TASKS_ATTEMPTS: {{ .Values.env.queue.finalizeTasksAttempts | quote }}
 {{- end }}

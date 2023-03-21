@@ -23,8 +23,8 @@ export class FinalizationManager {
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper
   ) {
     this.expirationDays = config.get<number>('cleanupExpirationDays');
-    this.finalizeTaskType = config.get<string>('externalClientsConfig.workerTypes.finalize.taskType');
-    this.finalizeAttempts = config.get<number>('externalClientsConfig.httpRetry.attempts');
+    this.finalizeTaskType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
+    this.finalizeAttempts = config.get<number>('externalClientsConfig.clientsUrls.jobManager.finalizeTasksAttempts');
   }
 
   public async jobStatusPoll(): Promise<boolean> {

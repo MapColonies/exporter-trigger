@@ -33,7 +33,7 @@ export class QueueClient {
       this.queueConfig.jobType,
       this.queueConfig.jobManagerBaseUrl,
       config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
-      undefined,
+      'jobManagerClient',
       config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
     );
   }

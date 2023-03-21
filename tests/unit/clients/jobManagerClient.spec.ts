@@ -208,7 +208,7 @@ describe('JobManagerClient', () => {
 
       describe('Find Job by Status', () => {
         it('should findExportCompletedJobs successfully', async () => {
-          const tilesJobType = configMock.get<string>('externalClientsConfig.workerTypes.tiles.jobType');
+          const tilesJobType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType');
           getExportJobs = jest.fn();
           const jobManager = jobManagerClient as unknown as { getExportJobs: unknown };
           jobManager.getExportJobs = getExportJobs.mockResolvedValue([completedExportJob]);
@@ -243,7 +243,7 @@ describe('JobManagerClient', () => {
         });
 
         it('should findExportInProgressJobs successfully', async () => {
-          const tilesJobType = configMock.get<string>('externalClientsConfig.workerTypes.tiles.jobType');
+          const tilesJobType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType');
           getExportJobs = jest.fn();
           const jobManager = jobManagerClient as unknown as { getExportJobs: unknown };
           jobManager.getExportJobs = getExportJobs.mockResolvedValue([inProgressExportJob]);

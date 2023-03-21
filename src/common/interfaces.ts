@@ -311,20 +311,17 @@ export interface IHeartbeatManager extends IClientBase {
   heartbeatIntervalMs: number;
 }
 
-export interface IJobTaskType {
-  jobType: string;
-  taskType: string;
-}
-
 export interface IExternalClientsConfig {
   clientsUrls: {
     jobManager: IJobManager;
     rasterCatalogManager: IRasterCatalogManager;
     heartbeatManager: IHeartbeatManager;
+    finalizeTasksAttempts: number;
   };
-  workerTypes: {
-    tiles: IJobTaskType;
-    finalize: IJobTaskType;
+  exportJobAndTaskTypes: {
+    jobType: string;
+    taskTilesType: string;
+    taskFinalizeType: string;
   };
   httpRetry: IHttpRetryConfig;
   disableHttpClientLogs: boolean;

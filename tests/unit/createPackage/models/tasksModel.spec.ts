@@ -436,7 +436,7 @@ describe('TasksManager', () => {
 
     describe('#createFinalizeTask', () => {
       it('should create new success finalize task', async () => {
-        const finalizeTaskType = configMock.get<string>('externalClientsConfig.workerTypes.finalize.taskType');
+        const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
           parameters: { exporterTaskStatus: OperationStatus.COMPLETED },
@@ -453,7 +453,7 @@ describe('TasksManager', () => {
       });
 
       it('should create new not success finalize task', async () => {
-        const finalizeTaskType = configMock.get<string>('externalClientsConfig.workerTypes.finalize.taskType');
+        const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
           parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED },

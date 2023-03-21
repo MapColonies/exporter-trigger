@@ -63,6 +63,7 @@ const registerDefaultConfig = (): void => {
           url: 'http://raster-catalog-manager',
           jobDomain: 'RASTER',
           dequeueFinalizeIntervalMs: 1000,
+          finalizeTasksAttempts: 5,
         },
         rasterCatalogManager: {
           url: 'http://job-manager-job-manager',
@@ -72,14 +73,10 @@ const registerDefaultConfig = (): void => {
           heartbeatIntervalMs: 300,
         },
       },
-      workerTypes: {
-        tiles: {
-          jobType: 'rasterTilesExporter',
-          taskType: 'rasterTilesExporter',
-        },
-        finalize: {
-          taskType: 'rasterFinalizeExporter',
-        },
+      exportJobAndTaskTypes: {
+        jobType: 'rasterTilesExporter',
+        taskTilesType: 'rasterTilesExporter',
+        taskFinalizeType: 'rasterTilesExporter',
       },
       httpRetry: {
         attempts: 5,

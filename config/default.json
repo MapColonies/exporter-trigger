@@ -38,7 +38,8 @@
         "url": "http://job-manager-job-manager",
         "jobDomain": "RASTER",
         "cleanupExpirationDays": 30,
-        "dequeueFinalizeIntervalMs": 1000
+        "dequeueFinalizeIntervalMs": 1000,
+        "finalizeTasksAttempts": 5
       },
       "rasterCatalogManager": {
         "url": "http://catalog-manager-catalog-manager"
@@ -48,14 +49,10 @@
         "heartbeatIntervalMs": 300
       }
     },
-    "workerTypes": {
-      "tiles": {
-        "jobType": "rasterTilesExporter",
-        "taskType": "rasterTilesExporter"
-      },
-      "finalize": {
-        "taskType": "rasterFinalizeExporter"
-      }
+    "exportJobAndTaskTypes": {
+      "jobType": "rasterTilesExporter",
+      "taskTilesType": "rasterTilesExporter",
+      "taskFinalizeType": "rasterFinalizeExporter"
     },
     "httpRetry": {
       "attempts": 5,

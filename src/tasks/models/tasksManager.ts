@@ -46,7 +46,7 @@ export class TasksManager {
   ) {
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
     this.downloadServerUrl = config.get<string>('downloadServerUrl');
-    this.tilesJobType = config.get<string>('externalClientsConfig.workerTypes.tiles.jobType');
+    this.tilesJobType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType');
   }
 
   /**

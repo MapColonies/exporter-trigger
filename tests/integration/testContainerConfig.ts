@@ -14,8 +14,8 @@ function getContainerConfig(): InjectionObject<unknown>[] {
     heartbeatManagerBaseUrl: externalClientsConfig.clientsUrls.heartbeatManager.url,
     dequeueFinalizeIntervalMs: externalClientsConfig.clientsUrls.jobManager.dequeueFinalizeIntervalMs,
     heartbeatIntervalMs: externalClientsConfig.clientsUrls.heartbeatManager.heartbeatIntervalMs,
-    jobType: externalClientsConfig.workerTypes.tiles.jobType,
-    tilesTaskType: externalClientsConfig.workerTypes.finalize.taskType,
+    jobType: externalClientsConfig.exportJobAndTaskTypes.jobType,
+    tilesTaskType: externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType,
   };
 
   return [
