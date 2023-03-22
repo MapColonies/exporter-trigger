@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.12.0](https://github.com/MapColonies/exporter-trigger/compare/v2.11.0...v2.12.0) (2023-03-22)
+
+
+### Features
+
+* add storage route (MAPCO-2932) ([#60](https://github.com/MapColonies/exporter-trigger/issues/60)) ([921ef84](https://github.com/MapColonies/exporter-trigger/commit/921ef84659f50158dc11e378efae67a9ffe240fb))
+* Finalize-tasks-polling (MAPCO-2888) ([#59](https://github.com/MapColonies/exporter-trigger/issues/59)) ([6e2a861](https://github.com/MapColonies/exporter-trigger/commit/6e2a861200121be6fb23a3ae31047ef6c43cf822))
+
 ## [2.11.0](https://github.com/MapColonies/exporter-trigger/compare/v2.10.0...v2.11.0) (2023-03-12)
 
 
