@@ -40,6 +40,6 @@ data:
   QUEUE_HEART_BEAT_MANAGER_BASE_URL: {{ .Values.rasterCommon.serviceUrls.heartbeatManager | quote }}
   QUEUE_DEQUEUE_FINALIZE_INTERVAL_MS: {{ .Values.env.queue.dequeueFinalizeIntervalMs | quote }}
   QUEUE_HEART_BEAT_INTERVAL_MS: {{ .Values.env.queue.heartbeatIntervalMs | quote }}
-  FINALIZE_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.taskFinalizeType | quote }}
+  FINALIZE_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.taskFinalizeType | quote }}
   FINALIZE_TASKS_ATTEMPTS: {{ .Values.env.queue.finalizeTasksAttempts | quote }}
 {{- end }}
