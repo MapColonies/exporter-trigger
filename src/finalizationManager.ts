@@ -27,61 +27,17 @@ export class FinalizationManager {
     this.finalizeAttempts = config.get<number>('externalClientsConfig.clientsUrls.jobManager.finalizeTasksAttempts');
   }
 
-  public async jobStatusPoll(): Promise<boolean> {
-    let existsJobs = false;
-
-    const getMapJobs = await this.taskManager.getJobsByTaskStatus(); // for old getmap api - will be removed
-    const roiJobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
-    const expirationDateUTC = getUTCDate();
-    expirationDateUTC.setDate(expirationDateUTC.getDate() + this.expirationDays);
-    this.logger.debug({ ...getMapJobs, msg: `Handling GetMap jobs` });
-    if (getMapJobs.completedJobs && getMapJobs.completedJobs.length > 0) {
-      existsJobs = true;
-      this.logger.debug({ msg: `GETMAP Completed GetMap jobs detected, running finalize job` });
-      for (const job of getMapJobs.completedJobs) {
-        this.logger.info({ jobId: job.id, msg: `GETMAP Execute completed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
-        await this.taskManager.finalizeJob(job, expirationDateUTC);
-      }
-    } else if (getMapJobs.failedJobs && getMapJobs.failedJobs.length > 0) {
-      existsJobs = true;
-      this.logger.debug({ msg: `GETMAP Failed jobs detected, running finalize job` });
-      for (const job of getMapJobs.failedJobs) {
-        this.logger.info({ jobId: job.id, msg: `GETMAP Execute Failed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
-        const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
-        await this.taskManager.finalizeJob(job, expirationDateUTC, false, gpkgFailedErr);
-      }
-    }
-
-    this.logger.debug({ ...roiJobs, msg: `Handling ROI jobs` });
-    if (roiJobs.completedJobs && roiJobs.completedJobs.length > 0) {
-      existsJobs = true;
-      this.logger.debug({ msg: `ROI Completed jobs detected, running finalize job` });
-      for (const job of roiJobs.completedJobs) {
-        await this.taskManager.createFinalizeTask(job, this.finalizeTaskType);
-      }
-    } else if (roiJobs.failedJobs && roiJobs.failedJobs.length > 0) {
-      existsJobs = true;
-      this.logger.debug({ msg: `ROI Failed jobs detected, running finalize job` });
-      for (const job of roiJobs.failedJobs) {
-        const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
-        await this.taskManager.createFinalizeTask(job, this.finalizeTaskType, false, gpkgFailedErr);
-      }
-    }
-
-    return existsJobs;
-  }
-
   public async jobFinalizePoll(): Promise<boolean> {
     const finalizeTask = await this.queueClient.queueHandlerForFinalizeTasks.dequeue<ITaskFinalizeParameters>(this.finalizeTaskType);
     if (!finalizeTask) {
       return false;
     }
-    const attempts = finalizeTask.attempts;
-    const jobId = finalizeTask.jobId;
-    const taskId = finalizeTask.id;
     try {
-      this.logger.info({ jobId: finalizeTask.jobId, taskId: finalizeTask.id, msg: `Found new finalize task` });
-      const job = (await this.taskManager.getFinalizeJobById(finalizeTask.jobId)) as JobFinalizeResponse;
+      const attempts = finalizeTask.attempts;
+      const jobId = finalizeTask.jobId;
+      const taskId = finalizeTask.id;
+      this.logger.info({ jobId, taskId, msg: `Found new finalize task` });
+      const job = (await this.taskManager.getFinalizeJobById(jobId)) as JobFinalizeResponse;
       if (attempts <= this.finalizeAttempts) {
         const expirationDateUtc = getUTCDate();
         expirationDateUtc.setDate(expirationDateUtc.getDate() + this.expirationDays);
@@ -109,7 +65,7 @@ export class FinalizationManager {
             await this.queueClient.queueHandlerForFinalizeTasks.reject(jobId, taskId, true);
           }
         } else {
-          this.logger.warn({ jobId, taskId, exportingErr: errReason, msg: `Failure exporting finalization, will execute finalize task deletion` });
+          this.logger.info({ jobId, taskId, exportingErr: errReason, msg: `Failure exporting finalization, will execute finalize task deletion` });
           errReason = errReason ?? 'Failed on GPKG creation';
           const updateJobResults = await this.taskManager.finalizeGPKGFailure(job, expirationDateUtc, errReason);
           await this.queueClient.queueHandlerForFinalizeTasks.ack(jobId, taskId);
@@ -122,7 +78,6 @@ export class FinalizationManager {
             msg: `failure finalization. close task as completed, job closed as ${updateJobResults.status as OperationStatus}`,
           });
         }
-
         // finalizing only task - reached to max attempts
       } else {
         this.logger.warn({ jobId, taskId, msg: `Failed finalizing job, reached to max attempts of ${attempts}\\${this.finalizeAttempts}` });
@@ -131,9 +86,66 @@ export class FinalizationManager {
       }
     } catch (error) {
       // close the task if exception accrued
-      this.logger.error({ jobId, taskId, err: error, msg: `Failed finalizing job - [${(error as Error).message}]` });
-      await this.queueClient.queueHandlerForFinalizeTasks.reject(jobId, taskId, true);
+      this.logger.error({
+        jobId: finalizeTask.jobId,
+        taskId: finalizeTask.id,
+        err: error,
+        msg: `Failed finalizing job - [${(error as Error).message}]`,
+      });
+      await this.queueClient.queueHandlerForFinalizeTasks.reject(finalizeTask.jobId, finalizeTask.id, true);
     }
     return true;
+  }
+
+  public async jobStatusPoll(): Promise<boolean> {
+    const getMapExistsJobs = await this.handleGetMapJobs();
+    const roiExistsJobs = await this.handleROIJobs();
+    return getMapExistsJobs || roiExistsJobs;
+  }
+
+  private async handleGetMapJobs(): Promise<boolean> {
+    let existsJobs = false;
+    const getMapJobs = await this.taskManager.getJobsByTaskStatus(); // for old getmap api - will be removed
+    const expirationDateUTC = getUTCDate();
+    expirationDateUTC.setDate(expirationDateUTC.getDate() + this.expirationDays);
+    this.logger.debug({ ...getMapJobs, msg: `Handling GetMap jobs` });
+    if (getMapJobs.completedJobs && getMapJobs.completedJobs.length > 0) {
+      existsJobs = true;
+      this.logger.info({ msg: `GETMAP Completed GetMap jobs detected, running finalize job` });
+      for (const job of getMapJobs.completedJobs) {
+        this.logger.info({ jobId: job.id, msg: `GETMAP Execute completed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
+        await this.taskManager.finalizeJob(job, expirationDateUTC);
+      }
+    } else if (getMapJobs.failedJobs && getMapJobs.failedJobs.length > 0) {
+      existsJobs = true;
+      this.logger.info({ msg: `GETMAP Failed jobs detected, running finalize job` });
+      for (const job of getMapJobs.failedJobs) {
+        this.logger.info({ jobId: job.id, msg: `GETMAP Execute Failed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
+        const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
+        await this.taskManager.finalizeJob(job, expirationDateUTC, false, gpkgFailedErr);
+      }
+    }
+    return existsJobs;
+  }
+
+  private async handleROIJobs(): Promise<boolean> {
+    let existsJobs = false;
+    const roiJobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
+    this.logger.debug({ ...roiJobs, msg: `Handling ROI jobs` });
+    if (roiJobs.completedJobs && roiJobs.completedJobs.length > 0) {
+      existsJobs = true;
+      this.logger.info({ msg: `ROI Completed jobs detected, running finalize job` });
+      for (const job of roiJobs.completedJobs) {
+        await this.taskManager.createFinalizeTask(job, this.finalizeTaskType);
+      }
+    } else if (roiJobs.failedJobs && roiJobs.failedJobs.length > 0) {
+      existsJobs = true;
+      this.logger.info({ msg: `ROI Failed jobs detected, running finalize job` });
+      for (const job of roiJobs.failedJobs) {
+        const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
+        await this.taskManager.createFinalizeTask(job, this.finalizeTaskType, false, gpkgFailedErr);
+      }
+    }
+    return existsJobs;
   }
 }

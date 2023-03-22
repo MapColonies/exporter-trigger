@@ -185,7 +185,7 @@ export class TasksManager {
     const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDate);
 
     try {
-      this.logger.info({ jobId: job.id, msg: `Finalize Job` });
+      this.logger.info({ jobId: job.id, msg: `GetMap Finalize Job` });
       const packageName = job.parameters.fileName;
       if (isSuccess) {
         const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
@@ -194,14 +194,14 @@ export class TasksManager {
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
       updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams, cleanupData } };
 
-      this.logger.info({ jobId: job.id, status: isSuccess, msg: `Update Job status` });
+      this.logger.info({ jobId: job.id, status: isSuccess, msg: `GetMap Update Job status` });
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     } catch (error) {
       this.logger.error({
         jobId: job.id,
         err: error,
         errorReason: (error as Error).message,
-        msg: `Could not finalize job, will updating to status failed`,
+        msg: `GetMap Could not finalize job, will updating to status failed`,
       });
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
       updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams, cleanupData } };
@@ -277,11 +277,11 @@ export class TasksManager {
 
   public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
     const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
+    this.logger.info({ jobId: job.id, operationStatus, msg: `create finalize task` });
     const taskParameters: ITaskFinalizeParameters = {
       reason,
       exporterTaskStatus: operationStatus,
     };
-    this.logger.info({ jobId: job.id, operationStatus, msg: `Execute finalized job` });
 
     const createTaskRequest: CreateFinalizeTaskBody = {
       type: taskType,
@@ -293,7 +293,7 @@ export class TasksManager {
     try {
       await this.jobManagerClient.enqueueTask(job.id, createTaskRequest);
     } catch (error) {
-      this.logger.warn({ jobId: job.id, err: error, msg: `failed on enqueue new finalize task` });
+      this.logger.warn({ jobId: job.id, err: error, msg: `failed to create new finalize task` });
     }
   }
 
@@ -329,7 +329,7 @@ export class TasksManager {
           jobId: job.id,
           err: error,
           reason: `${(error as Error).message}`,
-          msg: `failed getting gpkg file size to ${packageFullPath}`,
+          msg: `failed to get gpkg file size from: ${packageFullPath}`,
         });
       }
     }
