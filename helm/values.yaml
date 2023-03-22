@@ -97,14 +97,14 @@ env:
     delay: exponential
     shouldResetTimeout: true
   estimatedStorageCalculation:
-    jpegTileEstimatedSizeInBytes: 12500
-    pngTileEstimatedSizeInBytes: 12500
+    jpegTileEstimatedSizeInBytes: 27000
+    pngTileEstimatedSizeInBytes: 263000
     storageFactorBuffer: 1.25
     validateStorageSize: true
   queue:
-    dequeueFinalizeIntervalMs: 1000
+    dequeueFinalizeIntervalMs: 2000
     heartbeatIntervalMs: 300
-    finalizeTasksAttempts: 5
+    finalizeTasksAttempts: 3
 
 resources:
   enabled: true
