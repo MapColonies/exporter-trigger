@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { ExportVersion, JobExportResponse, JobResponse } from '../../../src/common/interfaces';
+import { ExportVersion, JobFinalizeResponse, JobResponse } from '../../../src/common/interfaces';
 import { fc1 } from '../data';
 
 /**
@@ -55,7 +55,7 @@ export const mockJob: JobResponse = {
   updated: '2022-08-29T07:13:05.206Z',
 };
 
-export const mockCompletedJob: JobExportResponse = {
+export const mockCompletedJob: JobFinalizeResponse = {
   id: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
   resourceId: 'testCompleted',
   domain: 'testDomain',

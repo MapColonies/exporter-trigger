@@ -5,7 +5,6 @@ import { FeatureCollection } from '@turf/helpers';
 import {
   ExportVersion,
   ICreatePackage,
-  IGeometryRecord,
   IJobExportParameters,
   IJobParameters,
   ITaskParameters,

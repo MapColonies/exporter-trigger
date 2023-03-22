@@ -25,34 +25,44 @@
       }
     }
   },
-  "httpRetry": {
-    "attempts": 5,
-    "delay": "exponential",
-    "shouldResetTimeout": true
-  },
-  "jobManager": {
-    "url": "http://job-manager-job-manager",
-    "jobDomain": "RASTER",
-    "expirationDays": 30
-  },
-  "rasterCatalogManager": {
-    "url": "http://raster-catalog-manager"
-  },
-  "workerTypes": {
-    "tiles": {
-      "jobType": "rasterTilesExporter",
-      "taskType": "rasterTilesExporter"
-    }
-  },
   "storageEstimation": {
     "jpegTileEstimatedSizeInBytes": 12500,
     "pngTileEstimatedSizeInBytes": 12500,
     "storageFactorBuffer": 1.25,
     "validateStorageSize": true
   },
-  "disableHttpClientLogs": false,
+  "cleanupExpirationDays": 30,
+  "externalClientsConfig": {
+    "clientsUrls": {
+      "jobManager": {
+        "url": "http://job-manager-job-manager",
+        "jobDomain": "RASTER",
+        "cleanupExpirationDays": 30,
+        "dequeueFinalizeIntervalMs": 1000,
+        "finalizeTasksAttempts": 5
+      },
+      "rasterCatalogManager": {
+        "url": "http://catalog-manager-catalog-manager"
+      },
+      "heartbeatManager": {
+        "url": "http://heartbeat-manage-heartbeat-manager",
+        "heartbeatIntervalMs": 300
+      }
+    },
+    "exportJobAndTaskTypes": {
+      "jobType": "rasterTilesExporter",
+      "taskTilesType": "rasterTilesExporter",
+      "taskFinalizeType": "rasterFinalizeExporter"
+    },
+    "httpRetry": {
+      "attempts": 5,
+      "delay": "exponential",
+      "shouldResetTimeout": true
+    },
+    "disableHttpClientLogs": false
+  },
   "tilesProvider": "S3",
   "gpkgsLocation": "/app/tiles_outputs/gpkgs",
   "downloadServerUrl": "http://download-service",
-  "pollingTimeoutMS": 2000
+  "finalizePollingTimeMS": 2000
 }

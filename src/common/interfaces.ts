@@ -1,6 +1,6 @@
 import { MultiPolygon, Polygon, BBox, FeatureCollection, Geometry } from '@turf/turf';
-import { ICreateJobBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { ITileRange } from '@map-colonies/mc-utils';
+import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IHttpRetryConfig, ITileRange } from '@map-colonies/mc-utils';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -194,6 +194,11 @@ export interface IJobExportParameters {
   cleanupData?: ICleanupData;
 }
 
+export interface ITaskFinalizeParameters {
+  reason?: string;
+  exporterTaskStatus: OperationStatus;
+}
+
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
 
 export interface IMapSource {
@@ -279,3 +284,45 @@ export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;
 // new API based on multi resolution
 export type JobExportResponse = IJobResponse<IJobExportParameters, ITaskParameters>;
 export type CreateExportJobBody = ICreateJobBody<IJobExportParameters, ITaskParameters>;
+export type CreateFinalizeTaskBody = ICreateTaskBody<ITaskFinalizeParameters>;
+export type JobFinalizeResponse = IJobResponse<IJobExportParameters, ITaskFinalizeParameters>;
+
+export interface IQueueConfig {
+  jobManagerBaseUrl: string;
+  heartbeatManagerBaseUrl: string;
+  dequeueFinalizeIntervalMs: number;
+  heartbeatIntervalMs: number;
+  jobType: string;
+  tilesTaskType: string;
+}
+
+export interface IClientBase {
+  url: string;
+}
+
+export interface IJobManager extends IClientBase {
+  jobDomain: string;
+  dequeueFinalizeIntervalMs: number;
+}
+
+export interface IRasterCatalogManager extends IClientBase {}
+
+export interface IHeartbeatManager extends IClientBase {
+  heartbeatIntervalMs: number;
+}
+
+export interface IExternalClientsConfig {
+  clientsUrls: {
+    jobManager: IJobManager;
+    rasterCatalogManager: IRasterCatalogManager;
+    heartbeatManager: IHeartbeatManager;
+    finalizeTasksAttempts: number;
+  };
+  exportJobAndTaskTypes: {
+    jobType: string;
+    taskTilesType: string;
+    taskFinalizeType: string;
+  };
+  httpRetry: IHttpRetryConfig;
+  disableHttpClientLogs: boolean;
+}

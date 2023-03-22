@@ -33,16 +33,16 @@ export class JobManagerWrapper extends JobManagerClient {
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
     super(
       logger,
-      config.get<string>('workerTypes.tiles.jobType'),
-      config.get<string>('jobManager.url'),
-      config.get<IHttpRetryConfig>('httpRetry'),
+      config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType'),
+      config.get<string>('externalClientsConfig.clientsUrls.jobManager.url'),
+      config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
       'jobManagerClient',
-      config.get<boolean>('disableHttpClientLogs')
+      config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
     );
-    this.expirationDays = config.get<number>('jobManager.expirationDays');
-    this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
-    this.tilesTaskType = config.get<string>('workerTypes.tiles.taskType');
-    this.jobDomain = config.get<string>('jobManager.jobDomain');
+    this.expirationDays = config.get<number>('cleanupExpirationDays');
+    this.tilesJobType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType');
+    this.tilesTaskType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskTilesType');
+    this.jobDomain = config.get<string>('externalClientsConfig.clientsUrls.jobManager.jobDomain');
   }
 
   /**
@@ -253,11 +253,15 @@ export class JobManagerWrapper extends JobManagerClient {
     });
   }
 
+  public async deleteTaskById(jobId: string, taskId: string): Promise<void> {
+    const deleteTaskUrl = `/jobs/${jobId}/tasks/${taskId}`;
+    await this.delete(deleteTaskUrl);
+  }
+
   public async validateAndUpdateExpiration(jobId: string): Promise<void> {
     const getOrUpdateURL = `/jobs/${jobId}`;
     const newExpirationDate = getUTCDate();
     newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
-
     const job = await this.get<JobResponse | JobExportResponse | undefined>(getOrUpdateURL);
     if (job) {
       const oldExpirationDate = new Date(job.parameters.cleanupData?.cleanupExpirationTimeUTC as Date);

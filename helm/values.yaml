@@ -9,13 +9,15 @@ global:
 rasterCommon:
   serviceUrls:
     catalogManager: "http://catalog-raster-dev-raster-catalog-manager"
+    heartbeatManager: "http://heartbeat-raster-dev-raster-heartbeat-manager"
     jobManager: "http://job-manager-raster-dev-discrete-ingestion-db"
     downloadServer: "http://files-server-raster-dev-files-server"
   jobManagement:
     jobDomain: RASTER
     exporter:
       jobType: tilesExport
-      taskType: tilesExport
+      taskTilesType: tilesExport
+      taskFinalizeType: tilesFinalize
   authentication:
     opa:
       enabled: false
@@ -81,25 +83,28 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  pollingTimeoutMS: 2000
+  finalizePollingTimeMS: 2000
   disableHttpClientLogs: false
+  cleanupExpirationDays: 30
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
-  jobManager:
-    expirationDays: 30
   httpRetry:
     attempts: 5
     delay: exponential
     shouldResetTimeout: true
   estimatedStorageCalculation:
-    jpegTileEstimatedSizeInBytes: 12500
-    pngTileEstimatedSizeInBytes: 12500
+    jpegTileEstimatedSizeInBytes: 27000
+    pngTileEstimatedSizeInBytes: 263000
     storageFactorBuffer: 1.25
     validateStorageSize: true
+  queue:
+    dequeueFinalizeIntervalMs: 2000
+    heartbeatIntervalMs: 300
+    finalizeTasksAttempts: 3
 
 resources:
   enabled: true

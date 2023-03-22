@@ -7,6 +7,7 @@ import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../commo
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
+  CreateFinalizeTaskBody,
   ICallbackData,
   ICallbackDataBase,
   ICallbackDataExportBase,
@@ -18,7 +19,9 @@ import {
   IJobParameters,
   IJobStatusResponse,
   ILinkDefinition,
+  ITaskFinalizeParameters,
   JobExportResponse,
+  JobFinalizeResponse,
   JobResponse,
 } from '../../common/interfaces';
 import { CallbackClient } from '../../clients/callbackClient';
@@ -43,7 +46,7 @@ export class TasksManager {
   ) {
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
     this.downloadServerUrl = config.get<string>('downloadServerUrl');
-    this.tilesJobType = config.get<string>('workerTypes.tiles.jobType');
+    this.tilesJobType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType');
   }
 
   /**
@@ -58,6 +61,11 @@ export class TasksManager {
       failedJobs: failedJobs,
     };
     return jobsStatus;
+  }
+
+  public async getFinalizeJobById(jobId: string): Promise<JobFinalizeResponse | undefined> {
+    const job = await this.jobManagerClient.getJob<IJobExportParameters, ITaskFinalizeParameters>(jobId);
+    return job;
   }
 
   public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
@@ -141,7 +149,7 @@ export class TasksManager {
     }
   }
 
-  public async sendExportCallbacks(job: JobExportResponse, callbackParams: ICallbackDataExportBase): Promise<void> {
+  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackDataExportBase): Promise<void> {
     try {
       this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
@@ -177,7 +185,7 @@ export class TasksManager {
     const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDate);
 
     try {
-      this.logger.info({ jobId: job.id, msg: `Finalize Job` });
+      this.logger.info({ jobId: job.id, msg: `GetMap Finalize Job` });
       const packageName = job.parameters.fileName;
       if (isSuccess) {
         const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
@@ -186,14 +194,14 @@ export class TasksManager {
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
       updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams, cleanupData } };
 
-      this.logger.info({ jobId: job.id, status: isSuccess, msg: `Update Job status` });
+      this.logger.info({ jobId: job.id, status: isSuccess, msg: `GetMap Update Job status` });
       await this.jobManagerClient.updateJob(job.id, updateJobParams);
     } catch (error) {
       this.logger.error({
         jobId: job.id,
         err: error,
         errorReason: (error as Error).message,
-        msg: `Could not finalize job, will updating to status failed`,
+        msg: `GetMap Could not finalize job, will updating to status failed`,
       });
       const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
       updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams, cleanupData } };
@@ -201,62 +209,105 @@ export class TasksManager {
     }
   }
 
-  public async finalizeExportJob(job: JobExportResponse, expirationDate: Date, isSuccess = true, reason?: string): Promise<void> {
-    let updateJobParams: IUpdateJobBody<IJobExportParameters> = {
-      reason,
-      /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
-      percentage: isSuccess ? 100 : undefined,
-      status: isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED,
+  public async finalizeGPKGSuccess(job: JobFinalizeResponse, expirationDateUTC: Date): Promise<IUpdateJobBody<IJobExportParameters>> {
+    // initialization to mutual finalized params
+    const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDateUTC);
+    let reason = undefined;
+    let finalizeStatus = OperationStatus.COMPLETED;
+
+    this.logger.info({ jobId: job.id, msg: `Finalizing successful GPKG creation task` });
+    const successMetadataCreation = await this.packageManager.createExportJsonMetadata(job);
+    if (!successMetadataCreation) {
+      reason = 'Failed on metadata.json creation';
+      finalizeStatus = OperationStatus.FAILED;
+      this.logger.error({ jobId: job.id, err: reason, finalizeStatus, msg: `Failed on metadata.json creation, Could not finalize success job` });
+    }
+
+    // create and sending response to callbacks
+    const callbackSendParams = await this.generateCallbackParam(job, expirationDateUTC, reason);
+
+    await this.sendExportCallbacks(job, callbackSendParams);
+
+    const callbackParams: ICallbackExportResponse = {
+      ...callbackSendParams,
+      roi: job.parameters.roi,
+      status: finalizeStatus,
+      errorReason: reason,
     };
 
-    const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDate);
+    this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
+    const updateJobParams = {
+      reason: reason ?? undefined,
+      status: finalizeStatus,
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      percentage: finalizeStatus === OperationStatus.COMPLETED ? 100 : 0,
+      parameters: { ...job.parameters, callbackParams, cleanupData },
+    };
 
+    return updateJobParams;
+  }
+
+  public async finalizeGPKGFailure(job: JobFinalizeResponse, expirationDateUTC: Date, reason: string): Promise<IUpdateJobBody<IJobExportParameters>> {
+    const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDateUTC);
+
+    // generate job finally completion with webhook (callback param) data
+    this.logger.info({ jobId: job.id, msg: `Finalizing failure GPKG creation task` });
+    // create and sending response to callbacks
+    const callbackSendParams = await this.generateCallbackParam(job, expirationDateUTC, reason);
+
+    await this.sendExportCallbacks(job, callbackSendParams);
+
+    const callbackParams: ICallbackExportResponse = {
+      ...callbackSendParams,
+      roi: job.parameters.roi,
+      status: OperationStatus.FAILED,
+      errorReason: reason,
+    };
+
+    this.logger.info({ reason, jobId: job.id, msg: `Updating job finalizing status for failure job` });
+    const updateJobParams: IUpdateJobBody<IJobExportParameters> = {
+      reason: reason,
+      status: OperationStatus.FAILED,
+      percentage: 0,
+      parameters: { ...job.parameters, callbackParams, cleanupData },
+    };
+
+    return updateJobParams;
+  }
+
+  public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
+    const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
+    this.logger.info({ jobId: job.id, operationStatus, msg: `create finalize task` });
+    const taskParameters: ITaskFinalizeParameters = {
+      reason,
+      exporterTaskStatus: operationStatus,
+    };
+
+    const createTaskRequest: CreateFinalizeTaskBody = {
+      type: taskType,
+      parameters: taskParameters,
+      status: OperationStatus.PENDING,
+      blockDuplication: true,
+    };
+    //to protect race condition of multi-triggers, protection on crash while enqueue same task
     try {
-      this.logger.info({ jobId: job.id, isSuccess, msg: `Finalize Job` });
-      if (isSuccess) {
-        await this.packageManager.createExportJsonMetadata(job);
-      }
-
-      // create and sending response to callbacks
-      const callbackSendParams = await this.generateCallbackParam(job, expirationDate, reason);
-      await this.sendExportCallbacks(job, callbackSendParams);
-
-      // generate job finally completion with webhook (callback param) data
-      let finalizeStatus = OperationStatus.COMPLETED;
-
-      if (reason !== undefined) {
-        finalizeStatus = OperationStatus.FAILED;
-      }
-
-      const callbackParams: ICallbackExportResponse = {
-        ...callbackSendParams,
-        roi: job.parameters.roi,
-        status: finalizeStatus,
-        errorReason: reason,
-      };
-
-      updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams, cleanupData } };
-      this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
+      await this.jobManagerClient.enqueueTask(job.id, createTaskRequest);
     } catch (error) {
-      this.logger.error({ jobId: job.id, err: error, reason: `${(error as Error).message}`, msg: `Could not finalize job` });
-      updateJobParams = {
-        ...updateJobParams,
-        reason: JSON.stringify(error as Error),
-        status: OperationStatus.FAILED,
-        parameters: { ...job.parameters, cleanupData },
-      };
-    } finally {
-      await this.jobManagerClient.updateJob(job.id, updateJobParams);
+      this.logger.warn({ jobId: job.id, err: error, msg: `failed to create new finalize task` });
     }
   }
 
-  private generateCleanupEntity(job: JobResponse | JobExportResponse, expirationDate: Date): ICleanupData {
+  private generateCleanupEntity(job: JobResponse | JobExportResponse | JobFinalizeResponse, expirationDate: Date): ICleanupData {
     const cleanupData = { directoryPath: job.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationDate };
     this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
     return cleanupData;
   }
 
-  private async generateCallbackParam(job: JobExportResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataExportBase> {
+  private async generateCallbackParam(
+    job: JobExportResponse | JobFinalizeResponse,
+    expirationDate: Date,
+    errorReason?: string
+  ): Promise<ICallbackDataExportBase> {
     let links: ILinkDefinition = { ...job.parameters.fileNamesTemplates }; // default file names in case of failure
     this.logger.info({ jobId: job.id, msg: `generate callback body for job: ${job.id}` });
 
@@ -278,7 +329,7 @@ export class TasksManager {
           jobId: job.id,
           err: error,
           reason: `${(error as Error).message}`,
-          msg: `failed getting gpkg file size to ${packageFullPath}`,
+          msg: `failed to get gpkg file size from: ${packageFullPath}`,
         });
       }
     }
