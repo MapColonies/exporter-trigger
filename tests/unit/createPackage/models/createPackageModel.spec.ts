@@ -21,6 +21,7 @@ import {
 import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalogManagerClient';
 import {
   ExportVersion,
+  ICreateExportJobResponse,
   ICreateJobResponse,
   ICreatePackage,
   ICreatePackageRoi,
@@ -586,7 +587,7 @@ describe('CreatePackageManager', () => {
         expect(findExportJobMock.mock.calls[3]).toEqual([OperationStatus.COMPLETED, jobDupParams]);
         expect(createExportMock).toHaveBeenCalledTimes(0);
         expect(res).toStrictEqual({
-          id: inProgressExportJob.id,
+          jobId: inProgressExportJob.id,
           taskIds: ['1f765695-338b-4752-b182-a8cbae3c610e'],
           status: OperationStatus.IN_PROGRESS,
         });
@@ -625,7 +626,7 @@ describe('CreatePackageManager', () => {
         expect(findExportJobMock.mock.calls[2]).toEqual([OperationStatus.COMPLETED, jobDupParams]);
         expect(createExportMock).toHaveBeenCalledTimes(0);
         expect(res).toStrictEqual({
-          id: inProgressExportJob.id,
+          jobId: inProgressExportJob.id,
           taskIds: ['1f765695-338b-4752-b182-a8cbae3c610e'],
           status: OperationStatus.IN_PROGRESS,
         });
@@ -672,8 +673,8 @@ describe('CreatePackageManager', () => {
           },
         };
         const res = await createPackageManager.createPackageRoi({ ...req, callbackURLs: ['http://new-added-callback-url.com'] });
-        const expectedReturn: ICreateJobResponse = {
-          id: inProgressExportJob.id,
+        const expectedReturn: ICreateExportJobResponse = {
+          jobId: inProgressExportJob.id,
           taskIds: ['1f765695-338b-4752-b182-a8cbae3c610e'],
           status: OperationStatus.IN_PROGRESS,
         };

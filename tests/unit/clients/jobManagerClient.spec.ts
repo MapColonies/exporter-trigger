@@ -2,7 +2,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
-import { JobResponse, ICreateJobResponse as JobInProgressResponse, JobExportDuplicationParams } from '../../../src/common/interfaces';
+import { JobResponse, JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import {
   completedExportJob,
@@ -176,8 +176,8 @@ describe('JobManagerClient', () => {
     describe('RoiExport', () => {
       describe('Export Job Creation', () => {
         it('should create Export job successfully', async () => {
-          const inProgressJobIds = { id: '123', taskIds: ['123'] };
-          const expectedResponse: JobInProgressResponse = {
+          const inProgressJobIds = { jobId: '123', taskIds: ['123'] };
+          const expectedResponse: ICreateExportJobResponse = {
             ...inProgressJobIds,
             status: OperationStatus.IN_PROGRESS,
           };

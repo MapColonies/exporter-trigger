@@ -87,7 +87,7 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/createGpkgJobResponse'
+                  - $ref: '#/components/schemas/createRoiGpkgJobResponse'
                   - $ref: '#/components/schemas/exportNaiveCacheJobResponse'
                 discriminator:
                   propertyName: response
@@ -258,9 +258,11 @@ components:
           description: The priority of the record. Maximum priority = most urgent.
           minimum: 0
           maximum: 999999999
+        description:
+          type: string
+          description: free test to describe the requested export
       required:
         - dbId
-        - callbackURLs
       example:
         dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
         roi:
@@ -287,6 +289,7 @@ components:
           - http://example.getmap.com/callback2
         crs: EPSG:4326
         priority: 0
+        description: This is roi exporting example
     createGpkgJobResponse:
       allOf:
         - $ref: '#/components/schemas/CommonResponse'
@@ -302,6 +305,22 @@ components:
             format: uuid
       required:
         - id
+        - taskIds
+    createRoiGpkgJobResponse:
+      allOf:
+        - $ref: '#/components/schemas/CommonResponse'
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        taskIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+        - jobId
         - taskIds
     naiveCacheJobResponse:
       allOf:
@@ -361,9 +380,11 @@ components:
         recordCatalogId:
           type: string
           format: uuid
+        description:
+          type: string
         roi:
           $ref: '#/components/schemas/FeatureCollection'
-        requestJobId:
+        jobId:
           type: string
           format: uuid
       required:
@@ -372,7 +393,7 @@ components:
         - fileSize
         - recordCatalogId
         - roi
-        - requestJobId
+        - jobId
         - status
     error:
       type: object

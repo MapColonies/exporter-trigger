@@ -11,6 +11,7 @@ import {
   CreateJobBody,
   ExportVersion,
   ICreateJobResponse,
+  ICreateExportJobResponse,
   IJobExportParameters,
   IJobParameters,
   ITaskParameters,
@@ -93,7 +94,7 @@ export class JobManagerWrapper extends JobManagerClient {
     };
   }
 
-  public async createExport(data: IWorkerExportInput): Promise<ICreateJobResponse> {
+  public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
 
@@ -117,6 +118,7 @@ export class JobManagerWrapper extends JobManagerClient {
       productType: data.productType,
       productName: data.cswProductId,
       priority: data.priority,
+      description: data.description,
       status: OperationStatus.IN_PROGRESS,
       additionalIdentifiers: data.relativeDirectoryPath,
       tasks: [
@@ -130,8 +132,8 @@ export class JobManagerWrapper extends JobManagerClient {
       ],
     };
     const res = await this.createJob<IJobExportParameters, ITaskParameters>(createJobRequest);
-    const createJobResponse: ICreateJobResponse = {
-      id: res.id,
+    const createJobResponse: ICreateExportJobResponse = {
+      jobId: res.id,
       taskIds: res.taskIds,
       status: OperationStatus.IN_PROGRESS,
     };

@@ -61,7 +61,7 @@ export const mockCompletedJob: JobFinalizeResponse = {
   domain: 'testDomain',
   version: '1.0',
   type: 'rasterTilesExporter',
-  description: '',
+  description: 'test job',
   parameters: {
     crs: 'EPSG:4326',
     roi: fc1,

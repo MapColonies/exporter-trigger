@@ -694,7 +694,7 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
       },
       status: OperationStatus.COMPLETED,
       fileSize: 1773568,
-      requestJobId: 'afbdd5e6-25db-4567-a81f-71e0e7d30761',
+      jobId: 'afbdd5e6-25db-4567-a81f-71e0e7d30761',
       expirationTime: new Date(),
       recordCatalogId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
     },

@@ -117,7 +117,7 @@ describe('FinalizationManager', () => {
             expirationTime: expirationDate,
             recordCatalogId: completedExportJob.internalId as string,
             fileSize: 1000,
-            requestJobId: completedExportJob.id,
+            jobId: completedExportJob.id,
           },
         },
       };
@@ -168,7 +168,7 @@ describe('FinalizationManager', () => {
             recordCatalogId: completedExportJob.internalId as string,
             fileSize: 0,
             errorReason: 'Failed on GPKG creation',
-            requestJobId: completedExportJob.id,
+            jobId: completedExportJob.id,
           },
         },
       };
@@ -277,7 +277,7 @@ describe('FinalizationManager', () => {
             expirationTime: expirationDate,
             recordCatalogId: completedExportJob.internalId as string,
             fileSize: 1000,
-            requestJobId: completedExportJob.id,
+            jobId: completedExportJob.id,
           },
         },
       };

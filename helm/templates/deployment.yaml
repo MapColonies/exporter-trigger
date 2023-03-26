@@ -60,6 +60,7 @@ spec:
             - name: http
               containerPort: {{ .Values.env.targetPort }}
               protocol: TCP
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
           livenessProbe:
             initialDelaySeconds: {{ .Values.initialDelaySeconds }}
             httpGet:
