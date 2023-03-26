@@ -380,6 +380,8 @@ components:
         recordCatalogId:
           type: string
           format: uuid
+        description:
+          type: string
         roi:
           $ref: '#/components/schemas/FeatureCollection'
         jobId:
