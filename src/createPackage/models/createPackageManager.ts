@@ -612,7 +612,7 @@ export class CreatePackageManager {
 
   private async checkForExportDuplicate(
     dupParams: JobExportDuplicationParams,
-    callbackUrls: ICallbackTargetExport[] | undefined
+    callbackUrls?: ICallbackTargetExport[]
   ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
     let completedExists = await this.checkForExportCompleted(dupParams);
     if (completedExists) {
@@ -677,16 +677,14 @@ export class CreatePackageManager {
 
   private async checkForExportProcessing(
     dupParams: JobExportDuplicationParams,
-    newCallbacks: ICallbackTargetExport[] | undefined
+    newCallbacks?: ICallbackTargetExport[]
   ): Promise<ICreateExportJobResponse | undefined> {
     this.logger.info({ ...dupParams, roi: undefined, msg: `Checking for PROCESSING duplications with parameters` });
     const processingJob =
       (await this.jobManagerClient.findExportJob(OperationStatus.IN_PROGRESS, dupParams, true)) ??
       (await this.jobManagerClient.findExportJob(OperationStatus.PENDING, dupParams, true));
     if (processingJob) {
-      if (newCallbacks) {
-        await this.updateExportCallbackURLs(processingJob, newCallbacks);
-      }
+      await this.updateExportCallbackURLs(processingJob, newCallbacks);
       return {
         jobId: processingJob.id,
         taskIds: (processingJob.tasks as unknown as IJobResponse<IJobExportParameters, ITaskParameters>[]).map((t) => t.id),
@@ -733,7 +731,11 @@ export class CreatePackageManager {
     });
   }
 
-  private async updateExportCallbackURLs(processingJob: JobExportResponse, newCallbacks: ICallbackTargetExport[]): Promise<void> {
+  private async updateExportCallbackURLs(processingJob: JobExportResponse, newCallbacks?: ICallbackTargetExport[]): Promise<void> {
+    if (!newCallbacks) {
+      return;
+    }
+
     if (!processingJob.parameters.callbacks) {
       processingJob.parameters.callbacks = newCallbacks;
     } else {

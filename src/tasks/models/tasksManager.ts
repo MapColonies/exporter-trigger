@@ -153,7 +153,9 @@ export class TasksManager {
     try {
       this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
-      if (targetCallbacks) {
+      if (!targetCallbacks) {
+        return;
+      } else {
         const callbackPromises: Promise<void>[] = [];
         for (const target of targetCallbacks) {
           const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
