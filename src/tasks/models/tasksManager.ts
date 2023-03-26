@@ -155,21 +155,20 @@ export class TasksManager {
       const targetCallbacks = job.parameters.callbacks;
       if (!targetCallbacks) {
         return;
-      } else {
-        const callbackPromises: Promise<void>[] = [];
-        for (const target of targetCallbacks) {
-          const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
-          callbackPromises.push(this.callbackClient.send(target.url, params));
-        }
-
-        const promisesResponse = await Promise.allSettled(callbackPromises);
-        promisesResponse.forEach((response, index) => {
-          if (response.status === 'rejected') {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
-          }
-        });
       }
+      const callbackPromises: Promise<void>[] = [];
+      for (const target of targetCallbacks) {
+        const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
+        callbackPromises.push(this.callbackClient.send(target.url, params));
+      }
+
+      const promisesResponse = await Promise.allSettled(callbackPromises);
+      promisesResponse.forEach((response, index) => {
+        if (response.status === 'rejected') {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
+        }
+      });
     } catch (error) {
       this.logger.error({ err: error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
     }
