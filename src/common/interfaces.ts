@@ -16,7 +16,6 @@ export interface OpenApiConfig {
 
 export interface IBaseCreatePackage {
   dbId: string;
-  callbackURLs: string[];
   crs?: string;
   priority?: number;
 }
@@ -32,10 +31,13 @@ export interface ICleanupData {
 export interface ICreatePackage extends IBaseCreatePackage {
   targetResolution?: number;
   bbox?: BBox | Polygon | MultiPolygon;
+  callbackURLs: string[];
 }
 
 export interface ICreatePackageRoi extends IBaseCreatePackage {
   roi?: FeatureCollection;
+  callbackURLs?: string[];
+  description?: string;
 }
 
 export interface ICallbackBase {
@@ -79,17 +81,27 @@ export interface IWorkerInput extends IWorkerInputBase {
 }
 
 export interface IWorkerExportInput extends IWorkerInputBase {
-  callbacks: ICallbackTargetExport[];
+  callbacks?: ICallbackTargetExport[];
   roi: FeatureCollection;
   fileNamesTemplates: ILinkDefinition;
+  description?: string;
 }
 
 export interface IBasicResponse {
   message: string;
 }
 
+/**
+ * @deprecated GetMap API - will be deprecated on future
+ */
 export interface ICreateJobResponse {
   id: string;
+  taskIds: string[];
+  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
+}
+
+export interface ICreateExportJobResponse {
+  jobId: string;
   taskIds: string[];
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
@@ -114,8 +126,9 @@ export interface ICallbackDataExportBase {
   expirationTime: Date;
   fileSize: number;
   recordCatalogId: string;
-  requestJobId: string;
+  jobId: string;
   errorReason?: string;
+  description?: string;
 }
 
 /**
@@ -187,7 +200,7 @@ export interface IJobExportParameters {
   crs: string;
   exportVersion: ExportVersion;
   roi: FeatureCollection;
-  callbacks: ICallbackTargetExport[];
+  callbacks?: ICallbackTargetExport[];
   callbackParams?: ICallbackExportResponse;
   fileNamesTemplates: ILinkDefinition;
   gpkgEstimatedSize?: number;

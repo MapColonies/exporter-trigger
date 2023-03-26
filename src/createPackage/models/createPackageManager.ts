@@ -35,6 +35,7 @@ import {
   ICallbackExportResponse,
   ICallbackTargetExport,
   IConfig,
+  ICreateExportJobResponse,
   ICreatePackageRoi,
   IGeometryRecord,
   IJobExportParameters,
@@ -206,8 +207,8 @@ export class CreatePackageManager {
     return jobCreated;
   }
 
-  public async createPackageRoi(userInput: ICreatePackageRoi): Promise<ICreateJobResponse | ICallbackExportResponse> {
-    const { dbId, crs, priority, callbackURLs } = userInput;
+  public async createPackageRoi(userInput: ICreatePackageRoi): Promise<ICreateExportJobResponse | ICallbackExportResponse> {
+    const { dbId, crs, priority, callbackURLs, description } = userInput;
     let roi = userInput.roi;
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
@@ -267,20 +268,20 @@ export class CreatePackageManager {
       crs: crs ?? DEFAULT_CRS,
     };
 
-    const callbacks = callbackURLs.map((url) => <ICallbackTargetExport>{ url, roi });
+    const callbacks = callbackURLs ? callbackURLs.map((url) => <ICallbackTargetExport>{ url, roi }) : undefined;
     const duplicationExist = await this.checkForExportDuplicate(dupParams, callbacks);
     if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
       const callbackParam = duplicationExist as ICallbackExportResponse;
       this.logger.info({
         jobStatus: callbackParam.status,
-        jobId: callbackParam.requestJobId,
+        jobId: callbackParam.jobId,
         catalogId: callbackParam.recordCatalogId,
         msg: `Found relevant cache for export request`,
       });
       return duplicationExist;
     } else if (duplicationExist) {
-      const jobResponse = duplicationExist as ICreateJobResponse;
-      this.logger.info({ jobId: jobResponse.id, status: jobResponse.status, msg: `Found exists relevant In-Progress job for export request` });
+      const jobResponse = duplicationExist as ICreateExportJobResponse;
+      this.logger.info({ jobId: jobResponse.jobId, status: jobResponse.status, msg: `Found exists relevant In-Progress job for export request` });
       return duplicationExist;
     }
 
@@ -358,6 +359,7 @@ export class CreatePackageManager {
       priority: priority ?? DEFAULT_PRIORITY,
       callbacks: callbacks,
       gpkgEstimatedSize: estimatesGpkgSize,
+      description,
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);
     return jobCreated;
@@ -610,8 +612,8 @@ export class CreatePackageManager {
 
   private async checkForExportDuplicate(
     dupParams: JobExportDuplicationParams,
-    callbackUrls: ICallbackTargetExport[]
-  ): Promise<ICallbackExportResponse | ICreateJobResponse | undefined> {
+    callbackUrls: ICallbackTargetExport[] | undefined
+  ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
     let completedExists = await this.checkForExportCompleted(dupParams);
     if (completedExists) {
       return completedExists;
@@ -675,16 +677,18 @@ export class CreatePackageManager {
 
   private async checkForExportProcessing(
     dupParams: JobExportDuplicationParams,
-    newCallbacks: ICallbackTargetExport[]
-  ): Promise<ICreateJobResponse | undefined> {
+    newCallbacks: ICallbackTargetExport[] | undefined
+  ): Promise<ICreateExportJobResponse | undefined> {
     this.logger.info({ ...dupParams, roi: undefined, msg: `Checking for PROCESSING duplications with parameters` });
     const processingJob =
       (await this.jobManagerClient.findExportJob(OperationStatus.IN_PROGRESS, dupParams, true)) ??
       (await this.jobManagerClient.findExportJob(OperationStatus.PENDING, dupParams, true));
     if (processingJob) {
-      await this.updateExportCallbackURLs(processingJob, newCallbacks);
+      if (newCallbacks) {
+        await this.updateExportCallbackURLs(processingJob, newCallbacks);
+      }
       return {
-        id: processingJob.id,
+        jobId: processingJob.id,
         taskIds: (processingJob.tasks as unknown as IJobResponse<IJobExportParameters, ITaskParameters>[]).map((t) => t.id),
         status: OperationStatus.IN_PROGRESS,
       };
@@ -730,20 +734,24 @@ export class CreatePackageManager {
   }
 
   private async updateExportCallbackURLs(processingJob: JobExportResponse, newCallbacks: ICallbackTargetExport[]): Promise<void> {
-    const callbacks = processingJob.parameters.callbacks;
-    for (const newCallback of newCallbacks) {
-      const hasCallback = callbacks.findIndex((callback) => {
-        const exist = callback.url === newCallback.url;
-        if (!exist) {
-          return false;
-        }
+    if (!processingJob.parameters.callbacks) {
+      processingJob.parameters.callbacks = newCallbacks;
+    } else {
+      const callbacks = processingJob.parameters.callbacks;
+      for (const newCallback of newCallbacks) {
+        const hasCallback = callbacks.findIndex((callback) => {
+          const exist = callback.url === newCallback.url;
+          if (!exist) {
+            return false;
+          }
 
-        const sameROI = featureCollectionBooleanEqual(callback.roi, newCallback.roi);
-        return sameROI;
-      });
-      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-      if (hasCallback === -1) {
-        callbacks.push(newCallback);
+          const sameROI = featureCollectionBooleanEqual(callback.roi, newCallback.roi);
+          return sameROI;
+        });
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+        if (hasCallback === -1) {
+          callbacks.push(newCallback);
+        }
       }
     }
     await this.jobManagerClient.updateJob<IJobExportParameters>(processingJob.id, {

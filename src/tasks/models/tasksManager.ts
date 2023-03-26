@@ -153,19 +153,21 @@ export class TasksManager {
     try {
       this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
-      const callbackPromises: Promise<void>[] = [];
-      for (const target of targetCallbacks) {
-        const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
-        callbackPromises.push(this.callbackClient.send(target.url, params));
-      }
-
-      const promisesResponse = await Promise.allSettled(callbackPromises);
-      promisesResponse.forEach((response, index) => {
-        if (response.status === 'rejected') {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
+      if (targetCallbacks) {
+        const callbackPromises: Promise<void>[] = [];
+        for (const target of targetCallbacks) {
+          const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
+          callbackPromises.push(this.callbackClient.send(target.url, params));
         }
-      });
+
+        const promisesResponse = await Promise.allSettled(callbackPromises);
+        promisesResponse.forEach((response, index) => {
+          if (response.status === 'rejected') {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
+          }
+        });
+      }
     } catch (error) {
       this.logger.error({ err: error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
     }
@@ -338,8 +340,9 @@ export class TasksManager {
       expirationTime: expirationDate,
       fileSize,
       recordCatalogId: job.internalId as string,
-      requestJobId: job.id,
+      jobId: job.id,
       errorReason,
+      description: job.description,
     };
     this.logger.info({
       links: callbackParams.links,

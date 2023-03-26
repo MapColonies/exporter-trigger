@@ -7,6 +7,7 @@ import {
   CreateFinalizeTaskBody,
   ICallbackDataBase,
   ICallbackDataExportBase,
+  ICallbackTargetExport,
   ITaskParameters,
   JobExportResponse,
   JobFinalizeResponse,
@@ -387,17 +388,18 @@ describe('TasksManager', () => {
             metadataURI: 'http://download-service/downloads/test${sep}test.json',
           },
           recordCatalogId: '880a9316-0f10-4874-92e2-a62d587a1169',
-          requestJobId: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
+          jobId: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
           expirationTime: expirationTime,
           fileSize: 2000,
           errorReason: undefined,
         };
 
-        const actualCallBackUrls = mockCompletedJob.parameters.callbacks.map((callback) => callback.url);
+        const expectedCallbacksData = mockCompletedJob.parameters.callbacks as unknown as ICallbackTargetExport[];
+        const actualCallBackUrls = expectedCallbacksData.map((callback) => callback.url);
 
         await tasksManager.sendExportCallbacks(mockCompletedJob, callbackData);
         expect(sendMock).toHaveBeenCalledTimes(2);
-        expect(sendMock.mock.calls).toHaveLength(mockCompletedJob.parameters.callbacks.length);
+        expect(sendMock.mock.calls).toHaveLength(expectedCallbacksData.length);
         const receviedCallbacks = sendMock.mock.calls;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
         const urlsArr = receviedCallbacks.map((call) => call[0]);
@@ -413,7 +415,7 @@ describe('TasksManager', () => {
             metadataURI: 'http://download-service/downloads/test${sep}test.json',
           },
           recordCatalogId: '880a9316-0f10-4874-92e2-a62d587a1169',
-          requestJobId: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
+          jobId: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
           expirationTime: expirationTime,
           fileSize: 2000,
           errorReason: undefined,
@@ -489,8 +491,9 @@ describe('TasksManager', () => {
             metadataURI: `${downloadUrl}/downloads/${mockCompletedJob.parameters.relativeDirectoryPath}/${mockCompletedJob.parameters.fileNamesTemplates.metadataURI}`,
           },
           recordCatalogId: mockCompletedJob.internalId as string,
-          requestJobId: mockCompletedJob.id,
+          jobId: mockCompletedJob.id,
           errorReason: undefined,
+          description: 'test job',
         };
 
         const expectedUpdateRequest = {
@@ -527,8 +530,9 @@ describe('TasksManager', () => {
             metadataURI: `${mockCompletedJob.parameters.fileNamesTemplates.metadataURI}`,
           },
           recordCatalogId: mockCompletedJob.internalId as string,
-          requestJobId: mockCompletedJob.id,
+          jobId: mockCompletedJob.id,
           errorReason: 'Failed on metadata.json creation',
+          description: 'test job',
         };
 
         const expectedUpdateRequest = {
@@ -569,8 +573,9 @@ describe('TasksManager', () => {
             metadataURI: `${mockCompletedJob.parameters.fileNamesTemplates.metadataURI}`,
           },
           recordCatalogId: mockCompletedJob.internalId as string,
-          requestJobId: mockCompletedJob.id,
+          jobId: mockCompletedJob.id,
           errorReason: exportingErrorMsg,
+          description: 'test job',
         };
 
         const expectedUpdateRequest = {

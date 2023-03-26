@@ -4,7 +4,7 @@ import { feature, featureCollection, Geometry } from '@turf/turf';
 import { getApp } from '../../../src/app';
 import { RasterCatalogManagerClient } from '../../../src/clients/rasterCatalogManagerClient';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
-import { ICreateJobResponse, ICreatePackageRoi, JobExportDuplicationParams } from '../../../src/common/interfaces';
+import { ICreateExportJobResponse, ICreatePackageRoi, JobExportDuplicationParams } from '../../../src/common/interfaces';
 import { layerFromCatalog, fc1, fcNoMaxResolutionDeg, fcNoIntersection, fcTooHighResolution } from '../../mocks/data';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { CreatePackageManager } from '../../../src/createPackage/models/createPackageManager';
@@ -136,7 +136,7 @@ describe('Export by ROI', function () {
         },
         status: OperationStatus.COMPLETED,
         fileSize: 10,
-        requestJobId: 'afbdd5e6-25db-4567-a81f-71e0e7d30761',
+        jobId: 'afbdd5e6-25db-4567-a81f-71e0e7d30761',
         expirationTime: expirationTime,
         recordCatalogId: layerFromCatalog.id,
       };
@@ -151,7 +151,7 @@ describe('Export by ROI', function () {
         },
         status: OperationStatus.COMPLETED,
         fileSize: 10,
-        requestJobId: 'afbdd5e6-25db-4567-a81f-71e0e7d30761',
+        jobId: 'afbdd5e6-25db-4567-a81f-71e0e7d30761',
         expirationTime: expirationTime,
         recordCatalogId: layerFromCatalog.id,
       };
@@ -183,8 +183,8 @@ describe('Export by ROI', function () {
         priority: 0,
       };
 
-      const inProgressJobResonse: ICreateJobResponse = {
-        id: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812',
+      const inProgressJobResonse: ICreateExportJobResponse = {
+        jobId: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812',
         taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'],
         status: OperationStatus.IN_PROGRESS,
       };

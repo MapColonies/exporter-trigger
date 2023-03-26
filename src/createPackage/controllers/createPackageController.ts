@@ -12,11 +12,12 @@ import {
   ICallbackResposne,
   ICreatePackageRoi,
   ICallbackExportResponse,
+  ICreateExportJobResponse,
 } from '../../common/interfaces';
 
 type CreatePackageHandler = RequestHandler<
   undefined,
-  IBasicResponse | ICreateJobResponse | ICallbackResposne | ICallbackExportResponse,
+  IBasicResponse | ICreateJobResponse | ICreateExportJobResponse | ICallbackResposne | ICallbackExportResponse,
   ICreatePackage | ICreatePackageRoi
 >;
 
@@ -29,7 +30,7 @@ export class CreatePackageController {
   ) {}
 
   public create: CreatePackageHandler = async (req, res, next) => {
-    const userInput: ICreatePackage = req.body;
+    const userInput: ICreatePackage = req.body as ICreatePackage;
     try {
       this.logger.debug(userInput, `Creating package with user input`);
       const jobCreated = await this.manager.createPackage(userInput);
