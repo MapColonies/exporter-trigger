@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.13.0](https://github.com/MapColonies/exporter-trigger/compare/v2.12.0...v2.13.0) (2023-03-26)
+
+
+### Features
+
+* API changes for integration + helm improvement (MAPCO-2931) ([#62](https://github.com/MapColonies/exporter-trigger/issues/62)) ([bda2343](https://github.com/MapColonies/exporter-trigger/commit/bda2343e136ced4b597aae671615f1072ea9521a)), closes [#2](https://github.com/MapColonies/exporter-trigger/issues/2)
+
+
+### Bug Fixes
+
+* configuration direction on raster common ([#61](https://github.com/MapColonies/exporter-trigger/issues/61)) ([945e343](https://github.com/MapColonies/exporter-trigger/commit/945e3430c5100620f6fb11bd26a67d193d988a71))
+
 ## [2.12.0](https://github.com/MapColonies/exporter-trigger/compare/v2.11.0...v2.12.0) (2023-03-22)
 
 
