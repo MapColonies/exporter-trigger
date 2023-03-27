@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.13.2](https://github.com/MapColonies/exporter-trigger/compare/v2.13.1...v2.13.2) (2023-03-27)
+
+
+### Bug Fixes
+
+* adding missing errorReason ([#64](https://github.com/MapColonies/exporter-trigger/issues/64)) ([a75558f](https://github.com/MapColonies/exporter-trigger/commit/a75558f2f041d3a4ef33c33a163682481138cf7b))
+
 ### [2.13.1](https://github.com/MapColonies/exporter-trigger/compare/v2.13.0...v2.13.1) (2023-03-27)
 
 ## [2.13.0](https://github.com/MapColonies/exporter-trigger/compare/v2.12.0...v2.13.0) (2023-03-26)
