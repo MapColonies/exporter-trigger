@@ -387,6 +387,8 @@ components:
         jobId:
           type: string
           format: uuid
+        errorReason:
+          type: string
       required:
         - links
         - expirationTime
