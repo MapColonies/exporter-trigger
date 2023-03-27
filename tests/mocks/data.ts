@@ -532,7 +532,7 @@ const fcTooHighResolution: FeatureCollection = {
   features: [
     {
       type: 'Feature',
-      properties: { maxResolutionDeg: 0.000000167638063430786 },
+      properties: { maxResolutionDeg: 0.000000335276126861572 },
       geometry: {
         coordinates: [
           [
