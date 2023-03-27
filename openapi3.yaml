@@ -270,7 +270,7 @@ components:
           features:
             - type: Feature
               properties:
-                maxResolutionDeg: 0.072
+                maxResolutionDeg: 0.0439453125
               geometry:
                 type: Polygon
                 coordinates:
@@ -434,8 +434,8 @@ components:
           properties:
             maxResolutionDeg:
               type: number
-              minimum: 9.e-8
-              maximum: 0.072
+              minimum: 0.000000335276126861572
+              maximum: 0.703125
               format: double
               description: max resolution of layer in degrees/pixel
         geometry:

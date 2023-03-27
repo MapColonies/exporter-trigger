@@ -69,9 +69,9 @@ describe('Utils', () => {
 
       it('should return array of 1 IGeometry objects', () => {
         const expectedObjectBase = {
-          zoomLevel: 22,
-          targetResolutionDeg: 1.67638063430786e-7,
-          targetResolutionMeter: 0.0185,
+          zoomLevel: 21,
+          targetResolutionDeg: 0.000000335276126861572,
+          targetResolutionMeter: 0.037,
         };
         const result = utils.parseFeatureCollection(fcTooHighResolution);
         expect(result).toHaveLength(1);
