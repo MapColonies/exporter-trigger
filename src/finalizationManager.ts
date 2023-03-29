@@ -6,7 +6,7 @@ import { getUTCDate } from '@map-colonies/mc-utils';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
 import { QueueClient } from './clients/queueClient';
-import { ITaskFinalizeParameters, JobFinalizeResponse } from './common/interfaces';
+import { ITaskFinalizeParameters } from './common/interfaces';
 import { JobManagerWrapper } from './clients/jobManagerWrapper';
 
 export const FINALIZATION_MANGER_SYMBOL = Symbol('tasksFactory');
@@ -36,8 +36,8 @@ export class FinalizationManager {
       const attempts = finalizeTask.attempts;
       const jobId = finalizeTask.jobId;
       const taskId = finalizeTask.id;
-      this.logger.info({ jobId, taskId, msg: `Found new finalize task` });
-      const job = (await this.taskManager.getFinalizeJobById(jobId)) as JobFinalizeResponse;
+      this.logger.info({ jobId, taskId, msg: `Found new finalize task for jobId: ${jobId}` });
+      const job = await this.taskManager.getFinalizeJobById(jobId);
       if (attempts <= this.finalizeAttempts) {
         const expirationDateUtc = getUTCDate();
         expirationDateUtc.setDate(expirationDateUtc.getDate() + this.expirationDays);

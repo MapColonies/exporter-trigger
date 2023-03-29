@@ -264,25 +264,23 @@ export class JobManagerWrapper extends JobManagerClient {
     const getOrUpdateURL = `/jobs/${jobId}`;
     const newExpirationDate = getUTCDate();
     newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
-    const job = await this.get<JobResponse | JobExportResponse | undefined>(getOrUpdateURL);
-    if (job) {
-      const oldExpirationDate = new Date(job.parameters.cleanupData?.cleanupExpirationTimeUTC as Date);
-      if (oldExpirationDate < newExpirationDate) {
-        this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg: 'update expirationDate' });
-        await this.put(getOrUpdateURL, {
-          parameters: {
-            ...job.parameters,
-            cleanupData: {
-              ...job.parameters.cleanupData,
-              cleanupExpirationTimeUTC: newExpirationDate,
-              directoryPath: job.parameters.relativeDirectoryPath,
-            },
+    const job = await this.get<JobResponse | JobExportResponse>(getOrUpdateURL);
+    const oldExpirationDate = new Date(job.parameters.cleanupData?.cleanupExpirationTimeUTC as Date);
+    if (oldExpirationDate < newExpirationDate) {
+      this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg: 'update expirationDate' });
+      await this.put(getOrUpdateURL, {
+        parameters: {
+          ...job.parameters,
+          cleanupData: {
+            ...job.parameters.cleanupData,
+            cleanupExpirationTimeUTC: newExpirationDate,
+            directoryPath: job.parameters.relativeDirectoryPath,
           },
-        });
-      } else {
-        const msg = 'Will not update expiration date, as current expiration date is later than current expiration date';
-        this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg });
-      }
+        },
+      });
+    } else {
+      const msg = 'Will not update expiration date, as current expiration date is later than current expiration date';
+      this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg });
     }
   }
 
