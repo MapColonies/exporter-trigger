@@ -226,6 +226,8 @@ describe('Export by ROI', function () {
       expect(createJobSpy).toHaveBeenCalledTimes(0);
 
       expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(JSON.parse(resposne.text).message).toBe(`request/body must have required property 'dbId'`);
     });
 
     it('should return 400 status code because of bad data - no "maxResolutionDeg" properties in feature', async function () {
@@ -244,6 +246,8 @@ describe('Export by ROI', function () {
       expect(checkForExportDuplicateSpy).toHaveBeenCalledTimes(0);
       expect(createJobSpy).toHaveBeenCalledTimes(0);
       expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(JSON.parse(resposne.text).message).toBe(`request/body/roi/features/0/properties must have required property 'maxResolutionDeg'`);
     });
 
     it('should return 400 status code because of bad data - no "minResolutionDeg" is higher than maxResolutionDeg', async function () {
@@ -255,7 +259,8 @@ describe('Export by ROI', function () {
       } as unknown as ICreatePackageRoi;
 
       findLayerSpy.mockResolvedValue(layerFromCatalog);
-
+      const maxResValue = fcBadMinResolutionDeg.features[0].properties?.maxResolutionDeg as unknown as number;
+      const minResValue = fcBadMinResolutionDeg.features[0].properties?.minResolutionDeg as unknown as number;
       checkForExportDuplicateSpy.mockResolvedValue(undefined);
       const resposne = await requestSender.createPackageRoi(body);
       expect(resposne).toSatisfyApiSpec();
@@ -263,6 +268,8 @@ describe('Export by ROI', function () {
       expect(checkForExportDuplicateSpy).toHaveBeenCalledTimes(0);
       expect(createJobSpy).toHaveBeenCalledTimes(0);
       expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(JSON.parse(resposne.text).message).toBe(`The requested minResolutionDeg ${minResValue} is larger then maxResolutionDeg ${maxResValue}`);
     });
 
     it('should return 400 status code because of Bad Feature geometry - no intersection with layer geometry', async function () {
@@ -283,6 +290,12 @@ describe('Export by ROI', function () {
       expect(checkForExportDuplicateSpy).toHaveBeenCalledTimes(0);
       expect(createJobSpy).toHaveBeenCalledTimes(0);
       expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(JSON.parse(resposne.text).message).toBe(
+        `Requested ${JSON.stringify(fcNoIntersection.features[0].geometry)} has no intersection with requested layer ${
+          layerFromCatalog.metadata.id as string
+        }`
+      );
     });
 
     it('should return 400 status code because of Bad Feature maxResolutionDeg property - requested resolution is higher than layer maximum', async function () {
@@ -303,6 +316,12 @@ describe('Export by ROI', function () {
       expect(checkForExportDuplicateSpy).toHaveBeenCalledTimes(0);
       expect(createJobSpy).toHaveBeenCalledTimes(0);
       expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(JSON.parse(resposne.text).message).toBe(
+        `The requested resolution ${fcTooHighResolution.features[0].properties?.maxResolutionDeg as number} is larger then product resolution ${
+          layerFromCatalog.metadata.maxResolutionDeg as number
+        }`
+      );
     });
   });
 
@@ -325,6 +344,8 @@ describe('Export by ROI', function () {
       expect(findLayerSpy).toHaveBeenCalledTimes(1);
       expect(createJobSpy).toHaveBeenCalledTimes(0);
       expect(resposne.status).toBe(httpStatusCodes.INSUFFICIENT_STORAGE);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(JSON.parse(resposne.text).message).toBe(`There isn't enough free disk space to executing export`);
     });
   });
 });
