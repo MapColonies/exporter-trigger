@@ -46,6 +46,8 @@ import {
   inProgressExportJob,
   fcNoIntersection,
   fcTooHighResolution,
+  fcMinResolutionDeg,
+  featuresRecordsSampleFcMinResolutionDeg,
 } from '../../../mocks/data';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
 import { METADA_JSON_FILE_EXTENSION } from '../../../../src/common/constants';
@@ -517,6 +519,47 @@ describe('CreatePackageManager', () => {
             roi: layerMetadataRoi,
           })
         );
+      });
+
+      it('should create job with batches from provided minResolutionDeg', async () => {
+        const req: ICreatePackageRoi = {
+          dbId: pycswRecord.id,
+          roi: fcMinResolutionDeg,
+          callbackURLs: ['testUrl'],
+          crs: 'EPSG:4326',
+        };
+
+        const expectedCreateJobResponse = {
+          jobId: '09e29fa8-7283-4334-b3a4-99f75922de59',
+          taskIds: ['66aa1e2e-784c-4178-b5a0-af962937d561'],
+          status: OperationStatus.IN_PROGRESS,
+        };
+        const validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
+        const generateExportFileNamesSpy = jest.spyOn(
+          CreatePackageManager.prototype as unknown as { generateExportFileNames: jest.Mock },
+          'generateExportFileNames'
+        );
+
+        const calculateEstimateGpkgSizeSpy = jest.spyOn(utils, 'calculateEstimateGpkgSize');
+        const testPycswRecord = JSON.parse(JSON.stringify(pycswRecord));
+        findLayerMock.mockResolvedValue({ ...testPycswRecord });
+        createExportMock.mockResolvedValue(expectedCreateJobResponse);
+        findExportJobMock.mockResolvedValue(undefined);
+
+        validateFreeSpaceSpy.mockResolvedValue(true);
+        const res = await createPackageManager.createPackageRoi(req);
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        const calculatedBatches = calculateEstimateGpkgSizeSpy.mock.calls[0][0];
+        expect(res).toEqual(expectedCreateJobResponse);
+        expect(generateExportFileNamesSpy).toHaveBeenCalledTimes(1);
+        expect(generateExportFileNamesSpy).toHaveBeenCalledWith(
+          testPycswRecord.metadata.productType,
+          testPycswRecord.metadata.productId,
+          testPycswRecord.metadata.productVersion,
+          featuresRecordsSampleFcMinResolutionDeg
+        );
+        expect(calculatedBatches).toHaveLength(7);
+        expect(res).toBe(expectedCreateJobResponse);
       });
 
       it('should return callbackParam(webhook) for existing completed job', async () => {

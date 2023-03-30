@@ -5,7 +5,7 @@ import { getApp } from '../../../src/app';
 import { RasterCatalogManagerClient } from '../../../src/clients/rasterCatalogManagerClient';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { ICreateExportJobResponse, ICreatePackageRoi, JobExportDuplicationParams } from '../../../src/common/interfaces';
-import { layerFromCatalog, fc1, fcNoMaxResolutionDeg, fcNoIntersection, fcTooHighResolution } from '../../mocks/data';
+import { layerFromCatalog, fc1, fcNoMaxResolutionDeg, fcNoIntersection, fcTooHighResolution, fcBadMinResolutionDeg } from '../../mocks/data';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { CreatePackageManager } from '../../../src/createPackage/models/createPackageManager';
 import { CreatePackageSender } from './helpers/createPackageSender';
@@ -228,25 +228,9 @@ describe('Export by ROI', function () {
       expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
     });
 
-    it('should return 400 status code because of bad data - no "callbackURLs"  field', async function () {
-      const body = {
-        roi: fc1,
-        crs: 'EPSG:4326',
-        priority: 0,
-      } as unknown as ICreatePackageRoi;
-
-      checkForExportDuplicateSpy.mockResolvedValue(undefined);
-      const resposne = await requestSender.createPackageRoi(body);
-
-      expect(resposne).toSatisfyApiSpec();
-      expect(findLayerSpy).toHaveBeenCalledTimes(0);
-      expect(checkForExportDuplicateSpy).toHaveBeenCalledTimes(0);
-      expect(createJobSpy).toHaveBeenCalledTimes(0);
-      expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
-    });
-
     it('should return 400 status code because of bad data - no "maxResolutionDeg" properties in feature', async function () {
       const body = {
+        dbId: layerFromCatalog.id,
         roi: fcNoMaxResolutionDeg,
         callbackURLs: ['http://example.getmap.com/callback'],
         crs: 'EPSG:4326',
@@ -255,9 +239,27 @@ describe('Export by ROI', function () {
 
       checkForExportDuplicateSpy.mockResolvedValue(undefined);
       const resposne = await requestSender.createPackageRoi(body);
-
       expect(resposne).toSatisfyApiSpec();
       expect(findLayerSpy).toHaveBeenCalledTimes(0);
+      expect(checkForExportDuplicateSpy).toHaveBeenCalledTimes(0);
+      expect(createJobSpy).toHaveBeenCalledTimes(0);
+      expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
+    });
+
+    it('should return 400 status code because of bad data - no "minResolutionDeg" is higher than maxResolutionDeg', async function () {
+      const body: ICreatePackageRoi = {
+        dbId: layerFromCatalog.id,
+        roi: fcBadMinResolutionDeg,
+        crs: 'EPSG:4326',
+        priority: 0,
+      } as unknown as ICreatePackageRoi;
+
+      findLayerSpy.mockResolvedValue(layerFromCatalog);
+
+      checkForExportDuplicateSpy.mockResolvedValue(undefined);
+      const resposne = await requestSender.createPackageRoi(body);
+      expect(resposne).toSatisfyApiSpec();
+      expect(findLayerSpy).toHaveBeenCalledTimes(1);
       expect(checkForExportDuplicateSpy).toHaveBeenCalledTimes(0);
       expect(createJobSpy).toHaveBeenCalledTimes(0);
       expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);

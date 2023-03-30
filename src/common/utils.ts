@@ -63,16 +63,22 @@ export const generateGeoIdentifier = (geo: FeatureCollection): string => {
 };
 
 export const parseFeatureCollection = (featuresCollection: FeatureCollection): IGeometryRecord[] => {
+  const zoomZeroResolution = 0.703125;
   const parsedGeoRecord: IGeometryRecord[] = [];
   featuresCollection.features.forEach((feature) => {
     if (feature.properties && (feature.properties.maxResolutionDeg as number)) {
       const targetResolutionDeg = feature.properties.maxResolutionDeg as number;
       const zoomLevel = degreesPerPixelToZoomLevel(targetResolutionDeg);
       const targetResolutionMeter = zoomLevelToResolutionMeter(zoomLevel) as number;
+      const minResolutionDeg =
+        feature.properties.minResolutionDeg !== undefined ? (feature.properties.minResolutionDeg as number) : zoomZeroResolution;
+      const minZoomLevel = degreesPerPixelToZoomLevel(minResolutionDeg);
       parsedGeoRecord.push({
         geometry: feature.geometry as Geometry,
         targetResolutionDeg,
         targetResolutionMeter,
+        minResolutionDeg,
+        minZoomLevel,
         zoomLevel,
       });
     }

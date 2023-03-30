@@ -271,6 +271,7 @@ components:
             - type: Feature
               properties:
                 maxResolutionDeg: 0.0439453125
+                minResolutionDeg: 0.17578125
               geometry:
                 type: Polygon
                 coordinates:
@@ -436,10 +437,16 @@ components:
           properties:
             maxResolutionDeg:
               type: number
-              minimum: 3.35276126861572e-7
+              minimum: 0.000000335276126861572
               maximum: 0.703125
               format: double
               description: max resolution of layer in degrees/pixel
+            minResolutionDeg:
+              type: number
+              minimum: 0.000000335276126861572
+              maximum: 0.703125
+              format: double
+              description: min resolution of layer in degrees/pixel
         geometry:
           type: object
           nullable: true
