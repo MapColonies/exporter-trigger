@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 import { promises as fsPromise } from 'fs';
 import { parse as parsePath } from 'path';
 import { sep } from 'path';
