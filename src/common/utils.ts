@@ -8,6 +8,7 @@ import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } fr
 import { FeatureCollection, Geometry } from '@turf/helpers';
 import md5 from 'md5';
 import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
+import { ZOOM_ZERO_RESOLUTION } from './constants';
 
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;
@@ -63,7 +64,6 @@ export const generateGeoIdentifier = (geo: FeatureCollection): string => {
 };
 
 export const parseFeatureCollection = (featuresCollection: FeatureCollection): IGeometryRecord[] => {
-  const zoomZeroResolution = 0.703125;
   const parsedGeoRecord: IGeometryRecord[] = [];
   featuresCollection.features.forEach((feature) => {
     if (feature.properties && (feature.properties.maxResolutionDeg as number)) {
@@ -71,7 +71,7 @@ export const parseFeatureCollection = (featuresCollection: FeatureCollection): I
       const zoomLevel = degreesPerPixelToZoomLevel(targetResolutionDeg);
       const targetResolutionMeter = zoomLevelToResolutionMeter(zoomLevel) as number;
       const minResolutionDeg =
-        feature.properties.minResolutionDeg !== undefined ? (feature.properties.minResolutionDeg as number) : zoomZeroResolution;
+        feature.properties.minResolutionDeg !== undefined ? (feature.properties.minResolutionDeg as number) : ZOOM_ZERO_RESOLUTION;
       const minZoomLevel = degreesPerPixelToZoomLevel(minResolutionDeg);
       parsedGeoRecord.push({
         geometry: feature.geometry as Geometry,
