@@ -60,6 +60,8 @@ describe('Utils', () => {
           zoomLevel: 5,
           targetResolutionDeg: 0.02197265625,
           targetResolutionMeter: 2445.98,
+          minResolutionDeg: 0.703125,
+          minZoomLevel: 0,
         };
         const result = utils.parseFeatureCollection(fc1);
         expect(result).toHaveLength(2);
@@ -72,6 +74,8 @@ describe('Utils', () => {
           zoomLevel: 21,
           targetResolutionDeg: 0.000000335276126861572,
           targetResolutionMeter: 0.037,
+          minResolutionDeg: 0.703125,
+          minZoomLevel: 0,
         };
         const result = utils.parseFeatureCollection(fcTooHighResolution);
         expect(result).toHaveLength(1);

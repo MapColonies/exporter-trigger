@@ -483,12 +483,72 @@ const fc1: FeatureCollection = {
   ],
 };
 
+const fcMinResolutionDeg: FeatureCollection = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: { maxResolutionDeg: 0.02197265625, minResolutionDeg: 0.17578125 },
+      geometry: {
+        coordinates: [
+          [
+            [37.42414218385065, 17.95036866237062],
+            [30.42608533411871, 17.95036866237062],
+            [30.42608533411871, 11.52904501530621],
+            [37.42414218385065, 11.52904501530621],
+            [37.42414218385065, 17.95036866237062],
+          ],
+        ],
+        type: 'Polygon',
+      },
+    },
+    {
+      type: 'Feature',
+      properties: { maxResolutionDeg: 0.02197265625, minResolutionDeg: 0.087890625 },
+      geometry: {
+        coordinates: [
+          [
+            [29.726720838716574, -10.646156974961286],
+            [25.120393802953117, -10.646156974961286],
+            [25.120393802953117, -16.979479051947962],
+            [29.726720838716574, -16.979479051947962],
+            [29.726720838716574, -10.646156974961286],
+          ],
+        ],
+        type: 'Polygon',
+      },
+    },
+  ],
+};
+
+const fcBadMinResolutionDeg: FeatureCollection = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: { maxResolutionDeg: 0.703125, minResolutionDeg: 0.02197265625 },
+      geometry: {
+        coordinates: [
+          [
+            [37.42414218385065, 17.95036866237062],
+            [30.42608533411871, 17.95036866237062],
+            [30.42608533411871, 11.52904501530621],
+            [37.42414218385065, 11.52904501530621],
+            [37.42414218385065, 17.95036866237062],
+          ],
+        ],
+        type: 'Polygon',
+      },
+    },
+  ],
+};
+
 const fcNoMaxResolutionDeg: FeatureCollection = {
   type: 'FeatureCollection',
   features: [
     {
       type: 'Feature',
-      properties: { maxResolutionDeg: 0.02197265625 },
+      properties: {},
       geometry: {
         coordinates: [
           [
@@ -917,10 +977,12 @@ const featuresRecordsSampleFc1 = [
       ],
       type: 'Polygon',
     },
-    sanitizedBox: [28.125, 11.25, 39.375, 22.5],
     targetResolutionDeg: 0.02197265625,
     targetResolutionMeter: 2445.98,
+    minResolutionDeg: 0.703125,
+    minZoomLevel: 0,
     zoomLevel: 5,
+    sanitizedBox: [28.125, 11.25, 39.375, 22.5],
   },
   {
     geometry: {
@@ -938,6 +1000,51 @@ const featuresRecordsSampleFc1 = [
     sanitizedBox: [22.5, -22.5, 33.75, -5.625],
     targetResolutionDeg: 0.02197265625,
     targetResolutionMeter: 2445.98,
+    minResolutionDeg: 0.703125,
+    minZoomLevel: 0,
+    zoomLevel: 5,
+  },
+];
+
+const featuresRecordsSampleFcMinResolutionDeg = [
+  {
+    geometry: {
+      coordinates: [
+        [
+          [37.42414218385065, 17.95036866237062],
+          [30.42608533411871, 17.95036866237062],
+          [30.42608533411871, 11.52904501530621],
+          [37.42414218385065, 11.52904501530621],
+          [37.42414218385065, 17.95036866237062],
+        ],
+      ],
+      type: 'Polygon',
+    },
+    targetResolutionDeg: 0.02197265625,
+    targetResolutionMeter: 2445.98,
+    minResolutionDeg: 0.17578125,
+    minZoomLevel: 2,
+    zoomLevel: 5,
+    sanitizedBox: [28.125, 11.25, 39.375, 22.5],
+  },
+  {
+    geometry: {
+      coordinates: [
+        [
+          [29.726720838716574, -10.646156974961286],
+          [25.120393802953117, -10.646156974961286],
+          [25.120393802953117, -16.979479051947962],
+          [29.726720838716574, -16.979479051947962],
+          [29.726720838716574, -10.646156974961286],
+        ],
+      ],
+      type: 'Polygon',
+    },
+    sanitizedBox: [22.5, -22.5, 33.75, -5.625],
+    targetResolutionDeg: 0.02197265625,
+    targetResolutionMeter: 2445.98,
+    minResolutionDeg: 0.087890625,
+    minZoomLevel: 3,
     zoomLevel: 5,
   },
 ];
@@ -1055,6 +1162,9 @@ export {
   inProgressJob,
   fc1,
   fcNoMaxResolutionDeg,
+  fcBadMinResolutionDeg,
+  fcMinResolutionDeg,
+  featuresRecordsSampleFcMinResolutionDeg,
   fcNoIntersection,
   fcTooHighResolution,
   completedExportJob,
