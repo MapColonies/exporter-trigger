@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.15.0](https://github.com/MapColonies/exporter-trigger/compare/v2.11.0...v2.15.0) (2023-04-16)
+
+
+### Features
+
+* add storage route (MAPCO-2932) ([#60](https://github.com/MapColonies/exporter-trigger/issues/60)) ([921ef84](https://github.com/MapColonies/exporter-trigger/commit/921ef84659f50158dc11e378efae67a9ffe240fb))
+* adding feature properties of minResolutionDeg (MAPCO-2995) ([#66](https://github.com/MapColonies/exporter-trigger/issues/66)) ([591f5b5](https://github.com/MapColonies/exporter-trigger/commit/591f5b512a333ae3321461c944f8514141e840a2))
+* API changes for integration + helm improvement (MAPCO-2931) ([#62](https://github.com/MapColonies/exporter-trigger/issues/62)) ([bda2343](https://github.com/MapColonies/exporter-trigger/commit/bda2343e136ced4b597aae671615f1072ea9521a)), closes [#2](https://github.com/MapColonies/exporter-trigger/issues/2)
+* Finalize-tasks-polling (MAPCO-2888) ([#59](https://github.com/MapColonies/exporter-trigger/issues/59)) ([6e2a861](https://github.com/MapColonies/exporter-trigger/commit/6e2a861200121be6fb23a3ae31047ef6c43cf822))
+
+
+### Bug Fixes
+
+* adding missing errorReason ([#64](https://github.com/MapColonies/exporter-trigger/issues/64)) ([a75558f](https://github.com/MapColonies/exporter-trigger/commit/a75558f2f041d3a4ef33c33a163682481138cf7b))
+* configuration direction on raster common ([#61](https://github.com/MapColonies/exporter-trigger/issues/61)) ([945e343](https://github.com/MapColonies/exporter-trigger/commit/945e3430c5100620f6fb11bd26a67d193d988a71))
+
 ## [2.14.0](https://github.com/MapColonies/exporter-trigger/compare/v2.13.2...v2.14.0) (2023-04-03)
 
 
