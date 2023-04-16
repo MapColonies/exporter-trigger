@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.14.0](https://github.com/MapColonies/exporter-trigger/compare/v2.13.2...v2.14.0) (2023-04-03)
+
+
+### Features
+
+* adding feature properties of minResolutionDeg (MAPCO-2995) ([#66](https://github.com/MapColonies/exporter-trigger/issues/66)) ([591f5b5](https://github.com/MapColonies/exporter-trigger/commit/591f5b512a333ae3321461c944f8514141e840a2))
+
 ### [2.13.2](https://github.com/MapColonies/exporter-trigger/compare/v2.13.1...v2.13.2) (2023-03-27)
 
 

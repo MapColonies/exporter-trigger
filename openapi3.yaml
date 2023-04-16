@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: exporter-trigger
   description: Service that responsible for activating the export geopackage process
-  version: 2.13.2
+  version: 2.14.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -271,6 +271,7 @@ components:
             - type: Feature
               properties:
                 maxResolutionDeg: 0.0439453125
+                minResolutionDeg: 0.17578125
               geometry:
                 type: Polygon
                 coordinates:
@@ -440,6 +441,12 @@ components:
               maximum: 0.703125
               format: double
               description: max resolution of layer in degrees/pixel
+            minResolutionDeg:
+              type: number
+              minimum: 3.35276126861572e-7
+              maximum: 0.703125
+              format: double
+              description: min resolution of layer in degrees/pixel
         geometry:
           type: object
           nullable: true

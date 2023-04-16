@@ -240,8 +240,12 @@ export class CreatePackageManager {
     // ROI vs layer validation section - zoom + geo intersection
     featuresRecords.forEach((record) => {
       if (record.zoomLevel > maxZoom) {
+        throw new BadRequestError(`The requested resolution ${record.targetResolutionDeg} is larger then product resolution ${srcRes as number}`);
+      }
+
+      if (record.zoomLevel < record.minZoomLevel) {
         throw new BadRequestError(
-          `The requested resolution ${record.targetResolutionDeg} is larger then then product resolution ${srcRes as number}`
+          `The requested minResolutionDeg ${record.minResolutionDeg} is larger then maxResolutionDeg ${record.targetResolutionDeg}`
         );
       }
       // generate sanitized bbox for each original feature
@@ -288,7 +292,7 @@ export class CreatePackageManager {
     // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
     const batches: ITileRange[] = [];
     featuresRecords.forEach((record) => {
-      for (let zoom = 0; zoom <= record.zoomLevel; zoom++) {
+      for (let zoom = record.minZoomLevel; zoom <= record.zoomLevel; zoom++) {
         const recordBatches = bboxToTileRange(record.sanitizedBox as BBox2d, zoom);
         batches.push(recordBatches);
       }

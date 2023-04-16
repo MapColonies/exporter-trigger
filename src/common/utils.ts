@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 import { promises as fsPromise } from 'fs';
 import { parse as parsePath } from 'path';
 import { sep } from 'path';
@@ -8,6 +6,7 @@ import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } fr
 import { FeatureCollection, Geometry } from '@turf/helpers';
 import md5 from 'md5';
 import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
+import { ZOOM_ZERO_RESOLUTION } from './constants';
 
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;
@@ -69,10 +68,15 @@ export const parseFeatureCollection = (featuresCollection: FeatureCollection): I
       const targetResolutionDeg = feature.properties.maxResolutionDeg as number;
       const zoomLevel = degreesPerPixelToZoomLevel(targetResolutionDeg);
       const targetResolutionMeter = zoomLevelToResolutionMeter(zoomLevel) as number;
+      const minResolutionDeg =
+        feature.properties.minResolutionDeg !== undefined ? (feature.properties.minResolutionDeg as number) : ZOOM_ZERO_RESOLUTION;
+      const minZoomLevel = degreesPerPixelToZoomLevel(minResolutionDeg);
       parsedGeoRecord.push({
         geometry: feature.geometry as Geometry,
         targetResolutionDeg,
         targetResolutionMeter,
+        minResolutionDeg,
+        minZoomLevel,
         zoomLevel,
       });
     }

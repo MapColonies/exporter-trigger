@@ -276,6 +276,8 @@ export interface IGeometryRecord extends IGeometryRecordBase {
   geometry?: Geometry;
   targetResolutionDeg: number;
   targetResolutionMeter: number;
+  minResolutionDeg: number;
+  minZoomLevel: number;
 }
 
 // todo - Temporary enum to define old\new api - will be removed after deleting getMap API
