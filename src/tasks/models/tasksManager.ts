@@ -1,7 +1,7 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import config from 'config';
-import { IFindJobsRequest, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IFindJobsRequest, IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
@@ -63,7 +63,7 @@ export class TasksManager {
     return jobsStatus;
   }
 
-  public async getFinalizeJobById(jobId: string): Promise<JobFinalizeResponse | undefined> {
+  public async getFinalizeJobById(jobId: string): Promise<IJobResponse<IJobExportParameters, ITaskFinalizeParameters>> {
     const job = await this.jobManagerClient.getJob<IJobExportParameters, ITaskFinalizeParameters>(jobId);
     return job;
   }
