@@ -1,5 +1,5 @@
 import config from 'config';
-import { logMethod } from '@map-colonies/telemetry';
+import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
@@ -29,11 +29,11 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     jobType: externalClientsConfig.exportJobAndTaskTypes.jobType,
     tilesTaskType: externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType,
   };
-  // @ts-expect-error the signature is wrong
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+  const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
 
-  const metrics = new Metrics(SERVICE_NAME);
+  const metrics = new Metrics();
+
   const meter = metrics.start();
 
   tracing.start();
