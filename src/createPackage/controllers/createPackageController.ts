@@ -1,5 +1,4 @@
 import { Logger } from '@map-colonies/js-logger';
-import { Meter } from '@map-colonies/telemetry';
 import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
@@ -25,8 +24,7 @@ type CreatePackageHandler = RequestHandler<
 export class CreatePackageController {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(CreatePackageManager) private readonly manager: CreatePackageManager,
-    @inject(SERVICES.METER) private readonly meter: Meter
+    @inject(CreatePackageManager) private readonly manager: CreatePackageManager
   ) {}
 
   public create: CreatePackageHandler = async (req, res, next) => {
