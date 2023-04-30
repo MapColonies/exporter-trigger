@@ -29,14 +29,9 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     jobType: externalClientsConfig.exportJobAndTaskTypes.jobType,
     tilesTaskType: externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType,
   };
-  // @ts-expect-error the signature is wrong
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
 
-  const metrics = new Metrics(SERVICE_NAME);
-  const meter = metrics.start();
-
-  tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
 
   const dependencies: InjectionObject<unknown>[] = [
@@ -44,7 +39,6 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.QUEUE_CONFIG, provider: { useValue: queueConfig } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
-    { token: SERVICES.METER, provider: { useValue: meter } },
     { token: STORAGE_ROUTER_SYMBOL, provider: { useFactory: storageRouterFactory } },
     { token: CREATE_PACKAGE_ROUTER_SYMBOL, provider: { useFactory: createPackageRouterFactory } },
     { token: TASKS_ROUTER_SYMBOL, provider: { useFactory: tasksRouterFactory } },
@@ -54,7 +48,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
       provider: {
         useValue: {
           useValue: async (): Promise<void> => {
-            await Promise.all([tracing.stop(), metrics.stop()]);
+            await Promise.all([tracing.stop()]);
           },
         },
       },
