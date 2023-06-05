@@ -235,6 +235,7 @@ export class TasksManager {
       roi: job.parameters.roi,
       status: finalizeStatus,
       errorReason: reason,
+      fileNames: {dataName: job.parameters.fileNamesTemplates.dataURI, metadataName:job.parameters.fileNamesTemplates.metadataURI}
     };
 
     await this.sendExportCallbacks(job, callbackParams);
@@ -265,6 +266,7 @@ export class TasksManager {
       roi: job.parameters.roi,
       status: OperationStatus.FAILED,
       errorReason: reason,
+      fileNames: {dataName: job.parameters.fileNamesTemplates.dataURI, metadataName:job.parameters.fileNamesTemplates.metadataURI}
     };
     
     await this.sendExportCallbacks(job, callbackParams);
@@ -308,6 +310,7 @@ export class TasksManager {
     return cleanupData;
   }
 
+  // todo - refactor after first integration with mutual export - to suite the real webhook interface
   private async generateCallbackParam(
     job: JobExportResponse | JobFinalizeResponse,
     expirationDate: Date,

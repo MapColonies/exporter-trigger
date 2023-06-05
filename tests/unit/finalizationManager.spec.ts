@@ -118,6 +118,7 @@ describe('FinalizationManager', () => {
             recordCatalogId: completedExportJob.internalId as string,
             fileSize: 1000,
             jobId: completedExportJob.id,
+            fileNames: { metadataName: 'test', dataName: 'test' },
           },
         },
       };
@@ -169,6 +170,7 @@ describe('FinalizationManager', () => {
             fileSize: 0,
             errorReason: 'Failed on GPKG creation',
             jobId: completedExportJob.id,
+            fileNames: { metadataName: 'testTemplate', dataName: 'testTemplate' }
           },
         },
       };
@@ -278,6 +280,7 @@ describe('FinalizationManager', () => {
             recordCatalogId: completedExportJob.internalId as string,
             fileSize: 1000,
             jobId: completedExportJob.id,
+            fileNames: { metadataName: 'test', dataName: 'test' }
           },
         },
       };

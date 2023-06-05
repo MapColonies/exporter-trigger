@@ -757,6 +757,10 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
       jobId: 'afbdd5e6-25db-4567-a81f-71e0e7d30761',
       expirationTime: new Date(),
       recordCatalogId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
+      fileNames: {
+        dataName: 'Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.gpkg',
+        metadataName: 'Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.json',
+      }
     },
     cleanupData: {
       directoryPath: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',

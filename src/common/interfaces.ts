@@ -154,8 +154,14 @@ export interface ILinkDefinition {
   metadataURI: string;
 }
 
+export interface IFileNameDefinition {
+  dataName: string;
+  metadataName: string;
+}
+
 export interface ICallbackExportResponse extends ICallbackExportData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED | OperationStatus.FAILED;
+  fileNames: IFileNameDefinition;
 }
 
 /**
