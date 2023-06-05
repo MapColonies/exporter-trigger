@@ -149,7 +149,7 @@ export class TasksManager {
     }
   }
 
-  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackDataExportBase): Promise<void> {
+  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackDataExportBase | ICallbackExportResponse): Promise<void> {
     try {
       this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
@@ -229,8 +229,7 @@ export class TasksManager {
     // create and sending response to callbacks
     const callbackSendParams = await this.generateCallbackParam(job, expirationDateUTC, reason);
 
-    await this.sendExportCallbacks(job, callbackSendParams);
-
+    
     const callbackParams: ICallbackExportResponse = {
       ...callbackSendParams,
       roi: job.parameters.roi,
@@ -238,6 +237,8 @@ export class TasksManager {
       errorReason: reason,
     };
 
+    await this.sendExportCallbacks(job, callbackParams);
+    
     this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
     const updateJobParams = {
       reason: reason ?? undefined,
@@ -258,14 +259,15 @@ export class TasksManager {
     // create and sending response to callbacks
     const callbackSendParams = await this.generateCallbackParam(job, expirationDateUTC, reason);
 
-    await this.sendExportCallbacks(job, callbackSendParams);
-
+    
     const callbackParams: ICallbackExportResponse = {
       ...callbackSendParams,
       roi: job.parameters.roi,
       status: OperationStatus.FAILED,
       errorReason: reason,
     };
+    
+    await this.sendExportCallbacks(job, callbackParams);
 
     this.logger.info({ reason, jobId: job.id, msg: `Updating job finalizing status for failure job` });
     const updateJobParams: IUpdateJobBody<IJobExportParameters> = {
