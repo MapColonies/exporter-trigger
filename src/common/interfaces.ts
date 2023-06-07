@@ -155,7 +155,7 @@ export interface ICallbackResposne extends ICallbackData {
 //todo - should be replaced and imported from exporter SDK
 export interface IArtifactDefinition {
   name: string,
-  uri?: string,
+  url?: string,
   size?: number,
   type: ArtifactType,
 }

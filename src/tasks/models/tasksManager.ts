@@ -351,13 +351,13 @@ export class TasksManager {
     const artifacts: IArtifactDefinition[] = [
       {
         name: job.parameters.fileNamesTemplates.dataURI,
-        uri: links.dataURI,
+        url: links.dataURI,
         size: fileSize,
         type: ArtifactType.GPKG,
       },
       {
         name: job.parameters.fileNamesTemplates.metadataURI,
-        uri: links.metadataURI,
+        url: links.metadataURI,
         size: metadataSize,
         type: ArtifactType.METADATA,
       },
