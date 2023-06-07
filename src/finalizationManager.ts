@@ -6,8 +6,9 @@ import { getUTCDate } from '@map-colonies/mc-utils';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
 import { QueueClient } from './clients/queueClient';
-import { ITaskFinalizeParameters } from './common/interfaces';
+import { ICallbackDataExportBase, ICallbackExportData, ICallbackExportResponse, ITaskFinalizeParameters, JobExportResponse, JobFinalizeResponse } from './common/interfaces';
 import { JobManagerWrapper } from './clients/jobManagerWrapper';
+import { CallbackClient } from './clients/callbackClient';
 
 export const FINALIZATION_MANGER_SYMBOL = Symbol('tasksFactory');
 
@@ -20,11 +21,40 @@ export class FinalizationManager {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(TasksManager) private readonly taskManager: TasksManager,
     @inject(QueueClient) private readonly queueClient: QueueClient,
+    @inject(CallbackClient) private readonly callbackClient: CallbackClient,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper
   ) {
     this.expirationDays = config.get<number>('cleanupExpirationDays');
     this.finalizeTaskType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
     this.finalizeAttempts = config.get<number>('externalClientsConfig.clientsUrls.jobManager.finalizeTasksAttempts');
+  }
+
+  public async sendExportCallbacks(
+    job: JobExportResponse | JobFinalizeResponse,
+    callbackParams: ICallbackDataExportBase | ICallbackExportResponse
+  ): Promise<void> {
+    try {
+      this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
+      const targetCallbacks = job.parameters.callbacks;
+      if (!targetCallbacks) {
+        return;
+      }
+      const callbackPromises: Promise<void>[] = [];
+      for (const target of targetCallbacks) {
+        const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
+        callbackPromises.push(this.callbackClient.send(target.url, params));
+      }
+
+      const promisesResponse = await Promise.allSettled(callbackPromises);
+      promisesResponse.forEach((response, index) => {
+        if (response.status === 'rejected') {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
+        }
+      });
+    } catch (error) {
+      this.logger.error({ err: error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
+    }
   }
 
   public async jobFinalizePoll(): Promise<boolean> {
@@ -56,6 +86,8 @@ export class FinalizationManager {
               taskId,
               msg: `success finalization. close task as completed, job closed as ${updateJobResults.status as OperationStatus}`,
             });
+
+          await this.sendExportCallbacks(job, updateJobResults.parameters?.callbackParams as ICallbackExportResponse);
           } else {
             this.logger.info({
               jobId,
@@ -69,6 +101,7 @@ export class FinalizationManager {
           errReason = errReason ?? 'Failed on GPKG creation';
           const updateJobResults = await this.taskManager.finalizeGPKGFailure(job, expirationDateUtc, errReason);
           await this.queueClient.queueHandlerForFinalizeTasks.ack(jobId, taskId);
+          await this.sendExportCallbacks(job, updateJobResults.parameters?.callbackParams as ICallbackExportResponse);
           await this.jobManagerClient.updateJob(job.id, updateJobResults);
           await this.jobManagerClient.deleteTaskById(jobId, taskId);
           this.logger.info({
@@ -83,6 +116,15 @@ export class FinalizationManager {
         this.logger.warn({ jobId, taskId, msg: `Failed finalizing job, reached to max attempts of ${attempts}\\${this.finalizeAttempts}` });
         await this.queueClient.queueHandlerForFinalizeTasks.reject(jobId, taskId, false);
         await this.jobManagerClient.updateJob(job.id, { status: OperationStatus.FAILED, percentage: undefined });
+        
+        const failedCallback:ICallbackExportResponse = {
+          roi: job.parameters.roi,
+          status: OperationStatus.FAILED,
+          recordCatalogId: job.internalId as string,
+          jobId: job.id,
+          errorReason: finalizeTask.reason,
+        }
+        await this.sendExportCallbacks(job, failedCallback);
       }
     } catch (error) {
       // close the task if exception accrued

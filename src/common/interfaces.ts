@@ -123,14 +123,14 @@ export interface ICallbackDataBase {
 }
 
 export interface ICallbackDataExportBase {
-  links: ILinkDefinition;
-  expirationTime: Date;
-  fileSize: number;
+  links?: ILinkDefinition;
+  expirationTime?: Date;
+  fileSize?: number;
   recordCatalogId: string;
   jobId: string;
   errorReason?: string;
   description?: string;
-  artifacts: IArtifactDefinition[];
+  artifacts?: IArtifactDefinition[];
 }
 
 /**
@@ -168,17 +168,9 @@ export interface ILinkDefinition {
   metadataURI: string;
 }
 
-/**
- * @deprecated ROI INTERNAL API - will be deprecated on future by shared exporter
- */
-export interface IFileNameDefinition {
-  dataName: string;
-  metadataName: string;
-}
 
 export interface ICallbackExportResponse extends ICallbackExportData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED | OperationStatus.FAILED;
-  fileNames: IFileNameDefinition;
 }
 
 /**

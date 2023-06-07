@@ -239,10 +239,9 @@ export class TasksManager {
       roi: job.parameters.roi,
       status: finalizeStatus,
       errorReason: reason,
-      fileNames: { dataName: job.parameters.fileNamesTemplates.dataURI, metadataName: job.parameters.fileNamesTemplates.metadataURI },
     };
 
-    await this.sendExportCallbacks(job, callbackParams);
+    // await this.sendExportCallbacks(job, callbackParams);
 
     this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
     const updateJobParams = {
@@ -268,11 +267,10 @@ export class TasksManager {
       ...callbackSendParams,
       roi: job.parameters.roi,
       status: OperationStatus.FAILED,
-      errorReason: reason,
-      fileNames: { dataName: job.parameters.fileNamesTemplates.dataURI, metadataName: job.parameters.fileNamesTemplates.metadataURI },
+      errorReason: reason
     };
 
-    await this.sendExportCallbacks(job, callbackParams);
+    // await this.sendExportCallbacks(job, callbackParams);
 
     this.logger.info({ reason, jobId: job.id, msg: `Updating job finalizing status for failure job` });
     const updateJobParams: IUpdateJobBody<IJobExportParameters> = {
