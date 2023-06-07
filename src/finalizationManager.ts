@@ -62,6 +62,8 @@ export class FinalizationManager {
     if (!finalizeTask) {
       return false;
     }
+    const expirationDateUtc = getUTCDate();
+        expirationDateUtc.setDate(expirationDateUtc.getDate() + this.expirationDays);
     try {
       const attempts = finalizeTask.attempts;
       const jobId = finalizeTask.jobId;
@@ -69,8 +71,7 @@ export class FinalizationManager {
       this.logger.info({ jobId, taskId, msg: `Found new finalize task for jobId: ${jobId}` });
       const job = await this.taskManager.getFinalizeJobById(jobId);
       if (attempts <= this.finalizeAttempts) {
-        const expirationDateUtc = getUTCDate();
-        expirationDateUtc.setDate(expirationDateUtc.getDate() + this.expirationDays);
+        
         const isSuccess = finalizeTask.parameters.exporterTaskStatus === OperationStatus.COMPLETED ? true : false;
         let errReason = finalizeTask.parameters.reason;
 
@@ -118,6 +119,7 @@ export class FinalizationManager {
         await this.jobManagerClient.updateJob(job.id, { status: OperationStatus.FAILED, percentage: undefined });
         
         const failedCallback:ICallbackExportResponse = {
+          expirationTime: expirationDateUtc,
           roi: job.parameters.roi,
           status: OperationStatus.FAILED,
           recordCatalogId: job.internalId as string,
