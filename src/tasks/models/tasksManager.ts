@@ -241,6 +241,7 @@ export class TasksManager {
       errorReason: reason,
     };
 
+    // todo - marked, callback will send only after job completed
     // await this.sendExportCallbacks(job, callbackParams);
 
     this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
@@ -267,9 +268,10 @@ export class TasksManager {
       ...callbackSendParams,
       roi: job.parameters.roi,
       status: OperationStatus.FAILED,
-      errorReason: reason
+      errorReason: reason,
     };
 
+    // todo - marked, callback will send only after job completed
     // await this.sendExportCallbacks(job, callbackParams);
 
     this.logger.info({ reason, jobId: job.id, msg: `Updating job finalizing status for failure job` });
@@ -351,13 +353,13 @@ export class TasksManager {
     const artifacts: IArtifactDefinition[] = [
       {
         name: job.parameters.fileNamesTemplates.dataURI,
-        url: links.dataURI,
+        url: success ? links.dataURI : undefined,
         size: fileSize,
         type: ArtifactType.GPKG,
       },
       {
         name: job.parameters.fileNamesTemplates.metadataURI,
-        url: links.metadataURI,
+        url: success ? links.metadataURI : undefined,
         size: metadataSize,
         type: ArtifactType.METADATA,
       },
@@ -371,7 +373,7 @@ export class TasksManager {
       jobId: job.id,
       errorReason,
       description: job.description,
-      artifacts
+      artifacts,
     };
     this.logger.info({
       links: callbackParams.links,

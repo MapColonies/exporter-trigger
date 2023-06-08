@@ -630,7 +630,7 @@ export class CreatePackageManager {
       if (completedExists) {
         return completedExists;
       }
-      return processingExists;
+      return {...processingExists, isDuplicated: true};
     }
 
     return undefined;

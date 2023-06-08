@@ -19,6 +19,7 @@ import { IExportJobStatusResponse, IJobExportParameters, IJobStatusResponse, ITa
 import { completedExportJob, inProgressJob, inProgressExportJob } from '../mocks/data';
 import { registerDefaultConfig } from '../mocks/config';
 import { jobManagerWrapperMock, updateJobMock, deleteTaskByIdMock } from '../mocks/clients/jobManagerWrapper';
+import { callbackClientMock } from '../mocks/clients/callbackClient';
 
 let finalizationManager: FinalizationManager;
 
@@ -26,7 +27,7 @@ describe('FinalizationManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    finalizationManager = new FinalizationManager(logger, taskManagerMock, queueClientMock, jobManagerWrapperMock);
+    finalizationManager = new FinalizationManager(logger, taskManagerMock, queueClientMock, callbackClientMock, jobManagerWrapperMock);
   });
 
   afterEach(() => {
@@ -118,7 +119,6 @@ describe('FinalizationManager', () => {
             recordCatalogId: completedExportJob.internalId as string,
             fileSize: 1000,
             jobId: completedExportJob.id,
-            fileNames: { metadataName: 'test', dataName: 'test' },
           },
         },
       };
@@ -170,7 +170,6 @@ describe('FinalizationManager', () => {
             fileSize: 0,
             errorReason: 'Failed on GPKG creation',
             jobId: completedExportJob.id,
-            fileNames: { metadataName: 'testTemplate', dataName: 'testTemplate' }
           },
         },
       };
@@ -280,7 +279,6 @@ describe('FinalizationManager', () => {
             recordCatalogId: completedExportJob.internalId as string,
             fileSize: 1000,
             jobId: completedExportJob.id,
-            fileNames: { metadataName: 'test', dataName: 'test' }
           },
         },
       };

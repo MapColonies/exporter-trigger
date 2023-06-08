@@ -105,6 +105,7 @@ export interface ICreateExportJobResponse {
   jobId: string;
   taskIds: string[];
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
+  isDuplicated?: boolean
 }
 
 /**
@@ -151,13 +152,12 @@ export interface ICallbackResposne extends ICallbackData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
-
 //todo - should be replaced and imported from exporter SDK
 export interface IArtifactDefinition {
-  name: string,
-  url?: string,
-  size?: number,
-  type: ArtifactType,
+  name: string;
+  url?: string;
+  size?: number;
+  type: ArtifactType;
 }
 
 /**
@@ -167,7 +167,6 @@ export interface ILinkDefinition {
   dataURI: string;
   metadataURI: string;
 }
-
 
 export interface ICallbackExportResponse extends ICallbackExportData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED | OperationStatus.FAILED;
@@ -356,4 +355,3 @@ export interface IExternalClientsConfig {
   httpRetry: IHttpRetryConfig;
   disableHttpClientLogs: boolean;
 }
-

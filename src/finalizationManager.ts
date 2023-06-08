@@ -6,7 +6,14 @@ import { getUTCDate } from '@map-colonies/mc-utils';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
 import { QueueClient } from './clients/queueClient';
-import { ICallbackDataExportBase, ICallbackExportData, ICallbackExportResponse, ITaskFinalizeParameters, JobExportResponse, JobFinalizeResponse } from './common/interfaces';
+import {
+  ICallbackDataExportBase,
+  ICallbackExportData,
+  ICallbackExportResponse,
+  ITaskFinalizeParameters,
+  JobExportResponse,
+  JobFinalizeResponse,
+} from './common/interfaces';
 import { JobManagerWrapper } from './clients/jobManagerWrapper';
 import { CallbackClient } from './clients/callbackClient';
 
@@ -63,7 +70,7 @@ export class FinalizationManager {
       return false;
     }
     const expirationDateUtc = getUTCDate();
-        expirationDateUtc.setDate(expirationDateUtc.getDate() + this.expirationDays);
+    expirationDateUtc.setDate(expirationDateUtc.getDate() + this.expirationDays);
     try {
       const attempts = finalizeTask.attempts;
       const jobId = finalizeTask.jobId;
@@ -71,7 +78,6 @@ export class FinalizationManager {
       this.logger.info({ jobId, taskId, msg: `Found new finalize task for jobId: ${jobId}` });
       const job = await this.taskManager.getFinalizeJobById(jobId);
       if (attempts <= this.finalizeAttempts) {
-        
         const isSuccess = finalizeTask.parameters.exporterTaskStatus === OperationStatus.COMPLETED ? true : false;
         let errReason = finalizeTask.parameters.reason;
 
@@ -88,7 +94,7 @@ export class FinalizationManager {
               msg: `success finalization. close task as completed, job closed as ${updateJobResults.status as OperationStatus}`,
             });
 
-          await this.sendExportCallbacks(job, updateJobResults.parameters?.callbackParams as ICallbackExportResponse);
+            await this.sendExportCallbacks(job, updateJobResults.parameters?.callbackParams as ICallbackExportResponse);
           } else {
             this.logger.info({
               jobId,
@@ -117,15 +123,15 @@ export class FinalizationManager {
         this.logger.warn({ jobId, taskId, msg: `Failed finalizing job, reached to max attempts of ${attempts}\\${this.finalizeAttempts}` });
         await this.queueClient.queueHandlerForFinalizeTasks.reject(jobId, taskId, false);
         await this.jobManagerClient.updateJob(job.id, { status: OperationStatus.FAILED, percentage: undefined });
-        
-        const failedCallback:ICallbackExportResponse = {
+
+        const failedCallback: ICallbackExportResponse = {
           expirationTime: expirationDateUtc,
           roi: job.parameters.roi,
           status: OperationStatus.FAILED,
           recordCatalogId: job.internalId as string,
           jobId: job.id,
           errorReason: finalizeTask.reason,
-        }
+        };
         await this.sendExportCallbacks(job, failedCallback);
       }
     } catch (error) {
