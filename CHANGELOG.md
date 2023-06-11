@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.16.0](https://github.com/MapColonies/exporter-trigger/compare/v2.15.1...v2.16.0) (2023-06-11)
+
+
+### Features
+
+* Semi integration mutual export ([#69](https://github.com/MapColonies/exporter-trigger/issues/69)) ([ec1766d](https://github.com/MapColonies/exporter-trigger/commit/ec1766d55e4f8cbb22c2b80cafc3b1b1a5b6bf3d)), closes [#1](https://github.com/MapColonies/exporter-trigger/issues/1) [#2](https://github.com/MapColonies/exporter-trigger/issues/2)
+
 ### [2.15.1](https://github.com/MapColonies/exporter-trigger/compare/v2.15.0...v2.15.1) (2023-04-30)
 
 ## [2.15.0](https://github.com/MapColonies/exporter-trigger/compare/v2.11.0...v2.15.0) (2023-04-16)
