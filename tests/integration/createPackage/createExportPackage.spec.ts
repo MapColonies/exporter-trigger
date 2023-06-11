@@ -187,6 +187,7 @@ describe('Export by ROI', function () {
         jobId: 'b1c59730-c31d-4e44-9c67-4dbbb3b1c812',
         taskIds: ['6556896a-113c-4397-a48b-0cb2c99658f5'],
         status: OperationStatus.IN_PROGRESS,
+        isDuplicated: true,
       };
 
       findLayerSpy.mockResolvedValue(layerFromCatalog);

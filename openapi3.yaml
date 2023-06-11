@@ -320,6 +320,8 @@ components:
           items:
             type: string
             format: uuid
+        isDuplicated:
+          type: boolean
       required:
         - jobId
         - taskIds

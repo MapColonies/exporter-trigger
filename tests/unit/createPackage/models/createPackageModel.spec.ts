@@ -633,6 +633,7 @@ describe('CreatePackageManager', () => {
           jobId: inProgressExportJob.id,
           taskIds: ['1f765695-338b-4752-b182-a8cbae3c610e'],
           status: OperationStatus.IN_PROGRESS,
+          isDuplicated: true,
         });
       });
 
@@ -672,6 +673,7 @@ describe('CreatePackageManager', () => {
           jobId: inProgressExportJob.id,
           taskIds: ['1f765695-338b-4752-b182-a8cbae3c610e'],
           status: OperationStatus.IN_PROGRESS,
+          isDuplicated: true,
         });
       });
 
@@ -720,6 +722,7 @@ describe('CreatePackageManager', () => {
           jobId: inProgressExportJob.id,
           taskIds: ['1f765695-338b-4752-b182-a8cbae3c610e'],
           status: OperationStatus.IN_PROGRESS,
+          isDuplicated: true,
         };
 
         expect(res).toEqual(expectedReturn);

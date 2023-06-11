@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import jsLogger from '@map-colonies/js-logger';
 import { ITaskResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { getUTCDate } from '@map-colonies/mc-utils';
 import { FinalizationManager } from '../../src/finalizationManager';
 import { ackMock, dequeueMock, queueClientMock, rejectMock } from '../mocks/clients/queueClient';
 import {
@@ -15,10 +16,17 @@ import {
   getFinalizeJobByIdMock,
   getJobsByTaskStatusMock,
 } from '../mocks/clients/taskManager';
-import { IExportJobStatusResponse, IJobExportParameters, IJobStatusResponse, ITaskFinalizeParameters } from '../../src/common/interfaces';
+import {
+  ICallbackDataExportBase,
+  IExportJobStatusResponse,
+  IJobExportParameters,
+  IJobStatusResponse,
+  ITaskFinalizeParameters,
+} from '../../src/common/interfaces';
 import { completedExportJob, inProgressJob, inProgressExportJob } from '../mocks/data';
-import { registerDefaultConfig } from '../mocks/config';
+import { configMock, registerDefaultConfig } from '../mocks/config';
 import { jobManagerWrapperMock, updateJobMock, deleteTaskByIdMock } from '../mocks/clients/jobManagerWrapper';
+import { callbackClientMock } from '../mocks/clients/callbackClient';
 
 let finalizationManager: FinalizationManager;
 
@@ -26,7 +34,7 @@ describe('FinalizationManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    finalizationManager = new FinalizationManager(logger, taskManagerMock, queueClientMock, jobManagerWrapperMock);
+    finalizationManager = new FinalizationManager(logger, taskManagerMock, queueClientMock, callbackClientMock, jobManagerWrapperMock);
   });
 
   afterEach(() => {
@@ -90,7 +98,10 @@ describe('FinalizationManager', () => {
     });
   });
   describe('#jobFinalizePoll', () => {
+    let sendCallbacksSpy: jest.SpyInstance;
+
     it('should poll finalize task and execute finalizing to job with success (success exporting)', async () => {
+      sendCallbacksSpy = jest.spyOn(finalizationManager, 'sendExportCallbacks');
       const dequeuedFinalizeTask: ITaskResponse<ITaskFinalizeParameters> = {
         id: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
         jobId: '880a9316-0f10-4874-92e2-a62d587a1169',
@@ -122,12 +133,16 @@ describe('FinalizationManager', () => {
         },
       };
 
+      const expectedCallbackParamData = expectedUpdateParams.parameters?.callbackParams;
+
       dequeueMock.mockReturnValue(dequeuedFinalizeTask);
       getFinalizeJobByIdMock.mockReturnValue(completedExportJob);
       finalizeGPKGSuccessMock.mockReturnValue(expectedUpdateParams);
 
       await finalizationManager.jobFinalizePoll();
-
+      const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
+      expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
+      expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
       expect(dequeueMock).toHaveBeenCalledTimes(1);
       expect(getFinalizeJobByIdMock).toHaveBeenCalledTimes(1);
       expect(finalizeGPKGSuccessMock).toHaveBeenCalledTimes(1);
@@ -140,6 +155,7 @@ describe('FinalizationManager', () => {
     });
 
     it('should poll finalize task and execute finalizing to job with attempts failure (failed exporting)', async () => {
+      sendCallbacksSpy = jest.spyOn(finalizationManager, 'sendExportCallbacks');
       const dequeuedFinalizeTask: ITaskResponse<ITaskFinalizeParameters> = {
         id: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
         jobId: '880a9316-0f10-4874-92e2-a62d587a1169',
@@ -173,11 +189,16 @@ describe('FinalizationManager', () => {
         },
       };
 
+      const expectedCallbackParamData = expectedUpdateParams.parameters?.callbackParams;
+
       dequeueMock.mockResolvedValue(dequeuedFinalizeTask);
       getFinalizeJobByIdMock.mockResolvedValue(completedExportJob);
       finalizeGPKGFailureMock.mockResolvedValue(expectedUpdateParams);
       await finalizationManager.jobFinalizePoll();
 
+      const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
+      expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
+      expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
       expect(dequeueMock).toHaveBeenCalledTimes(1);
       expect(getFinalizeJobByIdMock).toHaveBeenCalledTimes(1);
       expect(finalizeGPKGFailureMock).toHaveBeenCalledTimes(1);
@@ -190,6 +211,7 @@ describe('FinalizationManager', () => {
     });
 
     it('should poll finalize task and execute finalizing task rejection (because not reached the job - Async function)', async () => {
+      sendCallbacksSpy = jest.spyOn(finalizationManager, 'sendExportCallbacks');
       const dequeuedFinalizeTask: ITaskResponse<ITaskFinalizeParameters> = {
         id: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
         jobId: '880a9316-0f10-4874-92e2-a62d587a1169',
@@ -208,7 +230,7 @@ describe('FinalizationManager', () => {
       getFinalizeJobByIdMock.mockRejectedValue('internal server error');
       finalizeGPKGSuccessMock.mockResolvedValue(undefined);
       await finalizationManager.jobFinalizePoll();
-
+      expect(sendCallbacksSpy).toHaveBeenCalledTimes(0);
       expect(dequeueMock).toHaveBeenCalledTimes(1);
       expect(getFinalizeJobByIdMock).toHaveBeenCalledTimes(1);
       expect(finalizeGPKGSuccessMock).toHaveBeenCalledTimes(0);
@@ -219,6 +241,7 @@ describe('FinalizationManager', () => {
     });
 
     it('should poll finalize task and reject because max-attempts', async () => {
+      sendCallbacksSpy = jest.spyOn(finalizationManager, 'sendExportCallbacks');
       const dequeuedFinalizeTask: ITaskResponse<ITaskFinalizeParameters> = {
         id: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
         jobId: '880a9316-0f10-4874-92e2-a62d587a1169',
@@ -233,12 +256,25 @@ describe('FinalizationManager', () => {
         resettable: false,
       };
 
+      const expirationDateUtc = getUTCDate();
+      expirationDateUtc.setDate(expirationDateUtc.getDate() + configMock.get<number>('cleanupExpirationDays'));
+      const expectedCallbackParamData = {
+        roi: completedExportJob.parameters.roi,
+        status: OperationStatus.FAILED,
+        expirationTime: expirationDateUtc,
+        recordCatalogId: completedExportJob.internalId as string,
+        errorReason: 'string',
+        jobId: completedExportJob.id,
+      };
       dequeueMock.mockReturnValue(dequeuedFinalizeTask);
       getFinalizeJobByIdMock.mockReturnValue(completedExportJob);
       finalizeGPKGSuccessMock.mockReturnValue(undefined);
 
       await finalizationManager.jobFinalizePoll();
 
+      const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
+      expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
+      expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
       expect(dequeueMock).toHaveBeenCalledTimes(1);
       expect(getFinalizeJobByIdMock).toHaveBeenCalledTimes(1);
       expect(finalizeGPKGSuccessMock).toHaveBeenCalledTimes(0);

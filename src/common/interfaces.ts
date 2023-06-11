@@ -1,6 +1,7 @@
 import { MultiPolygon, Polygon, BBox, FeatureCollection, Geometry } from '@turf/turf';
 import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IHttpRetryConfig, ITileRange } from '@map-colonies/mc-utils';
+import { ArtifactType } from './enums';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -104,6 +105,7 @@ export interface ICreateExportJobResponse {
   jobId: string;
   taskIds: string[];
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
+  isDuplicated?: boolean;
 }
 
 /**
@@ -122,13 +124,14 @@ export interface ICallbackDataBase {
 }
 
 export interface ICallbackDataExportBase {
-  links: ILinkDefinition;
-  expirationTime: Date;
-  fileSize: number;
+  links?: ILinkDefinition;
+  expirationTime?: Date;
+  fileSize?: number;
   recordCatalogId: string;
   jobId: string;
   errorReason?: string;
   description?: string;
+  artifacts?: IArtifactDefinition[];
 }
 
 /**
@@ -149,6 +152,17 @@ export interface ICallbackResposne extends ICallbackData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
+//todo - should be replaced and imported from exporter SDK
+export interface IArtifactDefinition {
+  name: string;
+  url?: string;
+  size?: number;
+  type: ArtifactType;
+}
+
+/**
+ * @deprecated ROI INTERNAL API - will be deprecated on future by shared exporter
+ */
 export interface ILinkDefinition {
   dataURI: string;
   metadataURI: string;

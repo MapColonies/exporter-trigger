@@ -7,6 +7,7 @@ import {
   CreateFinalizeTaskBody,
   ICallbackDataBase,
   ICallbackDataExportBase,
+  ICallbackExportResponse,
   ICallbackTargetExport,
   ITaskParameters,
   JobExportResponse,
@@ -25,6 +26,7 @@ import {
 } from '../../../mocks/clients/jobManagerWrapper';
 import { mockCompletedJob, mockJob } from '../../../mocks/data/mockJob';
 import * as utils from '../../../../src/common/utils';
+import { ArtifactType } from '../../../../src/common/enums';
 
 let tasksManager: TasksManager;
 let getTasksByJobIdStub: jest.Mock;
@@ -473,17 +475,14 @@ describe('TasksManager', () => {
     });
 
     describe('#FinalizingSuccessExportJob', () => {
-      let sendCallbacksSpy: jest.SpyInstance;
-
       it('should successfully generate finalize a job data with status completed - and invoke relative callbacks', async () => {
         const downloadUrl = configMock.get<string>('downloadServerUrl');
         const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
         getFileSizeSpy.mockResolvedValue(2000);
         const expirationTime = new Date();
         createExportJsonMetadataMock.mockResolvedValue(true);
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendExportCallbacks');
 
-        const expectedCallbackParamData: ICallbackDataExportBase = {
+        const expectedCallbackParamData: ICallbackExportResponse = {
           expirationTime,
           fileSize: 2000,
           links: {
@@ -494,6 +493,22 @@ describe('TasksManager', () => {
           jobId: mockCompletedJob.id,
           errorReason: undefined,
           description: 'test job',
+          roi: mockCompletedJob.parameters.roi,
+          status: OperationStatus.COMPLETED,
+          artifacts: [
+            {
+              name: 'Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.gpkg',
+              size: 2000,
+              type: ArtifactType.GPKG,
+              url: 'http://download-service/downloads/415c9316e58862194145c4b54cf9d87e/Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.gpkg',
+            },
+            {
+              name: 'Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.json',
+              size: 2000,
+              type: ArtifactType.METADATA,
+              url: 'http://download-service/downloads/415c9316e58862194145c4b54cf9d87e/Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.json',
+            },
+          ],
         };
 
         const expectedUpdateRequest = {
@@ -502,16 +517,12 @@ describe('TasksManager', () => {
           status: OperationStatus.COMPLETED,
           parameters: {
             ...mockCompletedJob.parameters,
-            callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.COMPLETED },
+            callbackParams: expectedCallbackParamData,
             cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
           },
         };
         const results = await tasksManager.finalizeGPKGSuccess(mockCompletedJob, expirationTime);
         expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(1);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
         expect(results).toStrictEqual(expectedUpdateRequest);
       });
 
@@ -520,9 +531,8 @@ describe('TasksManager', () => {
         getFileSizeSpy.mockResolvedValue(0);
         const expirationTime = new Date();
         createExportJsonMetadataMock.mockResolvedValue(false);
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendExportCallbacks');
 
-        const expectedCallbackParamData: ICallbackDataExportBase = {
+        const expectedCallbackParamData: ICallbackExportResponse = {
           expirationTime,
           fileSize: 0,
           links: {
@@ -533,6 +543,22 @@ describe('TasksManager', () => {
           jobId: mockCompletedJob.id,
           errorReason: 'Failed on metadata.json creation',
           description: 'test job',
+          roi: mockCompletedJob.parameters.roi,
+          status: OperationStatus.FAILED,
+          artifacts: [
+            {
+              name: 'Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.gpkg',
+              size: 0,
+              type: ArtifactType.GPKG,
+              url: undefined,
+            },
+            {
+              name: 'Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.json',
+              size: 0,
+              type: ArtifactType.METADATA,
+              url: undefined,
+            },
+          ],
         };
 
         const expectedUpdateRequest = {
@@ -547,25 +573,18 @@ describe('TasksManager', () => {
         };
         const results = await tasksManager.finalizeGPKGSuccess(mockCompletedJob, expirationTime);
         expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(1);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
         expect(results).toStrictEqual(expectedUpdateRequest);
       });
     });
 
     describe('#FinalizingFailureExportJob', () => {
-      let sendCallbacksSpy: jest.SpyInstance;
-
       it('should generate finalize a job data for failed exported job with status failed - and invoke relative callbacks', async () => {
         const exportingErrorMsg = 'Failed on generating gpkg';
         const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
         getFileSizeSpy.mockResolvedValue(0);
         const expirationTime = new Date();
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendExportCallbacks');
 
-        const expectedCallbackParamData: ICallbackDataExportBase = {
+        const expectedCallbackParamData: ICallbackExportResponse = {
           expirationTime,
           fileSize: 0,
           links: {
@@ -576,6 +595,22 @@ describe('TasksManager', () => {
           jobId: mockCompletedJob.id,
           errorReason: exportingErrorMsg,
           description: 'test job',
+          roi: mockCompletedJob.parameters.roi,
+          status: OperationStatus.FAILED,
+          artifacts: [
+            {
+              name: 'Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.gpkg',
+              size: 0,
+              type: ArtifactType.GPKG,
+              url: undefined,
+            },
+            {
+              name: 'Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.json',
+              size: 0,
+              type: ArtifactType.METADATA,
+              url: undefined,
+            },
+          ],
         };
 
         const expectedUpdateRequest = {
@@ -584,15 +619,11 @@ describe('TasksManager', () => {
           status: OperationStatus.FAILED,
           parameters: {
             ...mockCompletedJob.parameters,
-            callbackParams: { ...expectedCallbackParamData, roi: mockCompletedJob.parameters.roi, status: OperationStatus.FAILED },
+            callbackParams: expectedCallbackParamData,
             cleanupData: { directoryPath: mockCompletedJob.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationTime },
           },
         };
         const results = await tasksManager.finalizeGPKGFailure(mockCompletedJob, expirationTime, exportingErrorMsg);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
         expect(results).toStrictEqual(expectedUpdateRequest);
       });
     });

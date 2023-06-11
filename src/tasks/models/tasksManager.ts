@@ -8,6 +8,7 @@ import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
   CreateFinalizeTaskBody,
+  IArtifactDefinition,
   ICallbackData,
   ICallbackDataBase,
   ICallbackDataExportBase,
@@ -27,6 +28,7 @@ import {
 import { CallbackClient } from '../../clients/callbackClient';
 import { getFileSize } from '../../common/utils';
 import { CreatePackageManager } from '../../createPackage/models/createPackageManager';
+import { ArtifactType } from '../../common/enums';
 
 export interface ITaskStatusResponse {
   percentage: number | undefined;
@@ -149,7 +151,10 @@ export class TasksManager {
     }
   }
 
-  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackDataExportBase): Promise<void> {
+  public async sendExportCallbacks(
+    job: JobExportResponse | JobFinalizeResponse,
+    callbackParams: ICallbackDataExportBase | ICallbackExportResponse
+  ): Promise<void> {
     try {
       this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
@@ -229,14 +234,15 @@ export class TasksManager {
     // create and sending response to callbacks
     const callbackSendParams = await this.generateCallbackParam(job, expirationDateUTC, reason);
 
-    await this.sendExportCallbacks(job, callbackSendParams);
-
     const callbackParams: ICallbackExportResponse = {
       ...callbackSendParams,
       roi: job.parameters.roi,
       status: finalizeStatus,
       errorReason: reason,
     };
+
+    // todo - marked, callback will send only after job completed
+    // await this.sendExportCallbacks(job, callbackParams);
 
     this.logger.info({ finalizeStatus, jobId: job.id, msg: `Updating job finalizing status` });
     const updateJobParams = {
@@ -258,14 +264,15 @@ export class TasksManager {
     // create and sending response to callbacks
     const callbackSendParams = await this.generateCallbackParam(job, expirationDateUTC, reason);
 
-    await this.sendExportCallbacks(job, callbackSendParams);
-
     const callbackParams: ICallbackExportResponse = {
       ...callbackSendParams,
       roi: job.parameters.roi,
       status: OperationStatus.FAILED,
       errorReason: reason,
     };
+
+    // todo - marked, callback will send only after job completed
+    // await this.sendExportCallbacks(job, callbackParams);
 
     this.logger.info({ reason, jobId: job.id, msg: `Updating job finalizing status for failure job` });
     const updateJobParams: IUpdateJobBody<IJobExportParameters> = {
@@ -306,6 +313,7 @@ export class TasksManager {
     return cleanupData;
   }
 
+  // todo - refactor after first integration with mutual export - to suite the real webhook interface
   private async generateCallbackParam(
     job: JobExportResponse | JobFinalizeResponse,
     expirationDate: Date,
@@ -315,18 +323,23 @@ export class TasksManager {
     this.logger.info({ jobId: job.id, msg: `generate callback body for job: ${job.id}` });
 
     const packageName = job.parameters.fileNamesTemplates.dataURI;
+    const metadataName = job.parameters.fileNamesTemplates.metadataURI;
     const relativeFilesDirectory = job.parameters.relativeDirectoryPath;
     const success = errorReason === undefined;
     let fileSize = 0;
+    let metadataSize = 0;
     if (success) {
       const packageFullPath = concatFsPaths(this.gpkgsLocation, relativeFilesDirectory, packageName);
+      const metadataFullPath = concatFsPaths(this.gpkgsLocation, relativeFilesDirectory, metadataName);
       // Todo - link shouldn't be hard-coded for each of his parts! temporary before webhooks implementation
       links = {
         dataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.dataURI}`,
         metadataURI: `${this.downloadServerUrl}/downloads/${relativeFilesDirectory}/${job.parameters.fileNamesTemplates.metadataURI}`,
       };
       try {
+        // todo - remove on future - not in use
         fileSize = await getFileSize(packageFullPath);
+        metadataSize = await getFileSize(metadataFullPath);
       } catch (error) {
         this.logger.error({
           jobId: job.id,
@@ -336,6 +349,22 @@ export class TasksManager {
         });
       }
     }
+
+    const artifacts: IArtifactDefinition[] = [
+      {
+        name: job.parameters.fileNamesTemplates.dataURI,
+        url: success ? links.dataURI : undefined,
+        size: fileSize,
+        type: ArtifactType.GPKG,
+      },
+      {
+        name: job.parameters.fileNamesTemplates.metadataURI,
+        url: success ? links.metadataURI : undefined,
+        size: metadataSize,
+        type: ArtifactType.METADATA,
+      },
+    ];
+
     const callbackParams: ICallbackDataExportBase = {
       links,
       expirationTime: expirationDate,
@@ -344,6 +373,7 @@ export class TasksManager {
       jobId: job.id,
       errorReason,
       description: job.description,
+      artifacts,
     };
     this.logger.info({
       links: callbackParams.links,
