@@ -105,7 +105,7 @@ export interface ICreateExportJobResponse {
   jobId: string;
   taskIds: string[];
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
-  isDuplicated?: boolean
+  isDuplicated?: boolean;
 }
 
 /**
