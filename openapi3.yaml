@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: exporter-trigger
   description: Service that responsible for activating the export geopackage process
-  version: 2.16.2
+  version: 2.16.3
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT

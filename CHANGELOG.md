@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.16.3](https://github.com/MapColonies/exporter-trigger/compare/v2.16.2...v2.16.3) (2023-07-05)
+
 ### [2.16.2](https://github.com/MapColonies/exporter-trigger/compare/v2.16.1...v2.16.2) (2023-06-11)
 
 ### [2.16.1](https://github.com/MapColonies/exporter-trigger/compare/v2.16.0...v2.16.1) (2023-06-11)
