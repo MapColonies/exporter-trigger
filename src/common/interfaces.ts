@@ -239,6 +239,7 @@ export interface IMapSource {
   };
 }
 export interface ITaskParameters {
+  isNewTarget: boolean;
   batches: ITileRange[];
   sources: IMapSource[];
 }
