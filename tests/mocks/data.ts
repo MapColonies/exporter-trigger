@@ -307,6 +307,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       type: 'rasterTilesExporter',
       description: '',
       parameters: {
+        isNewTarget: true,
         batches: [],
         sources: [],
       },
@@ -365,6 +366,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
       type: 'rasterTilesExporter',
       description: '',
       parameters: {
+        isNewTarget: true,
         batches: [],
         sources: [],
       },
@@ -793,6 +795,7 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
       type: 'rasterTilesExporter',
       description: '',
       parameters: {
+        isNewTarget: true,
         batches: [],
         sources: [],
       },
@@ -850,6 +853,7 @@ const inProgressExportJob: IJobResponse<IJobExportParameters, ITaskParameters> =
       type: 'rasterTilesExporter',
       description: '',
       parameters: {
+        isNewTarget: true,
         batches: [],
         sources: [],
       },
