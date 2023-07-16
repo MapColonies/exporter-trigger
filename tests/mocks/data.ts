@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { LayerMetadata, ProductType, RecordType } from '@map-colonies/mc-model-types';
+import { LayerMetadata, ProductType, RecordType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { FeatureCollection } from '@turf/helpers';
 import {
@@ -308,6 +308,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       description: '',
       parameters: {
         isNewTarget: true,
+        targetFormat: TileOutputFormat.PNG,
         batches: [],
         sources: [],
       },
@@ -367,6 +368,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
       description: '',
       parameters: {
         isNewTarget: true,
+        targetFormat: TileOutputFormat.PNG,
         batches: [],
         sources: [],
       },
@@ -796,6 +798,7 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
       description: '',
       parameters: {
         isNewTarget: true,
+        targetFormat: TileOutputFormat.JPEG,
         batches: [],
         sources: [],
       },
@@ -854,6 +857,7 @@ const inProgressExportJob: IJobResponse<IJobExportParameters, ITaskParameters> =
       description: '',
       parameters: {
         isNewTarget: true,
+        targetFormat: TileOutputFormat.JPEG,
         batches: [],
         sources: [],
       },

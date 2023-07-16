@@ -80,6 +80,7 @@ export class JobManagerWrapper extends JobManagerClient {
           type: this.tilesTaskType,
           parameters: {
             isNewTarget: true,
+            targetFormat: data.targetFormat,
             batches: data.batches,
             sources: data.sources,
           },
@@ -127,6 +128,7 @@ export class JobManagerWrapper extends JobManagerClient {
           type: this.tilesTaskType,
           parameters: {
             isNewTarget: true,
+            targetFormat: data.targetFormat,
             batches: data.batches,
             sources: data.sources,
           },
