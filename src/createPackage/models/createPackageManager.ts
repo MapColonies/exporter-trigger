@@ -202,6 +202,7 @@ export class CreatePackageManager {
       priority: priority ?? DEFAULT_PRIORITY,
       callbacks: callbacks,
       gpkgEstimatedSize: estimatesGpkgSize,
+      targetFormat: layerMetadata.tileOutputFormat,
     };
     const jobCreated = await this.jobManagerClient.create(workerInput);
     return jobCreated;
@@ -364,6 +365,7 @@ export class CreatePackageManager {
       callbacks: callbacks,
       gpkgEstimatedSize: estimatesGpkgSize,
       description,
+      targetFormat: layerMetadata.tileOutputFormat,
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);
     return jobCreated;
