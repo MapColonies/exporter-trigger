@@ -3,8 +3,6 @@ global:
   tracing: {}
   metrics: {}
   environment: {}
-  authentication:
-    jwtPublicKeySecretName: map-colonies-jwks
 
 rasterCommon:
   serviceUrls:
@@ -18,10 +16,6 @@ rasterCommon:
       jobType: tilesExport
       taskTilesType: tilesExport
       taskFinalizeType: tilesFinalize
-  authentication:
-    opa:
-      enabled: false
-      customHeaderName: ""
   storage:
     tilesStorageProvider: 'FS'
     fs:
@@ -49,7 +43,6 @@ image:
 
 env:
   port: 8080
-  internalPort: 80
   targetPort: 8080
   logLevel: info
   logPrettyPrintEnabled: false
@@ -101,11 +94,8 @@ route:
 ingress:
   enabled: false
   type: 'nginx-org' # supported values: 'nginx-org' | 'nginx-kubernetes
-  path: /api/raster/v1
+  path: /
   host: 'localhost'
-  tls: 
-      enabled: true
-      useExternal: ''
   cors:
     enabled: true
     origin: '*'

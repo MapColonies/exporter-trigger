@@ -1,7 +1,6 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "exporter-trigger.name" . -}}
 {{- $cloudProviderFlavor := include "exporter-trigger.cloudProviderFlavor" . -}}
-{{ $targetPort := ternary "external" "internal" .Values.rasterCommon.authentication.opa.enabled }}
 
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
 apiVersion: route.openshift.io/v1
@@ -18,8 +17,6 @@ spec:
   host: {{ .Values.route.host }}
   {{- end }}
   path:  {{ .Values.route.path | default "/" }}
-  port:
-    targetPort: {{ $targetPort }}
   to:
     kind: Service
     name: {{ $releaseName }}-{{ $chartName }}
@@ -27,10 +24,5 @@ spec:
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect
-    {{- if .Values.route.useCert }}
-    certificate: {{ .Files.Get "config/cert.pem" | quote }}
-    key: {{ .Files.Get "config/key.pem" | quote }}
-    caCertificate: {{ .Files.Get "config/caCertificate.pem" | quote }}
-    {{- end }}
   {{- end -}}
 {{- end -}}
