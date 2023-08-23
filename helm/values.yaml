@@ -46,35 +46,6 @@ image:
   repository: exporter-trigger
   tag: 'latest'
 
-opa:
-  image: openpolicyagent/opa
-  imageTag: 0.29.4-envoy-3
-  port: 9191
-  enableLogging: false
-  resources:
-    enabled: true
-    value:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-envoy:
-  image: envoyproxy/envoy
-  imageTag: v1.20.7
-  port: 8000
-  maxRequestBytes: 8192
-  requestedDomain: rasterExport
-  resources:
-    enabled: true
-    value:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
 
 env:
   port: 8080
