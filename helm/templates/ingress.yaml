@@ -25,12 +25,6 @@ metadata:
       add_header 'Access-Control-Allow-Headers' '*';
     {{- end }}
 spec:
-{{- if .Values.ingress.tls.enabled }}
-  tls:
-  - hosts:
-    - {{ .Values.ingress.host | quote }}
-    secretName: ingress-tls-secret
-  {{- end }}
   rules:
   - http:
       paths:
