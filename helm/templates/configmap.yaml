@@ -42,4 +42,5 @@ data:
   QUEUE_HEART_BEAT_INTERVAL_MS: {{ .Values.env.queue.heartbeatIntervalMs | quote }}
   FINALIZE_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.exporter.taskFinalizeType | quote }}
   FINALIZE_TASKS_ATTEMPTS: {{ .Values.env.queue.finalizeTasksAttempts | quote }}
+  npm_config_cache: /tmp/
 {{- end }}
