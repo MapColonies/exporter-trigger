@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.16.6](https://github.com/MapColonies/exporter-trigger/compare/v2.16.5...v2.16.6) (2023-09-19)
+
+
+### Bug Fixes
+
+* add internal-port(80) ([#75](https://github.com/MapColonies/exporter-trigger/issues/75)) ([b6393ac](https://github.com/MapColonies/exporter-trigger/commit/b6393acd572d23cf7be0ccf1db6cb7efc897d24b))
+* removed chart name from template names ([#74](https://github.com/MapColonies/exporter-trigger/issues/74)) ([1815cae](https://github.com/MapColonies/exporter-trigger/commit/1815cae03b558a55ed4852807d964579503bbdb2))
+
 ### [2.16.5](https://github.com/MapColonies/exporter-trigger/compare/v2.16.4...v2.16.5) (2023-08-28)
 
 ### [2.16.4](https://github.com/MapColonies/exporter-trigger/compare/v2.16.3...v2.16.4) (2023-07-16)
