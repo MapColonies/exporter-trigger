@@ -44,6 +44,7 @@ image:
 env:
   port: 8080
   targetPort: 8080
+  internalPort: 80
   logLevel: info
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
