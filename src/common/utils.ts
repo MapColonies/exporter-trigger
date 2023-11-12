@@ -1,6 +1,7 @@
 import { promises as fsPromise } from 'fs';
 import { parse as parsePath } from 'path';
 import { sep } from 'path';
+import { createHash } from 'crypto';
 import checkDiskSpace from 'check-disk-space';
 import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
 import { FeatureCollection, Geometry } from '@turf/helpers';
@@ -11,6 +12,12 @@ import { ZOOM_ZERO_RESOLUTION } from './constants';
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;
   return Math.trunc(fileSizeInBytes); // Make sure we return an Integer
+};
+
+export const getFilesha256Hash = async (filePath: string): Promise<string> => {
+  const buff = await fsPromise.readFile(filePath);
+  const hash = createHash('sha256').update(buff).digest('hex');
+  return hash;
 };
 
 export const getGpkgNameWithoutExt = (packageName: string): string => {
