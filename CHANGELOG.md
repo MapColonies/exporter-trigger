@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.17.0](https://github.com/MapColonies/exporter-trigger/compare/v2.16.7...v2.17.0) (2023-11-13)
+
+
+### Features
+
+* add sha256 checksum to metadata file ([#77](https://github.com/MapColonies/exporter-trigger/issues/77)) ([2a383d0](https://github.com/MapColonies/exporter-trigger/commit/2a383d0a8260e66ae380138704482c030114a73a))
+
 ### [2.16.7](https://github.com/MapColonies/exporter-trigger/compare/v2.16.6...v2.16.7) (2023-09-20)
 
 ### [2.16.6](https://github.com/MapColonies/exporter-trigger/compare/v2.16.5...v2.16.6) (2023-09-19)
