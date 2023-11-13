@@ -54,6 +54,7 @@ import {
   concatFsPaths,
   parseFeatureCollection,
   generateGeoIdentifier,
+  getFilesha256Hash,
 } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
@@ -442,6 +443,11 @@ export class CreatePackageManager {
       };
       record.metadata.productBoundingBox = roiBbox.join(',');
 
+      const packageName = job.parameters.fileNamesTemplates.dataURI;
+      const relativeFilesDirectory = job.parameters.relativeDirectoryPath;
+      const packageFullPath = concatFsPaths(this.gpkgsLocation, relativeFilesDirectory, packageName);
+      const sha256 = await getFilesha256Hash(packageFullPath);
+      (record.metadata as unknown as { sha256: string }).sha256 = sha256;
       this.logger.debug({ ...record.metadata, metadataFullPath, jobId: job.id, msg: 'Metadata json file will be written to file' });
       const recordMetadata = JSON.stringify(record.metadata);
 

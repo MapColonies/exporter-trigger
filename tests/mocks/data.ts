@@ -969,6 +969,7 @@ const metadataExportJson = {
     ],
   },
   productBoundingBox: '25.120393802953117,-16.979479051947962,37.42414218385065,17.95036866237062',
+  sha256: 'sha256_hash_mock',
 } as unknown as LayerMetadata;
 
 const featuresRecordsSampleFc1 = [

@@ -400,6 +400,8 @@ describe('CreatePackageManager', () => {
       it('should create metadata.json file with the correct parameters', async () => {
         const gpkgLocation = configMock.get<string>('gpkgsLocation');
         const concatFsPathsSpy = jest.spyOn(utils, 'concatFsPaths');
+        const getFilesha256HashSpy = jest.spyOn(utils, 'getFilesha256Hash');
+        getFilesha256HashSpy.mockResolvedValue('sha256_hash_mock');
         const parseFeatureCollectionSpy = jest.spyOn(utils, 'parseFeatureCollection');
         findLayerMock.mockResolvedValue(layerFromCatalogSample);
 
@@ -407,7 +409,8 @@ describe('CreatePackageManager', () => {
         expect(fs.promises.writeFile).toHaveBeenCalledTimes(1);
         expect(parseFeatureCollectionSpy).toHaveBeenCalledTimes(1);
         expect(parseFeatureCollectionSpy).toHaveBeenCalledWith(completedExportJob.parameters.roi);
-        expect(concatFsPathsSpy).toHaveBeenCalledTimes(1);
+        expect(getFilesha256HashSpy).toHaveBeenCalledTimes(1);
+        expect(concatFsPathsSpy).toHaveBeenCalledTimes(2);
         expect(concatFsPathsSpy).toHaveBeenCalledWith(
           gpkgLocation,
           completedExportJob.parameters.relativeDirectoryPath,
