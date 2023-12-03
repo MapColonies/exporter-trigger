@@ -19,8 +19,8 @@ export const getFilesha256Hash = async (filePath: string): Promise<string> => {
 };
 
 export async function getFileHash(filename: string, algorithm = 'sha256'): Promise<string> {
-  if (!existsSync(filename)) { 
-    throw new Error('File does not exist'); 
+  if (!existsSync(filename)) {
+    throw new Error('File does not exist');
   }
   const hash = createHash(algorithm);
 
