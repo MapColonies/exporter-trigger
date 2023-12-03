@@ -7,6 +7,32 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Test Spec File",
+      "protocol": "inspector",
+      "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
+      "args": [
+        "--collectCoverage=false",
+        "--colors",
+        "--config",
+        "${workspaceRoot}/tests/configurations/unit/jest.config.js",
+        "--runInBand",
+        /*"--runTestsByPath",
+        "${relativeFile}",
+        "--testPathPattern=${fileDirname}",*/
+        "--testTimeout=10000000"
+      ],
+      "outputCapture": "std",
+      "internalConsoleOptions": "openOnSessionStart",
+      "envFile": "${workspaceRoot}/.env",
+      "skipFiles": ["${workspaceRoot}/../../node_modules/**/*", "<node_internals>/**/*"],
+      "windows": {
+        "skipFiles": ["C:\\**\\node_modules\\**\\*", "<node_internals>/**/*"]
+      },
+      "disableOptimisticBPs": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Server",
       "preLaunchTask": "npm: build",
       "sourceMaps": true,
