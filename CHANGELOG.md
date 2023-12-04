@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.17.1](https://github.com/MapColonies/exporter-trigger/compare/v2.17.0...v2.17.1) (2023-12-04)
+
+
+### Bug Fixes
+
+* handle files larger than 2G ([#78](https://github.com/MapColonies/exporter-trigger/issues/78)) ([6afc3e8](https://github.com/MapColonies/exporter-trigger/commit/6afc3e887377718a2fb6b27fdab8a1c9f1393371))
+
 ## [2.17.0](https://github.com/MapColonies/exporter-trigger/compare/v2.16.7...v2.17.0) (2023-11-13)
 
 
