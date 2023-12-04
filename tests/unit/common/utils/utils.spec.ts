@@ -28,6 +28,14 @@ describe('Utils', () => {
     });
   });
 
+  describe('get File Hash', () => {
+    it('should return hash of file', async () => {
+      const fileName = utils.concatFsPaths(process.cwd(), 'tests', 'unit', 'common', 'utils', 'file_to_hash.txt');
+      const result = await utils.getFilesha256Hash(fileName);
+      expect(result).toBe('62a69c270f19efe1fa7bf3eda1bceb56626cd21bafecbec57aad2a2bf1d3aa24');
+    });
+  });
+
   describe('calculate  gpkg name without extention', () => {
     it('should return string name without extention (.gpkg)', () => {
       const fileName = 'test.gpkg';

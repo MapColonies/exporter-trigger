@@ -1,7 +1,6 @@
-import { promises as fsPromise } from 'fs';
-import { parse as parsePath } from 'path';
-import { sep } from 'path';
-import { createHash } from 'crypto';
+import { promises as fsPromise, existsSync, createReadStream } from 'node:fs';
+import { parse as parsePath, sep } from 'node:path';
+import { createHash } from 'node:crypto';
 import checkDiskSpace from 'check-disk-space';
 import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
 import { FeatureCollection, Geometry } from '@turf/helpers';
@@ -15,10 +14,26 @@ export const getFileSize = async (filePath: string): Promise<number> => {
 };
 
 export const getFilesha256Hash = async (filePath: string): Promise<string> => {
-  const buff = await fsPromise.readFile(filePath);
-  const hash = createHash('sha256').update(buff).digest('hex');
+  const hash = await getFileHash(filePath, 'sha256');
   return hash;
 };
+
+export async function getFileHash(filename: string, algorithm = 'sha256'): Promise<string> {
+  if (!existsSync(filename)) {
+    throw new Error('File does not exist');
+  }
+  const hash = createHash(algorithm);
+
+  const input = createReadStream(filename);
+
+  const stream = input.pipe(hash).setEncoding('hex');
+
+  return new Promise((resolve, reject) => {
+    input.on('error', reject);
+    stream.on('data', resolve);
+    stream.on('error', reject);
+  });
+}
 
 export const getGpkgNameWithoutExt = (packageName: string): string => {
   return parsePath(packageName).name;
