@@ -37,7 +37,6 @@
       "jobManager": {
         "url": "http://job-manager-job-manager",
         "jobDomain": "RASTER",
-        "cleanupExpirationDays": 30,
         "dequeueFinalizeIntervalMs": 1000,
         "finalizeTasksAttempts": 5
       },
