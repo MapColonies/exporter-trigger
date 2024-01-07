@@ -3,26 +3,44 @@ global:
   tracing: {}
   metrics: {}
   environment: {}
-
-rasterCommon:
   serviceUrls:
-    catalogManager: "http://catalog-raster-dev-raster-catalog-manager"
-    heartbeatManager: "http://heartbeat-raster-dev-raster-heartbeat-manager"
-    jobManager: "http://job-manager-raster-dev-discrete-ingestion-db"
-    downloadServer: "http://files-server-raster-dev-files-server"
+    catalogManager: ""
+    heartbeatManager: ""
+    jobManager: ""
+    downloadServer: ""
   jobManagement:
-    jobDomain: RASTER
+    jobDomain: ""
     exporter:
-      jobType: tilesExport
-      taskTilesType: tilesExport
-      taskFinalizeType: tilesFinalize
+      jobType: ""
+      taskTilesType: ""
+      taskFinalizeType: ""
   storage:
-    tilesStorageProvider: 'FS'
+    tilesStorageProvider: ""
     fs:
       internalPvc:
-        enabled: true
-        name: internal-pvc
-        gpkgSubPath: gpkgs
+        enabled: false
+        name: ""
+        gpkgSubPath: ""
+
+serviceUrls:
+  catalogManager: ""
+  heartbeatManager: ""
+  jobManager: ""
+  downloadServer: ""
+jobManagement:
+  jobDomain: RASTER
+  exporter:
+    jobType: ""
+    taskTilesType: ""
+    taskFinalizeType: ""
+storage:
+  tilesStorageProvider: ''
+  fs:
+    internalPvc:
+      enabled: false
+      name: ""
+      gpkgSubPath: ""
+
 enabled: true
 environment: development
 replicaCount: 1
@@ -39,7 +57,6 @@ cloudProvider:
 image:
   repository: exporter-trigger
   tag: 'latest'
-
 
 env:
   port: 8080
