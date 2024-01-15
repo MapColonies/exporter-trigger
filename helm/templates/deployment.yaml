@@ -6,12 +6,15 @@
 {{- $imageTag := include "exporter-trigger.tag" . -}}
 {{- if .Values.enabled -}}
 
-{{ $gpkgPath := (printf "%s%s" "/app/tiles_outputs/" .Values.rasterCommon.storage.fs.internalPvc.gpkgSubPath) }}
+{{- $fs := (include "common.fs.merged" .) | fromYaml }}
+{{- $configmapName := include "configmap.fullname" . }}
+{{- $deploymentName := include "deployment.fullname" . }}
+{{ $gpkgPath := (printf "%s%s" "/app/tiles_outputs/" $fs.internalPvc.gpkgSubPath) }}
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $releaseName }}-deployment
+  name: {{ $deploymentName }}
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}
@@ -33,10 +36,13 @@ spec:
         release: {{ $releaseName }}
         run: {{ $releaseName }}-{{ $chartName }}
         {{- include "exporter-trigger.selectorLabels" . | nindent 8 }}
-      {{- if .Values.resetOnConfigChange }}
       annotations:
+        {{- if .Values.resetOnConfigChange }}
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-      {{- end }}
+        {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       {{- if $cloudProviderImagePullSecretName }}
       imagePullSecrets:
@@ -54,7 +60,7 @@ spec:
               value: {{ $gpkgPath }}
           envFrom:
             - configMapRef:
-                name: {{ $releaseName }}-configmap
+                name: {{ $configmapName }}
           ports:
             - name: http
               containerPort: {{ .Values.env.targetPort }}
@@ -75,5 +81,5 @@ spec:
       volumes:
         - name: internal-storage
           persistentVolumeClaim:
-            claimName: {{ .Values.rasterCommon.storage.fs.internalPvc.name }}
+            claimName: {{ $fs.internalPvc.name }}
 {{- end -}}
