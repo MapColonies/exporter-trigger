@@ -47,28 +47,6 @@ const layerMetadata: LayerMetadata = {
       ],
     ],
   },
-  layerPolygonParts: {
-    bbox: [0, 0, 67.5, 22.5],
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: { Resolution: 0.000000167638063430786 },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [
-            [
-              [0, 0],
-              [67.5, 0],
-              [67.5, 22.5],
-              [0, 22.5],
-              [0, 0],
-            ],
-          ],
-        },
-      },
-    ],
-  },
   includedInBests: [],
   rawProductData: {
     bbox: [0, 0, 67.5, 22.5],
@@ -128,28 +106,6 @@ const layerMetadataSample: LayerMetadata = {
         [180, -89.999],
         [0, -89.999],
       ],
-    ],
-  },
-  layerPolygonParts: {
-    bbox: [0, 0, 67.5, 22.5],
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: { Resolution: 0.000000167638063430786 },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [
-            [
-              [0, 0],
-              [67.5, 0],
-              [67.5, 22.5],
-              [0, 22.5],
-              [0, 0],
-            ],
-          ],
-        },
-      },
     ],
   },
   includedInBests: [],
@@ -921,30 +877,6 @@ const metadataExportJson = {
       ],
     ],
   },
-  layerPolygonParts: {
-    bbox: [25.120393802953117, -16.979479051947962, 37.42414218385065, 17.95036866237062],
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: {
-          Resolution: 0.02197265625,
-        },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [
-            [
-              [30.42608533411871, 11.52904501530621],
-              [37.42414218385065, 11.52904501530621],
-              [37.42414218385065, 17.95036866237062],
-              [30.42608533411871, 17.95036866237062],
-              [30.42608533411871, 11.52904501530621],
-            ],
-          ],
-        },
-      },
-    ],
-  },
   includedInBests: [],
   rawProductData: {
     bbox: [0, 0, 67.5, 22.5],
@@ -1110,28 +1042,6 @@ const pycswRecord = {
           [180, -89.999],
           [0, -89.999],
         ],
-      ],
-    },
-    layerPolygonParts: {
-      bbox: [0, 0, 67.5, 22.5],
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: { Resolution: 0.000000167638063430786 },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [
-              [
-                [0, 0],
-                [67.5, 0],
-                [67.5, 22.5],
-                [0, 22.5],
-                [0, 0],
-              ],
-            ],
-          },
-        },
       ],
     },
     includedInBests: [],
