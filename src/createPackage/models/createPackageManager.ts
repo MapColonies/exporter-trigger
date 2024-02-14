@@ -12,7 +12,6 @@ import {
   FeatureCollection,
   Feature,
   Geometry,
-  featureCollection as createFeatureCollection,
 } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
 import {
@@ -390,10 +389,6 @@ export class CreatePackageManager {
 
     record.metadata.footprint = sanitizedBboxToPolygon;
     record.metadata.maxResolutionDeg = job.parameters.targetResolution;
-    (record.metadata.layerPolygonParts as FeatureCollection) = this.extractPolygonParts(
-      record.metadata.layerPolygonParts as FeatureCollection,
-      sanitizedBboxToPolygon
-    );
 
     const recordMetadata = JSON.stringify(record.metadata);
     await fsPromise.writeFile(metadataFilePath, recordMetadata);
@@ -430,17 +425,7 @@ export class CreatePackageManager {
       );
       record.metadata.maxResolutionMeter = maxResolutionMeter;
 
-      const layerPolygonPartFeatures = this.getExportedPackageLayerPolygonParts(
-        featuresRecords,
-        record.metadata.layerPolygonParts as FeatureCollection,
-        job.id
-      );
       const roiBbox = PolygonBbox(job.parameters.roi);
-      (record.metadata.layerPolygonParts as FeatureCollection) = {
-        ...(record.metadata.layerPolygonParts as FeatureCollection),
-        features: layerPolygonPartFeatures,
-        bbox: roiBbox,
-      };
       record.metadata.productBoundingBox = roiBbox.join(',');
 
       const packageName = job.parameters.fileNamesTemplates.dataURI;
@@ -790,23 +775,6 @@ export class CreatePackageManager {
     return `${productType}_${productId}_${productVersion.replaceAll('.', '_')}_${maxZoom}_${currentDateStr}`;
   }
 
-  private extractPolygonParts(layerPolygonParts: FeatureCollection, sanitizedBboxPolygonzied: Feature<Polygon>): FeatureCollection {
-    this.logger.debug(`Extracting layerPolygonParts from original record that intersects with sanitized bbox`);
-    const newFeatures: Feature[] = [];
-
-    layerPolygonParts.features.forEach((feature) => {
-      const intersection = intersect(feature.geometry as Polygon, sanitizedBboxPolygonzied);
-      if (intersection !== null) {
-        intersection.properties = feature.properties;
-        newFeatures.push(intersection);
-      }
-    });
-
-    const newPolygonParts = createFeatureCollection(newFeatures, { bbox: sanitizedBboxPolygonzied.bbox });
-
-    return newPolygonParts;
-  }
-
   private getTileEstimatedSize(tileOutputFormat: TileOutputFormat): number {
     let tileEstimatedSize;
     if (tileOutputFormat === TileOutputFormat.JPEG) {
@@ -833,27 +801,5 @@ export class CreatePackageManager {
       this.logger.error({ jobId, msg: `Failed to match features intersection with footprint with error: ${(error as Error).message}` });
     }
     return combinedFootprint;
-  }
-
-  private getExportedPackageLayerPolygonParts(featuresRecords: IGeometryRecord[], layerPolygonParts: FeatureCollection, jobId: string): Feature[] {
-    const layerPolygonPartFeatures: Feature[] = [];
-    for (const featureRecord of featuresRecords) {
-      for (const feature of layerPolygonParts.features) {
-        const intersectedFeature = intersect(featureRecord.geometry as Polygon | MultiPolygon, feature.geometry as Polygon | MultiPolygon);
-        if (!intersectedFeature) {
-          continue;
-        }
-        if (feature.properties?.Resolution !== undefined) {
-          const maxResolutionDeg = Math.max(featureRecord.targetResolutionDeg, feature.properties.Resolution as number);
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          intersectedFeature.properties = { ...feature.properties, Resolution: maxResolutionDeg };
-        } else {
-          this.logger.error({ ...feature, jobId, msg: `LayerPolygonPart not include property of type 'Resolution` });
-          throw new Error(`Layer's LayerPolygonPart value not include property of type 'Resolution`);
-        }
-        layerPolygonPartFeatures.push({ ...intersectedFeature });
-      }
-    }
-    return layerPolygonPartFeatures;
   }
 }
