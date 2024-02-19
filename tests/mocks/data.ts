@@ -71,6 +71,7 @@ const layerMetadata: LayerMetadata = {
     ],
   },
   productBoundingBox: '-180,-89.999,0,90',
+  tileMimeFormat: 'image/jpeg'
 } as unknown as LayerMetadata;
 
 const layerMetadataSample: LayerMetadata = {
@@ -132,6 +133,7 @@ const layerMetadataSample: LayerMetadata = {
     ],
   },
   productBoundingBox: '-180,-89.999,0,90',
+  tileMimeFormat: 'image/jpeg'
 } as unknown as LayerMetadata;
 
 const layerMetadataRoi = {
@@ -901,6 +903,7 @@ const metadataExportJson = {
     ],
   },
   productBoundingBox: '25.120393802953117,-16.979479051947962,37.42414218385065,17.95036866237062',
+  tileMimeFormat: 'image/jpeg',
   sha256: 'sha256_hash_mock',
 } as unknown as LayerMetadata;
 
@@ -1068,6 +1071,7 @@ const pycswRecord = {
       ],
     },
     productBoundingBox: '-180,-89.999,0,90',
+    tileMimeFormat: 'image/jpeg'
   } as unknown as LayerMetadata,
 };
 
