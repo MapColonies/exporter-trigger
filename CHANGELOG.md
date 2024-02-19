@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.17.5](https://github.com/MapColonies/exporter-trigger/compare/v2.17.4...v2.17.5) (2024-02-19)
+
+
+### Bug Fixes
+
+* update expiration time on callback params while return duplicate success response ([#84](https://github.com/MapColonies/exporter-trigger/issues/84)) ([41a480e](https://github.com/MapColonies/exporter-trigger/commit/41a480e55be6c2b7e50017ec1f214fe5d2ac67ff))
+
 ### [2.17.4](https://github.com/MapColonies/exporter-trigger/compare/v2.17.3...v2.17.4) (2024-02-18)
 
 ### [2.17.3](https://github.com/MapColonies/exporter-trigger/compare/v2.17.2...v2.17.3) (2024-02-06)
