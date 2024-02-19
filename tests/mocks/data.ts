@@ -71,7 +71,7 @@ const layerMetadata: LayerMetadata = {
     ],
   },
   productBoundingBox: '-180,-89.999,0,90',
-  tileMimeFormat: 'image/jpeg'
+  tileMimeFormat: 'image/jpeg',
 } as unknown as LayerMetadata;
 
 const layerMetadataSample: LayerMetadata = {
@@ -133,7 +133,7 @@ const layerMetadataSample: LayerMetadata = {
     ],
   },
   productBoundingBox: '-180,-89.999,0,90',
-  tileMimeFormat: 'image/jpeg'
+  tileMimeFormat: 'image/jpeg',
 } as unknown as LayerMetadata;
 
 const layerMetadataRoi = {
@@ -1071,7 +1071,7 @@ const pycswRecord = {
       ],
     },
     productBoundingBox: '-180,-89.999,0,90',
-    tileMimeFormat: 'image/jpeg'
+    tileMimeFormat: 'image/jpeg',
   } as unknown as LayerMetadata,
 };
 
