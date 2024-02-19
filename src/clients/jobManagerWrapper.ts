@@ -280,6 +280,10 @@ export class JobManagerWrapper extends JobManagerClient {
             cleanupExpirationTimeUTC: newExpirationDate,
             directoryPath: job.parameters.relativeDirectoryPath,
           },
+          callbackParams: {
+            ...job.parameters.callbackParams,
+            expirationTime: newExpirationDate,
+          },
         },
       });
     } else {

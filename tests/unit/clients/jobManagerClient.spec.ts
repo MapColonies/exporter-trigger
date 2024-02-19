@@ -136,6 +136,7 @@ describe('JobManagerClient', () => {
           parameters: {
             ...completedJob.parameters,
             cleanupData: { ...completedJob.parameters.cleanupData, cleanupExpirationTimeUTC: testExpirationDate },
+            callbackParams: { ...completedJob.parameters.callbackParams, expirationTime: testExpirationDate },
           },
         });
 
@@ -145,8 +146,11 @@ describe('JobManagerClient', () => {
         expect(putFun).toHaveBeenCalledTimes(1);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const expirationParamCall: Date = putFun.mock.calls[0][1].parameters.cleanupData.cleanupExpirationTimeUTC;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const expirationCallbackParams: Date = putFun.mock.calls[0][1].parameters.callbackParams.expirationTime;
         expirationParamCall.setSeconds(0, 0);
         expect(JSON.stringify(expirationParamCall)).toBe(JSON.stringify(expectedNewExpirationDate));
+        expect(JSON.stringify(expirationCallbackParams)).toBe(JSON.stringify(expectedNewExpirationDate));
       });
 
       /**
