@@ -21,6 +21,8 @@ global:
         enabled: false
         name: ""
         gpkgSubPath: ""
+  ingress:
+    domain: 'apps.aroapp.io'          
 
 serviceUrls:
   catalogManager: ""
