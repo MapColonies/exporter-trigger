@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.17.6](https://github.com/MapColonies/exporter-trigger/compare/v2.17.5...v2.17.6) (2024-02-20)
+
+
+### Bug Fixes
+
+* upgrade mc-models-types package (MAPCO-3257) ([#85](https://github.com/MapColonies/exporter-trigger/issues/85)) ([fb52a10](https://github.com/MapColonies/exporter-trigger/commit/fb52a10f08b9d80f5182a9e33011bb2140c4676b))
+
 ### [2.17.5](https://github.com/MapColonies/exporter-trigger/compare/v2.17.4...v2.17.5) (2024-02-19)
 
 
