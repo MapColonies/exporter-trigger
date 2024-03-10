@@ -1,8 +1,5 @@
 module.exports = {
   transform: {
-    '^.+\\.ts$': 'ts-jest',
-  },
-  transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
   testMatch: ['<rootDir>/tests/unit/**/*.spec.ts'],
@@ -12,17 +9,10 @@ module.exports = {
     '<rootDir>/src/**/*.ts',
     '!*/node_modules/',
     '!/vendor/**',
-    '!*/common/dependencyRegistration.ts',
-    '!*/common/tracing.ts',
-    '!*/common/constants.ts',
-    '!*/clients/callbackClient.ts**',
-    '!*/clients/queueClient.ts**',
+    '!*/common/**',
     '!**/controllers/**',
     '!**/routes/**',
-    '!<rootDir>/src/index.ts',
-    '!<rootDir>/src/containerConfig.ts',
-    '!<rootDir>/src/app.ts',
-    '!<rootDir>/src/serverBuilder.ts',
+    '!<rootDir>/src/*',
   ],
   coverageDirectory: '<rootDir>/coverage',
   reporters: [
