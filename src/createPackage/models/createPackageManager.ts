@@ -1,6 +1,8 @@
 import { promises as fsPromise } from 'fs';
 import { sep, parse as parsePath } from 'path';
 import { Logger } from '@map-colonies/js-logger';
+import { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import {
   Polygon,
   MultiPolygon,
@@ -92,6 +94,7 @@ export class CreatePackageManager {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
@@ -208,6 +211,7 @@ export class CreatePackageManager {
     return jobCreated;
   }
 
+  @withSpanAsyncV4
   public async createPackageRoi(userInput: ICreatePackageRoi): Promise<ICreateExportJobResponse | ICallbackExportResponse> {
     const { dbId, crs, priority, callbackURLs, description } = userInput;
     let roi = userInput.roi;
@@ -458,6 +462,7 @@ export class CreatePackageManager {
     return intersectedFeatures;
   }
 
+  @withSpanAsyncV4
   private async getFreeStorage(): Promise<number> {
     const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
     let otherRunningJobsSize = 0;

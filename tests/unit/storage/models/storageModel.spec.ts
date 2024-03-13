@@ -3,6 +3,7 @@ import { StorageManager } from '../../../../src/storage/models/storageManager';
 import { IStorageStatusResponse } from '../../../../src/common/interfaces';
 import { registerDefaultConfig } from '../../../mocks/config';
 import * as utils from '../../../../src/common/utils';
+import { tracerMock } from '../../../mocks/clients/tracer'
 
 let storageManager: StorageManager;
 
@@ -10,7 +11,7 @@ describe('Storage', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    storageManager = new StorageManager(logger);
+    storageManager = new StorageManager(logger, tracerMock);
   });
 
   afterEach(() => {

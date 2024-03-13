@@ -8,6 +8,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { LayerMetadata } from '@map-colonies/mc-model-types';
 import { BBox, Polygon } from '@turf/helpers';
+import { tracerMock } from '../../../mocks/clients/tracer'
 import {
   jobManagerWrapperMock,
   findCompletedJobMock,
@@ -71,7 +72,7 @@ describe('CreatePackageManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    createPackageManager = new CreatePackageManager(configMock, logger, jobManagerWrapperMock, catalogManagerMock);
+    createPackageManager = new CreatePackageManager(configMock, logger, tracerMock, jobManagerWrapperMock, catalogManagerMock);
   });
 
   afterEach(() => {

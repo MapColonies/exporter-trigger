@@ -4,6 +4,7 @@ import { getUTCDate } from '@map-colonies/mc-utils';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobResponse, JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
+import { tracerMock } from '../../mocks/clients/tracer'
 import {
   completedExportJob,
   completedJob,
@@ -29,7 +30,7 @@ describe('JobManagerClient', () => {
     beforeEach(() => {
       registerDefaultConfig();
       const logger = jsLogger({ enabled: false });
-      jobManagerClient = new JobManagerWrapper(logger);
+      jobManagerClient = new JobManagerWrapper(logger, tracerMock);
     });
 
     afterEach(() => {

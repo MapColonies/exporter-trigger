@@ -27,6 +27,7 @@ import {
 import { mockCompletedJob, mockJob } from '../../../mocks/data/mockJob';
 import * as utils from '../../../../src/common/utils';
 import { ArtifactType } from '../../../../src/common/enums';
+import { tracerMock } from '../../../mocks/clients/tracer'
 
 let tasksManager: TasksManager;
 let getTasksByJobIdStub: jest.Mock;
@@ -35,7 +36,7 @@ describe('TasksManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    tasksManager = new TasksManager(logger, jobManagerWrapperMock, callbackClientMock, packageManagerMock);
+    tasksManager = new TasksManager(logger, jobManagerWrapperMock, callbackClientMock, packageManagerMock, tracerMock);
   });
 
   afterEach(() => {

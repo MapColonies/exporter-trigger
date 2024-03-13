@@ -5,6 +5,8 @@ import booleanEqual from '@turf/boolean-equal';
 import bboxPolygon from '@turf/bbox-polygon';
 import { IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { featureCollectionBooleanEqual, getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import {
   CreateExportJobBody,
@@ -31,7 +33,10 @@ export class JobManagerWrapper extends JobManagerClient {
   private readonly expirationDays: number;
   private readonly jobDomain: string;
 
-  public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
+  public constructor(
+    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
+  ) {
     super(
       logger,
       config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType'),
@@ -96,6 +101,7 @@ export class JobManagerWrapper extends JobManagerClient {
     };
   }
 
+  @withSpanAsyncV4
   public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
@@ -231,6 +237,7 @@ export class JobManagerWrapper extends JobManagerClient {
     return undefined;
   }
 
+  @withSpanAsyncV4
   public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
     const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);
     return tasks;

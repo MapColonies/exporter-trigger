@@ -6,6 +6,8 @@ import { NotFoundError } from '@map-colonies/error-types';
 import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { Tracer } from '@opentelemetry/api';
 import {
   CreateFinalizeTaskBody,
   IArtifactDefinition,
@@ -44,7 +46,8 @@ export class TasksManager {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(CallbackClient) private readonly callbackClient: CallbackClient,
-    @inject(CreatePackageManager) private readonly packageManager: CreatePackageManager
+    @inject(CreatePackageManager) private readonly packageManager: CreatePackageManager,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
     this.downloadServerUrl = config.get<string>('downloadServerUrl');
@@ -87,6 +90,7 @@ export class TasksManager {
     return jobsStatus;
   }
 
+  @withSpanAsyncV4
   public async getTaskStatusByJobId(jobId: string): Promise<ITaskStatusResponse> {
     const tasks = await this.jobManagerClient.getTasksByJobId(jobId);
 
