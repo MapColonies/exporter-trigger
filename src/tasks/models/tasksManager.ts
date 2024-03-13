@@ -3,11 +3,11 @@ import { inject, injectable } from 'tsyringe';
 import config from 'config';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { Tracer } from '@opentelemetry/api';
 import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
-import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Tracer } from '@opentelemetry/api';
 import {
   CreateFinalizeTaskBody,
   IArtifactDefinition,
@@ -54,6 +54,21 @@ export class TasksManager {
     this.tilesJobType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType');
   }
 
+  @withSpanAsyncV4
+  public async getTaskStatusByJobId(jobId: string): Promise<ITaskStatusResponse> {
+    const tasks = await this.jobManagerClient.getTasksByJobId(jobId);
+
+    if (tasks.length === 0) {
+      throw new NotFoundError(`No tasks were found for jobId: ${jobId}`);
+    }
+    const task = tasks[0];
+    const statusResponse: ITaskStatusResponse = {
+      percentage: task.percentage,
+      status: task.status,
+    };
+    return statusResponse;
+  }
+
   /**
    * @deprecated GetMap API - will be deprecated on future
    */
@@ -88,21 +103,6 @@ export class TasksManager {
       failedJobs: failedJobs,
     };
     return jobsStatus;
-  }
-
-  @withSpanAsyncV4
-  public async getTaskStatusByJobId(jobId: string): Promise<ITaskStatusResponse> {
-    const tasks = await this.jobManagerClient.getTasksByJobId(jobId);
-
-    if (tasks.length === 0) {
-      throw new NotFoundError(`No tasks were found for jobId: ${jobId}`);
-    }
-    const task = tasks[0];
-    const statusResponse: ITaskStatusResponse = {
-      percentage: task.percentage,
-      status: task.status,
-    };
-    return statusResponse;
   }
 
   /**

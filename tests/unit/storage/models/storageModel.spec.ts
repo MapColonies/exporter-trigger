@@ -3,7 +3,7 @@ import { StorageManager } from '../../../../src/storage/models/storageManager';
 import { IStorageStatusResponse } from '../../../../src/common/interfaces';
 import { registerDefaultConfig } from '../../../mocks/config';
 import * as utils from '../../../../src/common/utils';
-import { tracerMock } from '../../../mocks/clients/tracer'
+import { tracerMock } from '../../../mocks/clients/tracer';
 
 let storageManager: StorageManager;
 

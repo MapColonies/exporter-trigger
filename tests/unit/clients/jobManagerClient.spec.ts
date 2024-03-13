@@ -4,7 +4,7 @@ import { getUTCDate } from '@map-colonies/mc-utils';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobResponse, JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
-import { tracerMock } from '../../mocks/clients/tracer'
+import { tracerMock } from '../../mocks/clients/tracer';
 import {
   completedExportJob,
   completedJob,

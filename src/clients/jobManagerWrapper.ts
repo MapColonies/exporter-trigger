@@ -33,10 +33,7 @@ export class JobManagerWrapper extends JobManagerClient {
   private readonly expirationDays: number;
   private readonly jobDomain: string;
 
-  public constructor(
-    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
-    @inject(SERVICES.TRACER) public readonly tracer: Tracer
-  ) {
+  public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger, @inject(SERVICES.TRACER) public readonly tracer: Tracer) {
     super(
       logger,
       config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType'),
@@ -49,6 +46,61 @@ export class JobManagerWrapper extends JobManagerClient {
     this.tilesJobType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType');
     this.tilesTaskType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskTilesType');
     this.jobDomain = config.get<string>('externalClientsConfig.clientsUrls.jobManager.jobDomain');
+  }
+
+  @withSpanAsyncV4
+  public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
+    const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);
+    return tasks;
+  }
+
+  @withSpanAsyncV4
+  public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
+
+    const jobParameters: IJobExportParameters = {
+      roi: data.roi,
+      callbacks: data.callbacks,
+      crs: data.crs,
+      exportVersion: ExportVersion.ROI,
+      fileNamesTemplates: data.fileNamesTemplates,
+      relativeDirectoryPath: data.relativeDirectoryPath,
+      gpkgEstimatedSize: data.gpkgEstimatedSize,
+    };
+
+    const createJobRequest: CreateExportJobBody = {
+      resourceId: data.cswProductId,
+      version: data.version,
+      type: this.tilesJobType,
+      domain: this.jobDomain,
+      parameters: jobParameters,
+      internalId: data.dbId,
+      productType: data.productType,
+      productName: data.cswProductId,
+      priority: data.priority,
+      description: data.description,
+      status: OperationStatus.IN_PROGRESS,
+      additionalIdentifiers: data.relativeDirectoryPath,
+      tasks: [
+        {
+          type: this.tilesTaskType,
+          parameters: {
+            isNewTarget: true,
+            targetFormat: data.targetFormat,
+            batches: data.batches,
+            sources: data.sources,
+          },
+        },
+      ],
+    };
+    const res = await this.createJob<IJobExportParameters, ITaskParameters>(createJobRequest);
+    const createJobResponse: ICreateExportJobResponse = {
+      jobId: res.id,
+      taskIds: res.taskIds,
+      status: OperationStatus.IN_PROGRESS,
+    };
+    return createJobResponse;
   }
 
   /**
@@ -99,55 +151,6 @@ export class JobManagerWrapper extends JobManagerClient {
       taskIds: res.taskIds,
       status: OperationStatus.IN_PROGRESS,
     };
-  }
-
-  @withSpanAsyncV4
-  public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
-
-    const jobParameters: IJobExportParameters = {
-      roi: data.roi,
-      callbacks: data.callbacks,
-      crs: data.crs,
-      exportVersion: ExportVersion.ROI,
-      fileNamesTemplates: data.fileNamesTemplates,
-      relativeDirectoryPath: data.relativeDirectoryPath,
-      gpkgEstimatedSize: data.gpkgEstimatedSize,
-    };
-
-    const createJobRequest: CreateExportJobBody = {
-      resourceId: data.cswProductId,
-      version: data.version,
-      type: this.tilesJobType,
-      domain: this.jobDomain,
-      parameters: jobParameters,
-      internalId: data.dbId,
-      productType: data.productType,
-      productName: data.cswProductId,
-      priority: data.priority,
-      description: data.description,
-      status: OperationStatus.IN_PROGRESS,
-      additionalIdentifiers: data.relativeDirectoryPath,
-      tasks: [
-        {
-          type: this.tilesTaskType,
-          parameters: {
-            isNewTarget: true,
-            targetFormat: data.targetFormat,
-            batches: data.batches,
-            sources: data.sources,
-          },
-        },
-      ],
-    };
-    const res = await this.createJob<IJobExportParameters, ITaskParameters>(createJobRequest);
-    const createJobResponse: ICreateExportJobResponse = {
-      jobId: res.id,
-      taskIds: res.taskIds,
-      status: OperationStatus.IN_PROGRESS,
-    };
-    return createJobResponse;
   }
 
   /**
@@ -235,12 +238,6 @@ export class JobManagerWrapper extends JobManagerClient {
     }
 
     return undefined;
-  }
-
-  @withSpanAsyncV4
-  public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
-    const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);
-    return tasks;
   }
 
   /**

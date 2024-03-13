@@ -8,7 +8,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { LayerMetadata } from '@map-colonies/mc-model-types';
 import { BBox, Polygon } from '@turf/helpers';
-import { tracerMock } from '../../../mocks/clients/tracer'
+import { tracerMock } from '../../../mocks/clients/tracer';
 import {
   jobManagerWrapperMock,
   findCompletedJobMock,

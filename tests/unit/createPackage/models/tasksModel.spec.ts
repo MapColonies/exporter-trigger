@@ -27,7 +27,7 @@ import {
 import { mockCompletedJob, mockJob } from '../../../mocks/data/mockJob';
 import * as utils from '../../../../src/common/utils';
 import { ArtifactType } from '../../../../src/common/enums';
-import { tracerMock } from '../../../mocks/clients/tracer'
+import { tracerMock } from '../../../mocks/clients/tracer';
 
 let tasksManager: TasksManager;
 let getTasksByJobIdStub: jest.Mock;
