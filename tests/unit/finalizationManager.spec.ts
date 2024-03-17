@@ -27,6 +27,7 @@ import { completedExportJob, inProgressJob, inProgressExportJob } from '../mocks
 import { configMock, registerDefaultConfig } from '../mocks/config';
 import { jobManagerWrapperMock, updateJobMock, deleteTaskByIdMock } from '../mocks/clients/jobManagerWrapper';
 import { callbackClientMock } from '../mocks/clients/callbackClient';
+import { tracerMock } from '../mocks/clients/tracer';
 
 let finalizationManager: FinalizationManager;
 
@@ -34,7 +35,7 @@ describe('FinalizationManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    finalizationManager = new FinalizationManager(logger, taskManagerMock, queueClientMock, callbackClientMock, jobManagerWrapperMock);
+    finalizationManager = new FinalizationManager(logger, tracerMock, taskManagerMock, queueClientMock, callbackClientMock, jobManagerWrapperMock);
   });
 
   afterEach(() => {

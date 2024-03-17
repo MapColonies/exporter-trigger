@@ -15,7 +15,6 @@ export const tracing = new Tracing(
     /* eslint-disable @typescript-eslint/naming-convention */
     '@opentelemetry/instrumentation-fs': { requireParentSpan: true },
     '@opentelemetry/instrumentation-http': { requireParentforOutgoingSpans: true },
-    '@opentelemetry/instrumentation-express': { ignoreLayersType: [ExpressLayerType.MIDDLEWARE] },
     /* eslint-disable @typescript-eslint/naming-convention */
   }
 );

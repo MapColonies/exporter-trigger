@@ -612,6 +612,7 @@ export class CreatePackageManager {
     return undefined;
   }
 
+  @withSpanAsyncV4
   private async checkForExportDuplicate(
     dupParams: JobExportDuplicationParams,
     callbackUrls?: ICallbackTargetExport[]

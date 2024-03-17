@@ -289,6 +289,7 @@ export class TasksManager {
     return updateJobParams;
   }
 
+  @withSpanAsyncV4
   public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
     const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
     this.logger.info({ jobId: job.id, operationStatus, msg: `create finalize task` });

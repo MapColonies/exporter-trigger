@@ -1,7 +1,8 @@
 import config from 'config';
 import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { Tracer } from '@opentelemetry/api';
+import { ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
@@ -16,6 +17,7 @@ import {
 } from './common/interfaces';
 import { JobManagerWrapper } from './clients/jobManagerWrapper';
 import { CallbackClient } from './clients/callbackClient';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 
 export const FINALIZATION_MANGER_SYMBOL = Symbol('tasksFactory');
 
@@ -26,6 +28,7 @@ export class FinalizationManager {
   private readonly finalizeAttempts: number;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(TasksManager) private readonly taskManager: TasksManager,
     @inject(QueueClient) private readonly queueClient: QueueClient,
     @inject(CallbackClient) private readonly callbackClient: CallbackClient,
@@ -69,6 +72,11 @@ export class FinalizationManager {
     if (!finalizeTask) {
       return false;
     }
+    return await this.runFinalize(finalizeTask);
+  }
+
+  @withSpanAsyncV4
+  private async runFinalize(finalizeTask : ITaskResponse<ITaskFinalizeParameters>) {
     const expirationDateUtc = getUTCDate();
     expirationDateUtc.setDate(expirationDateUtc.getDate() + this.expirationDays);
     try {
