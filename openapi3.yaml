@@ -111,13 +111,6 @@ paths:
                 $ref: '#/components/schemas/internalError'
 components:
   requestBodies:
-    ExportGetmapBody:
-      description: Export to gpkg via GetMap
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/exportGetMap'
     ExportByRoiBody:
       description: Export to gpkg via FeatureCollection
       required: true
