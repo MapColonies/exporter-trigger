@@ -459,90 +459,6 @@ export class CreatePackageManager {
     }
   }
 
-  private generateTileGroups(polygon: Polygon | MultiPolygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] {
-    let intersaction: Feature<Polygon | MultiPolygon> | null;
-
-    try {
-      intersaction = intersect(polygon, footprint);
-      if (intersaction === null) {
-        throw new BadRequestError(
-          `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
-        );
-      }
-    } catch (error) {
-      const message = `Error occurred while trying to generate tiles batches - intersaction error: ${JSON.stringify(error)}`;
-      this.logger.error({
-        firstPolygon: polygon,
-        secondPolygon: footprint,
-        zoom: zoom,
-        message: message,
-      });
-      throw new Error(message);
-    }
-
-    try {
-      const tileRanger = new TileRanger();
-      const tilesGroups: ITileRange[] = [];
-
-      for (let i = 0; i <= zoom; i++) {
-        const zoomTilesGroups = tileRanger.encodeFootprint(intersaction, i);
-        for (const group of zoomTilesGroups) {
-          tilesGroups.push(group);
-        }
-      }
-      return tilesGroups;
-    } catch (error) {
-      const message = `Error occurred while trying to generate tiles batches - encodeFootprint error: ${JSON.stringify(error)}`;
-      this.logger.error({
-        firstPolygon: polygon,
-        secondPolygon: footprint,
-        zoom: zoom,
-        message: message,
-      });
-      throw new Error(message);
-    }
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private async checkForDuplicate(
-    dupParams: JobDuplicationParams,
-    callbackUrls: ICallbackTarget[]
-  ): Promise<ICallbackResponse | ICreateJobResponse | undefined> {
-    let completedExists = await this.checkForCompleted(dupParams);
-    if (completedExists) {
-      return completedExists;
-    }
-
-    const processingExists = await this.checkForProcessing(dupParams, callbackUrls);
-    if (processingExists) {
-      // For race condition
-      completedExists = await this.checkForCompleted(dupParams);
-      if (completedExists) {
-        return completedExists;
-      }
-      return processingExists;
-    }
-
-    return undefined;
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResponse | undefined> {
-    this.logger.info(dupParams, `Checking for COMPLETED duplications with parameters`);
-    const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
-    if (responseJob) {
-      await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
-      return {
-        ...responseJob.parameters.callbackParams,
-        status: OperationStatus.COMPLETED,
-      } as ICallbackResponse;
-    }
-  }
-
   private async checkForExportCompleted(dupParams: JobExportDuplicationParams): Promise<ICallbackExportResponse | undefined> {
     this.logger.info({ ...dupParams, roi: undefined, msg: `Checking for COMPLETED duplications with parameters` });
     const responseJob = await this.jobManagerClient.findExportJob(OperationStatus.COMPLETED, dupParams);
@@ -552,22 +468,6 @@ export class CreatePackageManager {
         ...responseJob.parameters.callbackParams,
         status: OperationStatus.COMPLETED,
       } as ICallbackExportResponse;
-    }
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private async checkForProcessing(dupParams: JobDuplicationParams, newCallbacks: ICallbackTarget[]): Promise<ICreateJobResponse | undefined> {
-    this.logger.info(dupParams, `Checking for PROCESSING duplications with parameters`);
-    const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
-    if (processingJob) {
-      await this.updateCallbackURLs(processingJob, newCallbacks);
-      return {
-        id: processingJob.id,
-        taskIds: (processingJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[]).map((t) => t.id),
-        status: OperationStatus.IN_PROGRESS,
-      };
     }
   }
 
@@ -587,44 +487,6 @@ export class CreatePackageManager {
         status: OperationStatus.IN_PROGRESS,
       };
     }
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private async updateCallbackURLs(processingJob: JobResponse, newCallbacks: ICallbackTarget[]): Promise<void> {
-    const callbacks = processingJob.parameters.callbacks;
-    for (const newCallback of newCallbacks) {
-      const hasCallback = callbacks.findIndex((callback) => {
-        const exist = callback.url === newCallback.url;
-        if (!exist) {
-          return false;
-        }
-
-        if (this.isAPolygon(callback.bbox) && this.isAPolygon(newCallback.bbox)) {
-          return booleanEqual(newCallback.bbox, callback.bbox);
-        } else if (this.isAPolygon(callback.bbox) || this.isAPolygon(newCallback.bbox)) {
-          return false;
-        }
-        // else both BBoxes
-        let sameBboxCoordinate = false;
-        for (let i = 0; i < callback.bbox.length; i++) {
-          sameBboxCoordinate = callback.bbox[i] === newCallback.bbox[i];
-          if (!sameBboxCoordinate) {
-            sameBboxCoordinate = false;
-            break;
-          }
-        }
-        return sameBboxCoordinate;
-      });
-      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-      if (hasCallback === -1) {
-        callbacks.push(newCallback);
-      }
-    }
-    await this.jobManagerClient.updateJob<IJobParameters>(processingJob.id, {
-      parameters: processingJob.parameters,
-    });
   }
 
   private async updateExportCallbackURLs(processingJob: JobExportResponse, newCallbacks?: ICallbackTargetExport[]): Promise<void> {
@@ -655,16 +517,6 @@ export class CreatePackageManager {
     await this.jobManagerClient.updateJob<IJobExportParameters>(processingJob.id, {
       parameters: processingJob.parameters,
     });
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private generatePackageName(productType: string, productId: string, productVersion: string, zoomLevel: number, bbox: BBox): string {
-    const numberOfDecimals = 5;
-    const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_').replace(/-/g, 'm')).join('');
-    const productVersionConvention = productVersion.replace('.', '_');
-    return `${productType}_${productId}_${productVersionConvention}_${zoomLevel}_${bboxToString}.gpkg`;
   }
 
   private generateExportFileNames(productType: string, productId: string, productVersion: string, featuresRecords: IGeometryRecord[]): string {
