@@ -43,13 +43,6 @@ export interface ICallbackBase {
   url: string;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICallbackTarget extends ICallbackBase {
-  bbox: BBox | Polygon;
-}
-
 export interface ICallbackTargetExport extends ICallbackBase {
   roi: FeatureCollection;
 }
@@ -75,7 +68,6 @@ export interface IWorkerInputBase {
 export interface IWorkerInput extends IWorkerInputBase {
   targetResolution: number;
   fileName: string;
-  callbacks: ICallbackTarget[];
   sanitizedBbox: BBox;
   zoomLevel: number;
 }
@@ -199,7 +191,6 @@ export interface IJobParameters {
   relativeDirectoryPath: string;
   crs: string;
   exportVersion: ExportVersion;
-  callbacks: ICallbackTarget[];
   sanitizedBbox: BBox;
   zoomLevel: number;
   callbackParams?: ICallbackDataBase;

@@ -17,16 +17,6 @@ export const mockJob: JobResponse = {
     crs: 'EPSG:4326',
     fileName: 'test.gpkg',
     exportVersion: ExportVersion.GETMAP,
-    callbacks: [
-      {
-        url: 'http://example.getmap.com/callback',
-        bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
-      },
-      {
-        url: 'http://example.getmap.com/callback2',
-        bbox: [34.811938017107494, 31.95475033759175, 34.82237261707599, 31.96426962177354],
-      },
-    ],
     zoomLevel: 3,
     sanitizedBbox: [0, -90, 180, 90],
     targetResolution: 0.072,

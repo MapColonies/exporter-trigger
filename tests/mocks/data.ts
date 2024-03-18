@@ -218,12 +218,6 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
     fileName: 'test.gpkg',
     relativeDirectoryPath: 'test',
     zoomLevel: 4,
-    callbacks: [
-      {
-        url: 'http://localhost:1234',
-        bbox: [0, 0, 25, 41],
-      },
-    ],
     callbackParams: {
       dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
       fileUri: 'http://localhost:4515/downloads/gm_0c3e455f_4aeb_4258_982d_f7773469a92d_4_0_000000_0000025_0000041_00000.gpkg',
@@ -300,7 +294,6 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
     crs: 'EPSG:4326',
     sanitizedBbox: [0, 0, 25, 41],
     zoomLevel: 4,
-    callbacks: [{ url: 'http://localhost:6969', bbox: [0, 0, 25, 41] }],
     targetResolution: 0.0439453125,
   },
   status: OperationStatus.IN_PROGRESS,
@@ -353,12 +346,6 @@ const workerInput: IWorkerInput = {
   targetResolution: 0.0000429153442382812,
   zoomLevel: 15,
   dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-  callbacks: [
-    {
-      bbox: [0, 3, 25, 41],
-      url: 'http://localhost:6969',
-    },
-  ],
   sources: [
     {
       path: 'test.gpkg',

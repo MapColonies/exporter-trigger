@@ -68,7 +68,6 @@ import {
   JobResponse,
   MergerSourceType,
   IMapSource,
-  ICallbackTarget,
   ITaskParameters,
   IStorageStatusResponse,
 } from '../../common/interfaces';
