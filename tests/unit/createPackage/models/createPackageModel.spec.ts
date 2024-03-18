@@ -23,7 +23,6 @@ import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalo
 import {
   ExportVersion,
   ICreateExportJobResponse,
-  ICreateJobResponse,
   ICreatePackageRoi,
   IJobParameters,
   ITaskParameters,

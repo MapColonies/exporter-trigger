@@ -6,8 +6,6 @@ import { SERVICES } from '../../common/constants';
 import { CreatePackageManager } from '../models/createPackageManager';
 import {
   IBasicResponse,
-  ICreateJobResponse,
-  ICallbackResposne,
   ICreatePackageRoi,
   ICallbackExportResponse,
   ICreateExportJobResponse,
@@ -15,7 +13,7 @@ import {
 
 type CreatePackageHandler = RequestHandler<
   undefined,
-  IBasicResponse | ICreateJobResponse | ICreateExportJobResponse | ICallbackResposne | ICallbackExportResponse,
+  IBasicResponse | ICreateExportJobResponse | ICallbackExportResponse,
   ICreatePackageRoi
 >;
 

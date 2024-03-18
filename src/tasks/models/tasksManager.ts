@@ -11,8 +11,6 @@ import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
   CreateFinalizeTaskBody,
   IArtifactDefinition,
-  ICallbackData,
-  ICallbackDataBase,
   ICallbackDataExportBase,
   ICallbackExportData,
   ICallbackExportResponse,

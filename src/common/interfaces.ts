@@ -62,16 +62,6 @@ export interface IWorkerInputBase {
   targetFormat?: TileOutputFormat;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface IWorkerInput extends IWorkerInputBase {
-  targetResolution: number;
-  fileName: string;
-  sanitizedBbox: BBox;
-  zoomLevel: number;
-}
-
 export interface IWorkerExportInput extends IWorkerInputBase {
   callbacks?: ICallbackTargetExport[];
   roi: FeatureCollection;
@@ -81,15 +71,6 @@ export interface IWorkerExportInput extends IWorkerInputBase {
 
 export interface IBasicResponse {
   message: string;
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICreateJobResponse {
-  id: string;
-  taskIds: string[];
-  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
 export interface ICreateExportJobResponse {
@@ -125,22 +106,8 @@ export interface ICallbackDataExportBase {
   artifacts?: IArtifactDefinition[];
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICallbackData extends ICallbackDataBase {
-  bbox: BBox | Polygon | MultiPolygon;
-}
-
 export interface ICallbackExportData extends ICallbackDataExportBase {
   roi: FeatureCollection;
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICallbackResposne extends ICallbackData {
-  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
 //todo - should be replaced and imported from exporter SDK

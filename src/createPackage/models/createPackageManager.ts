@@ -60,11 +60,8 @@ import {
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
 import {
-  ICreateJobResponse,
-  IWorkerInput,
   JobDuplicationParams,
   IJobParameters,
-  ICallbackResposne as ICallbackResponse,
   JobResponse,
   MergerSourceType,
   IMapSource,

@@ -9,7 +9,6 @@ ICreatePackage,
   IJobParameters,
   ITaskParameters,
   IWorkerExportInput,
-  IWorkerInput,
 } from '../../src/common/interfaces';
 
 const layerMetadata: LayerMetadata = {
@@ -333,52 +332,6 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
   ],
   created: '2021-12-29T10:42:13.487Z',
   updated: '2021-12-29T10:42:13.487Z',
-};
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-const workerInput: IWorkerInput = {
-  fileName: 'test.gpkg',
-  relativeDirectoryPath: 'test',
-  exportVersion: ExportVersion.GETMAP,
-  sanitizedBbox: [0, 2.999267578125, 25.0048828125, 41.0009765625],
-  targetResolution: 0.0000429153442382812,
-  zoomLevel: 15,
-  dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-  sources: [
-    {
-      path: 'test.gpkg',
-      type: 'GPKG',
-      extent: {
-        minX: 0,
-        minY: 2.999267578125,
-        maxX: 25.0048828125,
-        maxY: 41.0009765625,
-      },
-    },
-  ],
-  batches: [
-    {
-      zoom: 15,
-      minX: 32768,
-      minY: 16930,
-      maxX: 20936,
-      maxY: 23848,
-    },
-    {
-      zoom: 14,
-      minX: 16384,
-      minY: 8465,
-      maxX: 10468,
-      maxY: 11924,
-    },
-  ],
-  version: '1.0',
-  cswProductId: 'string',
-  priority: 0,
-  crs: 'EPSG:4326',
-  productType: 'OrthophotoHistory',
 };
 
 /**
@@ -1064,7 +1017,6 @@ const pycswRecord = {
 
 export {
   layerFromCatalog,
-  workerInput,
   workerExportInput,
   jobs,
 userInput,
