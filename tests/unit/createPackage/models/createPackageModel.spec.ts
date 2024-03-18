@@ -78,49 +78,7 @@ describe('CreatePackageManager', () => {
     jest.resetAllMocks();
     jest.restoreAllMocks();
   });
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  describe('GetMAP', () => {
-    describe('#createMetadata', () => {
-      it('should create metadata.json file with the correct parameters', async () => {
-        const fileName = 'file';
-        const directoryName = '/tmp/gpkgDir';
 
-        const mockGgpkgPath = `${directoryName}/${fileName}`;
-
-        findLayerMock.mockResolvedValue(layerFromCatalog);
-
-        await createPackageManager.createJsonMetadata(mockGgpkgPath, completedJob);
-
-        const expectedFileName = `${directoryName}${sep}${fileName}${METADA_JSON_FILE_EXTENSION}`;
-        const expectedMetadata: LayerMetadata = {
-          ...layerFromCatalog.metadata,
-          maxResolutionDeg: completedJob.parameters.targetResolution,
-          footprint: {
-            type: 'Feature',
-            bbox: [0, 0, 25, 41],
-            properties: {},
-            geometry: {
-              type: 'Polygon',
-              coordinates: [
-                [
-                  [0, 0],
-                  [25, 0],
-                  [25, 41],
-                  [0, 41],
-                  [0, 0],
-                ],
-              ],
-            },
-          },
-        };
-
-        expect(fs.promises.writeFile).toHaveBeenCalledTimes(1);
-        expect(fs.promises.writeFile).toHaveBeenCalledWith(expectedFileName, JSON.stringify(expectedMetadata));
-      });
-    });
-  });
   describe('ROI', () => {
     describe('#createExportMetadata', () => {
       it('should create metadata.json file with the correct parameters', async () => {

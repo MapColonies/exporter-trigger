@@ -312,29 +312,6 @@ export class CreatePackageManager {
     return undefined;
   }
 
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async createJsonMetadata(fullGpkgPath: string, job: JobResponse): Promise<void> {
-    this.logger.info({
-      jobId: job.id,
-      msg: `Creating metadata.json file for gpkg in path "${this.gpkgsLocation}/${fullGpkgPath}" for jobId ${job.id}`,
-    });
-    const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
-
-    const parsedPath = parsePath(fullGpkgPath);
-    const directoryName = parsedPath.dir;
-    const metadataFileName = parsedPath.name.concat(METADATA_JSON_FILE_EXTENSION);
-    const metadataFilePath = `${directoryName}${sep}${metadataFileName}`;
-    const sanitizedBboxToPolygon = bboxPolygon(job.parameters.sanitizedBbox);
-
-    record.metadata.footprint = sanitizedBboxToPolygon;
-    record.metadata.maxResolutionDeg = job.parameters.targetResolution;
-
-    const recordMetadata = JSON.stringify(record.metadata);
-    await fsPromise.writeFile(metadataFilePath, recordMetadata);
-  }
-
   public async createExportJsonMetadata(job: JobExportResponse | JobFinalizeResponse): Promise<boolean> {
     this.logger.info({
       jobId: job.id,
