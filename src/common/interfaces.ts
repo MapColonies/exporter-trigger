@@ -80,21 +80,6 @@ export interface ICreateExportJobResponse {
   isDuplicated?: boolean;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICallbackDataBase {
-  fileUri: string;
-  expirationTime: Date;
-  fileSize: number;
-  dbId: string;
-  packageName: string;
-  targetResolution: number;
-  requestId: string;
-  success: boolean;
-  errorReason?: string;
-}
-
 export interface ICallbackDataExportBase {
   links?: ILinkDefinition;
   expirationTime?: Date;
@@ -130,18 +115,6 @@ export interface ICallbackExportResponse extends ICallbackExportData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED | OperationStatus.FAILED;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface JobDuplicationParams {
-  resourceId: string;
-  version: string;
-  dbId: string;
-  zoomLevel: number;
-  crs: string;
-  sanitizedBbox: BBox;
-}
-
 export interface JobExportDuplicationParams {
   resourceId: string;
   version: string;
@@ -150,9 +123,7 @@ export interface JobExportDuplicationParams {
   roi: FeatureCollection;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
+
 export interface IJobParameters {
   targetResolution: number;
   relativeDirectoryPath: string;
@@ -160,7 +131,6 @@ export interface IJobParameters {
   exportVersion: ExportVersion;
   sanitizedBbox: BBox;
   zoomLevel: number;
-  callbackParams?: ICallbackDataBase;
   fileName: string;
   gpkgEstimatedSize?: number;
   cleanupData?: ICleanupData;
@@ -215,14 +185,6 @@ export interface IInput {
   dbId: string;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface IJobStatusResponse {
-  completedJobs: JobResponse[] | undefined;
-  failedJobs: JobResponse[] | undefined;
-}
-
 export interface IExportJobStatusResponse {
   completedJobs: JobExportResponse[] | undefined;
   failedJobs: JobExportResponse[] | undefined;
@@ -259,15 +221,7 @@ export enum ExportVersion {
   ROI = 'ROI',
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
 export type TaskResponse = ITaskResponse<ITaskParameters>;
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;
 
 // new API based on multi resolution
 export type JobExportResponse = IJobResponse<IJobExportParameters, ITaskParameters>;

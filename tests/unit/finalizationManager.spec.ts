@@ -20,10 +20,9 @@ import {
   ICallbackDataExportBase,
   IExportJobStatusResponse,
   IJobExportParameters,
-  IJobStatusResponse,
   ITaskFinalizeParameters,
 } from '../../src/common/interfaces';
-import { completedExportJob, inProgressJob, inProgressExportJob } from '../mocks/data';
+import { completedExportJob, inProgressExportJob } from '../mocks/data';
 import { configMock, registerDefaultConfig } from '../mocks/config';
 import { jobManagerWrapperMock, updateJobMock, deleteTaskByIdMock } from '../mocks/clients/jobManagerWrapper';
 import { callbackClientMock } from '../mocks/clients/callbackClient';
@@ -44,12 +43,7 @@ describe('FinalizationManager', () => {
   });
 
   describe('#jobStatusPoll', () => {
-    it('should poll completed jobs for getmap and roi jobs', async () => {
-      const getmapJobStatus: IJobStatusResponse = {
-        completedJobs: [JSON.parse(JSON.stringify(inProgressJob)), JSON.parse(JSON.stringify(inProgressJob))],
-        failedJobs: [],
-      };
-
+    it('should poll completed jobs for roi jobs', async () => {
       const roiJobStatus: IExportJobStatusResponse = {
         completedJobs: [
           JSON.parse(JSON.stringify(inProgressExportJob)),
@@ -58,7 +52,6 @@ describe('FinalizationManager', () => {
         ],
         failedJobs: [],
       };
-      getJobsByTaskStatusMock.mockReturnValue(getmapJobStatus);
       getExportJobsByTaskStatusMock.mockReturnValue(roiJobStatus);
       finalizeJobMock.mockReturnValue(undefined);
       createFinalizeTaskMock.mockReturnValue(undefined);
@@ -69,11 +62,8 @@ describe('FinalizationManager', () => {
       expect(createFinalizeTaskMock).toHaveBeenCalledTimes(3);
     });
 
-    it('should poll failed jobs for getmap and roi jobs', async () => {
-      const getmapJobStatus: IJobStatusResponse = {
-        completedJobs: [],
-        failedJobs: [JSON.parse(JSON.stringify(inProgressJob)), JSON.parse(JSON.stringify(inProgressJob))],
-      };
+    it('should poll failed jobs for roi jobs', async () => {
+
 
       const roiJobStatus: IExportJobStatusResponse = {
         completedJobs: [],
@@ -83,7 +73,6 @@ describe('FinalizationManager', () => {
           JSON.parse(JSON.stringify(inProgressExportJob)),
         ],
       };
-      getJobsByTaskStatusMock.mockReturnValue(getmapJobStatus);
       getExportJobsByTaskStatusMock.mockReturnValue(roiJobStatus);
       finalizeJobMock.mockReturnValue(undefined);
       createFinalizeTaskMock.mockReturnValue(undefined);

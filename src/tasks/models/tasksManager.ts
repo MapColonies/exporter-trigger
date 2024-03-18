@@ -17,13 +17,10 @@ import {
   ICleanupData,
   IExportJobStatusResponse,
   IJobExportParameters,
-  IJobParameters,
-  IJobStatusResponse,
   ILinkDefinition,
   ITaskFinalizeParameters,
   JobExportResponse,
   JobFinalizeResponse,
-  JobResponse,
 } from '../../common/interfaces';
 import { CallbackClient } from '../../clients/callbackClient';
 import { getFileSize } from '../../common/utils';
@@ -208,7 +205,7 @@ export class TasksManager {
     return updateJobParams;
   }
 
-  private generateCleanupEntity(job: JobResponse | JobExportResponse | JobFinalizeResponse, expirationDate: Date): ICleanupData {
+  private generateCleanupEntity(job: JobExportResponse | JobFinalizeResponse, expirationDate: Date): ICleanupData {
     const cleanupData = { directoryPath: job.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationDate };
     this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
     return cleanupData;

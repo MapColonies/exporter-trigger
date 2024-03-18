@@ -5,14 +5,12 @@ import { NotFoundError } from '@map-colonies/error-types';
 import { ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
 import {
   CreateFinalizeTaskBody,
-  ICallbackDataBase,
   ICallbackDataExportBase,
   ICallbackExportResponse,
   ICallbackTargetExport,
   ITaskParameters,
   JobExportResponse,
   JobFinalizeResponse,
-  JobResponse,
   TaskResponse,
 } from '../../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
@@ -24,7 +22,7 @@ import {
   updateJobMock,
   getExportJobsMock,
 } from '../../../mocks/clients/jobManagerWrapper';
-import { mockCompletedJob, mockJob } from '../../../mocks/data/mockJob';
+import { mockCompletedJob } from '../../../mocks/data/mockJob';
 import * as utils from '../../../../src/common/utils';
 import { ArtifactType } from '../../../../src/common/enums';
 import { tracerMock } from '../../../mocks/clients/tracer';

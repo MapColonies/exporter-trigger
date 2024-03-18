@@ -6,7 +6,6 @@ import {
   ExportVersion,
 ICreatePackage,
   IJobExportParameters,
-  IJobParameters,
   ITaskParameters,
   IWorkerExportInput,
 } from '../../src/common/interfaces';
@@ -199,145 +198,6 @@ const layerFromCatalogSample = {
   ],
   metadata: layerMetadataSample,
 };
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
-  id: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
-  resourceId: 'string',
-  version: '1.0',
-  type: 'rasterTilesExporter',
-  domain: 'testDomain',
-  description: '',
-  parameters: {
-    crs: 'EPSG:4326',
-    sanitizedBbox: [0, 0, 25, 41],
-    exportVersion: ExportVersion.GETMAP,
-    fileName: 'test.gpkg',
-    relativeDirectoryPath: 'test',
-    zoomLevel: 4,
-    callbackParams: {
-      dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-      fileUri: 'http://localhost:4515/downloads/gm_0c3e455f_4aeb_4258_982d_f7773469a92d_4_0_000000_0000025_0000041_00000.gpkg',
-      success: true,
-      fileSize: 1773568,
-      requestId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
-      packageName: 'gm_0c3e455f_4aeb_4258_982d_f7773469a92d_4_0_000000_0000025_0000041_00000',
-      expirationTime: new Date(),
-      targetResolution: 0.0439453125,
-    },
-    cleanupData: {
-      directoryPath: 'test',
-      cleanupExpirationTimeUTC: new Date(),
-    },
-
-    targetResolution: 0.0439453125,
-  },
-
-  status: OperationStatus.COMPLETED,
-  percentage: 100,
-  reason: '',
-  isCleaned: false,
-  priority: 1000,
-  expirationDate: new Date(),
-  internalId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-  productName: 'string',
-  productType: 'OrthophotoHistory',
-  taskCount: 1,
-  completedTasks: 1,
-  failedTasks: 0,
-  expiredTasks: 0,
-  pendingTasks: 0,
-  inProgressTasks: 0,
-  abortedTasks: 0,
-  tasks: [
-    {
-      id: '542ebbfd-f4d1-4c77-bd4d-97ca121f0de7',
-      jobId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
-      type: 'rasterTilesExporter',
-      description: '',
-      parameters: {
-        isNewTarget: true,
-        targetFormat: TileOutputFormat.PNG,
-        batches: [],
-        sources: [],
-      },
-      status: OperationStatus.COMPLETED,
-      reason: '',
-      attempts: 0,
-      resettable: true,
-      created: '2021-12-29T08:06:48.399Z',
-      updated: '2021-12-29T08:07:00.293Z',
-    },
-  ],
-  created: '2021-12-29T08:06:48.399Z',
-  updated: '2021-12-29T08:07:00.270Z',
-};
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
-  id: 'fa3ab609-377a-4d96-bf0b-e0bb72f683b8',
-  domain: 'testDomain',
-  resourceId: 'string',
-  version: '1.0',
-  type: 'rasterTilesExporter',
-  percentage: 0,
-  description: '',
-  parameters: {
-    fileName: 'test.gpkg',
-    relativeDirectoryPath: 'test',
-    exportVersion: ExportVersion.GETMAP,
-    crs: 'EPSG:4326',
-    sanitizedBbox: [0, 0, 25, 41],
-    zoomLevel: 4,
-    targetResolution: 0.0439453125,
-  },
-  status: OperationStatus.IN_PROGRESS,
-  reason: '',
-  isCleaned: false,
-  priority: 0,
-  expirationDate: new Date(),
-  internalId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-  productName: 'string',
-  productType: 'OrthophotoHistory',
-  taskCount: 1,
-  completedTasks: 0,
-  failedTasks: 0,
-  expiredTasks: 0,
-  pendingTasks: 0,
-  abortedTasks: 0,
-  inProgressTasks: 1,
-  tasks: [
-    {
-      id: '1f765695-338b-4752-b182-a8cbae3c610e',
-      jobId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
-      type: 'rasterTilesExporter',
-      description: '',
-      parameters: {
-        isNewTarget: true,
-        targetFormat: TileOutputFormat.PNG,
-        batches: [],
-        sources: [],
-      },
-      status: OperationStatus.IN_PROGRESS,
-      reason: '',
-      attempts: 0,
-      resettable: true,
-      created: '2021-12-29T10:42:13.487Z',
-      updated: '2021-12-29T10:42:16.231Z',
-    },
-  ],
-  created: '2021-12-29T10:42:13.487Z',
-  updated: '2021-12-29T10:42:13.487Z',
-};
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-const jobs = [inProgressJob, completedJob];
 
 const userInput: ICreatePackage = {
   dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
@@ -1018,10 +878,7 @@ const pycswRecord = {
 export {
   layerFromCatalog,
   workerExportInput,
-  jobs,
-userInput,
-  completedJob,
-  inProgressJob,
+  userInput,
   fc1,
   fcNoMaxResolutionDeg,
   fcBadMinResolutionDeg,

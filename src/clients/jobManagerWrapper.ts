@@ -10,17 +10,13 @@ import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import {
   CreateExportJobBody,
-  CreateJobBody,
   ExportVersion,
   ICreateExportJobResponse,
   IJobExportParameters,
-  IJobParameters,
   ITaskParameters,
   IWorkerExportInput,
-  JobDuplicationParams,
   JobExportDuplicationParams,
   JobExportResponse,
-  JobResponse,
   TaskResponse,
 } from '../common/interfaces';
 
@@ -152,7 +148,7 @@ export class JobManagerWrapper extends JobManagerClient {
     const getOrUpdateURL = `/jobs/${jobId}`;
     const newExpirationDate = getUTCDate();
     newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
-    const job = await this.get<JobResponse | JobExportResponse>(getOrUpdateURL);
+    const job = await this.get<JobExportResponse>(getOrUpdateURL);
     const oldExpirationDate = new Date(job.parameters.cleanupData?.cleanupExpirationTimeUTC as Date);
     if (oldExpirationDate < newExpirationDate) {
       this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg: 'update expirationDate' });

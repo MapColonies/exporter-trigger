@@ -2,16 +2,13 @@ import jsLogger from '@map-colonies/js-logger';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
-import { JobResponse, JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
+import { JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { tracerMock } from '../../mocks/clients/tracer';
 import {
   completedExportJob,
-  completedJob,
   fc1,
   inProgressExportJob,
-  inProgressJob,
-  jobs,
   layerFromCatalog,
   workerExportInput,
 } from '../../mocks/data';
@@ -44,66 +41,6 @@ describe('JobManagerClient', () => {
         await jobManagerClient.updateJob('123213', { status: OperationStatus.COMPLETED });
 
         expect(putFun).toHaveBeenCalledTimes(1);
-      });
-
-      /**
-       * @deprecated GetMap API - will be deprecated on future
-       */
-      it('should successfully update job expirationDate (old expirationDate lower)', async () => {
-        const expirationDays: number = configMock.get('cleanupExpirationDays');
-        const testExpirationDate = getUTCDate();
-        const expectedNewExpirationDate = getUTCDate();
-        testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
-        expectedNewExpirationDate.setDate(expectedNewExpirationDate.getDate() + expirationDays);
-        expectedNewExpirationDate.setSeconds(0, 0);
-
-        get = jest.fn();
-        putFun = jest.fn();
-        (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
-        const jobManager = jobManagerClient as unknown as { get: unknown };
-        jobManager.get = get.mockResolvedValue({
-          ...completedJob,
-          parameters: {
-            ...completedJob.parameters,
-            cleanupData: { ...completedJob.parameters.cleanupData, cleanupExpirationTimeUTC: testExpirationDate },
-            callbackParams: { ...completedJob.parameters.callbackParams, expirationTime: testExpirationDate },
-          },
-        });
-
-        await jobManagerClient.validateAndUpdateExpiration(completedJob.id);
-
-        expect(get).toHaveBeenCalledTimes(1);
-        expect(putFun).toHaveBeenCalledTimes(1);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const expirationParamCall: Date = putFun.mock.calls[0][1].parameters.cleanupData.cleanupExpirationTimeUTC;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const expirationCallbackParams: Date = putFun.mock.calls[0][1].parameters.callbackParams.expirationTime;
-        expirationParamCall.setSeconds(0, 0);
-        expect(JSON.stringify(expirationParamCall)).toBe(JSON.stringify(expectedNewExpirationDate));
-        expect(JSON.stringify(expirationCallbackParams)).toBe(JSON.stringify(expectedNewExpirationDate));
-      });
-
-      /**
-       * @deprecated GetMap API - will be deprecated on future
-       */
-      it('should not update job expirationDate (old expirationDate higher)', async () => {
-        const expirationDays: number = configMock.get('cleanupExpirationDays');
-        const testExpirationDate = getUTCDate();
-        const expectedNewExpirationDate = getUTCDate();
-        testExpirationDate.setDate(testExpirationDate.getDate() + 2 * expirationDays);
-        expectedNewExpirationDate.setDate(expectedNewExpirationDate.getDate() + expirationDays);
-        expectedNewExpirationDate.setSeconds(0, 0);
-
-        get = jest.fn();
-        putFun = jest.fn();
-        (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
-        const jobManager = jobManagerClient as unknown as { get: unknown };
-        jobManager.get = get.mockResolvedValue({ ...inProgressJob, expirationDate: testExpirationDate });
-
-        await jobManagerClient.validateAndUpdateExpiration(inProgressJob.id);
-
-        expect(get).toHaveBeenCalledTimes(1);
-        expect(putFun).toHaveBeenCalledTimes(0);
       });
     });
 

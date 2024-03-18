@@ -24,16 +24,12 @@ import {
   ExportVersion,
   ICreateExportJobResponse,
   ICreatePackageRoi,
-  IJobParameters,
   ITaskParameters,
-  JobDuplicationParams,
   JobExportDuplicationParams,
 } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
 import {
   completedExportJob,
-  completedJob,
-  inProgressJob,
   layerFromCatalog,
   userInput,
   metadataExportJson,
