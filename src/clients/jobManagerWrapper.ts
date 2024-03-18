@@ -103,27 +103,6 @@ export class JobManagerWrapper extends JobManagerClient {
     return createJobResponse;
   }
 
-  /**
-   * @deprecated The method should not be used
-   */
-  public async findCompletedJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
-    const queryParams: IFindJobsRequest = {
-      resourceId: jobParams.resourceId,
-      version: jobParams.version,
-      isCleaned: false,
-      type: this.tilesJobType,
-      shouldReturnTasks: false,
-      status: OperationStatus.COMPLETED,
-    };
-    const jobs = await this.getGetMapJobs(queryParams);
-    if (jobs) {
-      const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);
-      return matchingJob;
-    }
-
-    return undefined;
-  }
-
   public async findExportJob(
     status: OperationStatus,
     jobParams: JobExportDuplicationParams,
@@ -146,61 +125,14 @@ export class JobManagerWrapper extends JobManagerClient {
     return undefined;
   }
 
-  /**
-   * @deprecated The method should not be used
-   */
-  public async findInProgressJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
-    const queryParams: IFindJobsRequest = {
-      resourceId: jobParams.resourceId,
-      version: jobParams.version,
-      isCleaned: false,
-      type: this.tilesJobType,
-      shouldReturnTasks: true,
-      status: OperationStatus.IN_PROGRESS,
-    };
-
-    const jobs = await this.getGetMapJobs(queryParams);
-    if (jobs) {
-      const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);
-      return matchingJob;
-    }
-
-    return undefined;
-  }
-
-  /**
-   * @deprecated The method should not be used
-   */
-  public async findPendingJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
-    const queryParams: IFindJobsRequest = {
-      resourceId: jobParams.resourceId,
-      version: jobParams.version,
-      isCleaned: false,
-      type: this.tilesJobType,
-      shouldReturnTasks: true,
-      status: OperationStatus.PENDING,
-    };
-
-    const jobs = await this.getGetMapJobs(queryParams);
-    if (jobs) {
-      const matchingJob = this.findJobWithMatchingParams(jobs, jobParams);
-      return matchingJob;
-    }
-
-    return undefined;
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async getInProgressJobs(shouldReturnTasks = false): Promise<JobResponse[] | undefined> {
+  public async getInProgressJobs(shouldReturnTasks = false): Promise<JobExportResponse[] | undefined> {
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
       type: this.tilesJobType,
       shouldReturnTasks,
       status: OperationStatus.IN_PROGRESS,
     };
-    const jobs = await this.getGetMapJobs(queryParams);
+    const jobs = await this.getExportJobs(queryParams);
     return jobs;
   }
 
@@ -246,25 +178,12 @@ export class JobManagerWrapper extends JobManagerClient {
     }
   }
 
+    //TODO: once will be only one kind of exported jobs, no need to filter by ROI's
   public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
     const exportJobs = jobs?.filter((job) => {
       if (job.parameters.exportVersion === ExportVersion.ROI) {
-        return job;
-      }
-    });
-    return exportJobs;
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private async getGetMapJobs(queryParams: IFindJobsRequest): Promise<JobResponse[] | undefined> {
-    this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
-    const jobs = await this.get<JobResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
-    const exportJobs = jobs?.filter((job) => {
-      if (job.parameters.exportVersion === ExportVersion.GETMAP) {
         return job;
       }
     });

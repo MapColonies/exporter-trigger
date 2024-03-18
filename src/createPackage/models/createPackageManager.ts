@@ -273,7 +273,7 @@ export class CreatePackageManager {
     const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
     let otherRunningJobsSize = 0;
 
-    const inProcessingJobs: JobResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
+    const inProcessingJobs: JobExportResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
     if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
       inProcessingJobs.forEach((job) => {
         let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
