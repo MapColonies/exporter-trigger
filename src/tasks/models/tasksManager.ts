@@ -3,6 +3,8 @@ import { inject, injectable } from 'tsyringe';
 import config from 'config';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { Tracer } from '@opentelemetry/api';
 import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
@@ -44,49 +46,15 @@ export class TasksManager {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(CallbackClient) private readonly callbackClient: CallbackClient,
-    @inject(CreatePackageManager) private readonly packageManager: CreatePackageManager
+    @inject(CreatePackageManager) private readonly packageManager: CreatePackageManager,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
     this.downloadServerUrl = config.get<string>('downloadServerUrl');
     this.tilesJobType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType');
   }
 
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async getJobsByTaskStatus(): Promise<IJobStatusResponse> {
-    const jobs = await this.jobManagerClient.getInProgressJobs();
-    const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
-    const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
-    const jobsStatus = {
-      completedJobs: completedJobs,
-      failedJobs: failedJobs,
-    };
-    return jobsStatus;
-  }
-
-  public async getFinalizeJobById(jobId: string): Promise<IJobResponse<IJobExportParameters, ITaskFinalizeParameters>> {
-    const job = await this.jobManagerClient.getJob<IJobExportParameters, ITaskFinalizeParameters>(jobId);
-    return job;
-  }
-
-  public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
-    const queryParams: IFindJobsRequest = {
-      isCleaned: false,
-      type: this.tilesJobType,
-      shouldReturnTasks: false,
-      status: OperationStatus.IN_PROGRESS,
-    };
-    const jobs = await this.jobManagerClient.getExportJobs(queryParams);
-    const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
-    const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
-    const jobsStatus = {
-      completedJobs: completedJobs,
-      failedJobs: failedJobs,
-    };
-    return jobsStatus;
-  }
-
+  @withSpanAsyncV4
   public async getTaskStatusByJobId(jobId: string): Promise<ITaskStatusResponse> {
     const tasks = await this.jobManagerClient.getTasksByJobId(jobId);
 
@@ -99,6 +67,29 @@ export class TasksManager {
       status: task.status,
     };
     return statusResponse;
+  }
+
+  @withSpanAsyncV4
+  public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
+    const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
+    this.logger.info({ jobId: job.id, operationStatus, msg: `create finalize task` });
+    const taskParameters: ITaskFinalizeParameters = {
+      reason,
+      exporterTaskStatus: operationStatus,
+    };
+
+    const createTaskRequest: CreateFinalizeTaskBody = {
+      type: taskType,
+      parameters: taskParameters,
+      status: OperationStatus.PENDING,
+      blockDuplication: true,
+    };
+    //to protect race condition of multi-triggers, protection on crash while enqueue same task
+    try {
+      await this.jobManagerClient.enqueueTask(job.id, createTaskRequest);
+    } catch (error) {
+      this.logger.warn({ jobId: job.id, err: error, msg: `failed to create new finalize task` });
+    }
   }
 
   /**
@@ -149,6 +140,42 @@ export class TasksManager {
     } catch (error) {
       this.logger.error({ jobId: job.id, err: error, reason: (error as Error).message, msg: `Sending callback has failed` });
     }
+  }
+
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
+  public async getJobsByTaskStatus(): Promise<IJobStatusResponse> {
+    const jobs = await this.jobManagerClient.getInProgressJobs();
+    const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
+    const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
+    const jobsStatus = {
+      completedJobs: completedJobs,
+      failedJobs: failedJobs,
+    };
+    return jobsStatus;
+  }
+
+  public async getFinalizeJobById(jobId: string): Promise<IJobResponse<IJobExportParameters, ITaskFinalizeParameters>> {
+    const job = await this.jobManagerClient.getJob<IJobExportParameters, ITaskFinalizeParameters>(jobId);
+    return job;
+  }
+
+  public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
+    const queryParams: IFindJobsRequest = {
+      isCleaned: false,
+      type: this.tilesJobType,
+      shouldReturnTasks: false,
+      status: OperationStatus.IN_PROGRESS,
+    };
+    const jobs = await this.jobManagerClient.getExportJobs(queryParams);
+    const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
+    const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
+    const jobsStatus = {
+      completedJobs: completedJobs,
+      failedJobs: failedJobs,
+    };
+    return jobsStatus;
   }
 
   public async sendExportCallbacks(
@@ -283,28 +310,6 @@ export class TasksManager {
     };
 
     return updateJobParams;
-  }
-
-  public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
-    const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
-    this.logger.info({ jobId: job.id, operationStatus, msg: `create finalize task` });
-    const taskParameters: ITaskFinalizeParameters = {
-      reason,
-      exporterTaskStatus: operationStatus,
-    };
-
-    const createTaskRequest: CreateFinalizeTaskBody = {
-      type: taskType,
-      parameters: taskParameters,
-      status: OperationStatus.PENDING,
-      blockDuplication: true,
-    };
-    //to protect race condition of multi-triggers, protection on crash while enqueue same task
-    try {
-      await this.jobManagerClient.enqueueTask(job.id, createTaskRequest);
-    } catch (error) {
-      this.logger.warn({ jobId: job.id, err: error, msg: `failed to create new finalize task` });
-    }
   }
 
   private generateCleanupEntity(job: JobResponse | JobExportResponse | JobFinalizeResponse, expirationDate: Date): ICleanupData {

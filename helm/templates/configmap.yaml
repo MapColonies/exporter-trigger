@@ -1,6 +1,9 @@
 {{- $chartName := include "exporter-trigger.name" . -}}
 {{- $tracingUrl := include "exporter-trigger.tracingUrl" . -}}
 {{- $metricsUrl := include "exporter-trigger.metricsUrl" . -}}
+{{- $tracingEnabled := include "raster-catalog-manager.tracingEnabled" . -}}
+{{- $metricsEnabled := include "raster-catalog-manager.metricsEnabled" . -}}
+{{- $metricsBuckets := include "raster-catalog-manager.metricsBuckets" . -}}
 {{- $serviceUrls := (include "common.serviceUrls.merged" .) | fromYaml }}
 {{- $jobManagement := (include "common.jobManagement.merged" .) | fromYaml }}
 {{- $storage := (include "common.storage.merged" .) | fromYaml }}
@@ -15,13 +18,14 @@ data:
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.env.responseCompressionEnabled | quote }}
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
   LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
-  {{ if .Values.env.tracing.enabled }}
-  TELEMETRY_TRACING_ENABLED: 'true'
+  TELEMETRY_TRACING_ENABLED: {{ $tracingEnabled | quote }}
+  {{ if $tracingEnabled }}
   TELEMETRY_TRACING_URL: {{ $tracingUrl }}
   {{ end }}
-  {{ if .Values.env.metrics.enabled }}
-  TELEMETRY_METRICS_ENABLED: 'true'
+  TELEMETRY_METRICS_ENABLED: {{ $metricsEnabled | quote }}
+  {{ if $metricsEnabled }}
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
+  TELEMETRY_METRICS_BUCKETS: {{ $metricsBuckets | toJson | quote }}
   {{ end }}
   JOB_MANAGER_URL: {{ $serviceUrls.jobManager | quote }}
   CLEANUP_EXPIRATION_DAYS: {{ .Values.env.cleanupExpirationDays | quote }}

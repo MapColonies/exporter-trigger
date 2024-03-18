@@ -1,6 +1,8 @@
 import { promises as fsPromise } from 'fs';
 import { sep, parse as parsePath } from 'path';
 import { Logger } from '@map-colonies/js-logger';
+import { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import {
   Polygon,
   MultiPolygon,
@@ -92,6 +94,7 @@ export class CreatePackageManager {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
@@ -102,112 +105,7 @@ export class CreatePackageManager {
     this.tilesProvider = this.tilesProvider.toUpperCase() as MergerSourceType;
   }
 
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
-    const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
-    const layerMetadata = layer.metadata;
-    let { productId: resourceId, productVersion: version, productType } = layerMetadata;
-    const { dbId, crs, priority, bbox: bboxFromUser, callbackURLs } = userInput;
-    const normalizedPolygon = this.normalize2Polygon(bboxFromUser);
-    const polygon = normalizedPolygon ?? layerMetadata.footprint;
-    const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
-    const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
-    const tileEstimatedSize = this.getTileEstimatedSize(layerMetadata.tileOutputFormat as TileOutputFormat);
-
-    resourceId = resourceId as string;
-    version = version as string;
-    productType = productType as ProductType;
-
-    const srcRes = layerMetadata.maxResolutionDeg as number;
-    const maxZoom = degreesPerPixelToZoomLevel(srcRes);
-    if (zoomLevel > maxZoom) {
-      throw new BadRequestError(`The requested resolution ${targetResolution} is larger than product resolution ${srcRes}`);
-    }
-
-    const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
-    if (sanitizedBbox === null) {
-      throw new BadRequestError(
-        `Requested ${JSON.stringify(polygon as Polygon)} has no intersection with requested layer ${layer.metadata.id as string}`
-      );
-    }
-
-    const dupParams: JobDuplicationParams = {
-      resourceId,
-      version,
-      dbId,
-      zoomLevel,
-      sanitizedBbox,
-      crs: crs ?? DEFAULT_CRS,
-    };
-
-    const callbacks = callbackURLs.map((url) => <ICallbackTarget>{ url, bbox: bboxFromUser ?? sanitizedBbox });
-    const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
-    if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
-      const completeResponseData = duplicationExist as ICallbackResponse;
-      completeResponseData.bbox = bboxFromUser ?? sanitizedBbox;
-      return duplicationExist;
-    } else if (duplicationExist) {
-      return duplicationExist;
-    }
-
-    // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
-    const batches: ITileRange[] = [];
-    for (let i = 0; i <= zoomLevel; i++) {
-      batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
-    }
-    // const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
-    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
-    if (this.storageEstimation.validateStorageSize) {
-      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
-      if (!isEnoughStorage) {
-        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
-      }
-    }
-    const separator = this.getSeparator();
-    const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, sanitizedBbox);
-    const packageRelativePath = getGpkgRelativePath(packageName, separator);
-    const sources: IMapSource[] = [
-      {
-        path: packageRelativePath,
-        type: 'GPKG',
-        extent: {
-          minX: sanitizedBbox[0],
-          minY: sanitizedBbox[1],
-          maxX: sanitizedBbox[2],
-          maxY: sanitizedBbox[3],
-        },
-      },
-      {
-        path: `${layerMetadata.id as string}${separator}${layerMetadata.displayPath as string}`, //tiles path
-        type: this.tilesProvider,
-      },
-    ];
-
-    const workerInput: IWorkerInput = {
-      sanitizedBbox,
-      targetResolution,
-      fileName: packageName,
-      relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
-      zoomLevel,
-      dbId,
-      exportVersion: ExportVersion.GETMAP,
-      version: version,
-      cswProductId: resourceId,
-      crs: crs ?? DEFAULT_CRS,
-      productType,
-      batches,
-      sources,
-      priority: priority ?? DEFAULT_PRIORITY,
-      callbacks: callbacks,
-      gpkgEstimatedSize: estimatesGpkgSize,
-      targetFormat: layerMetadata.tileOutputFormat,
-    };
-    const jobCreated = await this.jobManagerClient.create(workerInput);
-    return jobCreated;
-  }
-
+  @withSpanAsyncV4
   public async createPackageRoi(userInput: ICreatePackageRoi): Promise<ICreateExportJobResponse | ICallbackExportResponse> {
     const { dbId, crs, priority, callbackURLs, description } = userInput;
     let roi = userInput.roi;
@@ -371,6 +269,50 @@ export class CreatePackageManager {
     return jobCreated;
   }
 
+  @withSpanAsyncV4
+  private async getFreeStorage(): Promise<number> {
+    const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
+    let otherRunningJobsSize = 0;
+
+    const inProcessingJobs: JobResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
+    if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
+      inProcessingJobs.forEach((job) => {
+        let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
+        if (job.percentage) {
+          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+          jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the needed size that left for this gpkg creation
+        }
+        otherRunningJobsSize += jobGpkgEstimatedSize;
+      });
+    }
+    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageEstimation.storageFactorBuffer;
+    this.logger.debug({ freeSpace: actualFreeSpace, totalSpace: storageStatus.size }, `Current storage free space for gpkgs location`);
+    return actualFreeSpace;
+  }
+
+  @withSpanAsyncV4
+  private async checkForExportDuplicate(
+    dupParams: JobExportDuplicationParams,
+    callbackUrls?: ICallbackTargetExport[]
+  ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
+    let completedExists = await this.checkForExportCompleted(dupParams);
+    if (completedExists) {
+      return completedExists;
+    }
+
+    const processingExists = await this.checkForExportProcessing(dupParams, callbackUrls);
+    if (processingExists) {
+      // For race condition
+      completedExists = await this.checkForExportCompleted(dupParams);
+      if (completedExists) {
+        return completedExists;
+      }
+      return { ...processingExists, isDuplicated: true };
+    }
+
+    return undefined;
+  }
+
   /**
    * @deprecated GetMap API - will be deprecated on future
    */
@@ -444,6 +386,112 @@ export class CreatePackageManager {
     }
   }
 
+  /**
+   * @deprecated GetMap API - will be deprecated on future
+   */
+  public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
+    const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
+    const layerMetadata = layer.metadata;
+    let { productId: resourceId, productVersion: version, productType } = layerMetadata;
+    const { dbId, crs, priority, bbox: bboxFromUser, callbackURLs } = userInput;
+    const normalizedPolygon = this.normalize2Polygon(bboxFromUser);
+    const polygon = normalizedPolygon ?? layerMetadata.footprint;
+    const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
+    const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
+    const tileEstimatedSize = this.getTileEstimatedSize(layerMetadata.tileOutputFormat as TileOutputFormat);
+
+    resourceId = resourceId as string;
+    version = version as string;
+    productType = productType as ProductType;
+
+    const srcRes = layerMetadata.maxResolutionDeg as number;
+    const maxZoom = degreesPerPixelToZoomLevel(srcRes);
+    if (zoomLevel > maxZoom) {
+      throw new BadRequestError(`The requested resolution ${targetResolution} is larger than product resolution ${srcRes}`);
+    }
+
+    const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
+    if (sanitizedBbox === null) {
+      throw new BadRequestError(
+        `Requested ${JSON.stringify(polygon as Polygon)} has no intersection with requested layer ${layer.metadata.id as string}`
+      );
+    }
+
+    const dupParams: JobDuplicationParams = {
+      resourceId,
+      version,
+      dbId,
+      zoomLevel,
+      sanitizedBbox,
+      crs: crs ?? DEFAULT_CRS,
+    };
+
+    const callbacks = callbackURLs.map((url) => <ICallbackTarget>{ url, bbox: bboxFromUser ?? sanitizedBbox });
+    const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
+    if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
+      const completeResponseData = duplicationExist as ICallbackResponse;
+      completeResponseData.bbox = bboxFromUser ?? sanitizedBbox;
+      return duplicationExist;
+    } else if (duplicationExist) {
+      return duplicationExist;
+    }
+
+    // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
+    const batches: ITileRange[] = [];
+    for (let i = 0; i <= zoomLevel; i++) {
+      batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
+    }
+    // const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
+    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
+    if (this.storageEstimation.validateStorageSize) {
+      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
+      if (!isEnoughStorage) {
+        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
+      }
+    }
+    const separator = this.getSeparator();
+    const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, sanitizedBbox);
+    const packageRelativePath = getGpkgRelativePath(packageName, separator);
+    const sources: IMapSource[] = [
+      {
+        path: packageRelativePath,
+        type: 'GPKG',
+        extent: {
+          minX: sanitizedBbox[0],
+          minY: sanitizedBbox[1],
+          maxX: sanitizedBbox[2],
+          maxY: sanitizedBbox[3],
+        },
+      },
+      {
+        path: `${layerMetadata.id as string}${separator}${layerMetadata.displayPath as string}`, //tiles path
+        type: this.tilesProvider,
+      },
+    ];
+
+    const workerInput: IWorkerInput = {
+      sanitizedBbox,
+      targetResolution,
+      fileName: packageName,
+      relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
+      zoomLevel,
+      dbId,
+      exportVersion: ExportVersion.GETMAP,
+      version: version,
+      cswProductId: resourceId,
+      crs: crs ?? DEFAULT_CRS,
+      productType,
+      batches,
+      sources,
+      priority: priority ?? DEFAULT_PRIORITY,
+      callbacks: callbacks,
+      gpkgEstimatedSize: estimatesGpkgSize,
+      targetFormat: layerMetadata.tileOutputFormat,
+    };
+    const jobCreated = await this.jobManagerClient.create(workerInput);
+    return jobCreated;
+  }
+
   private featuresFootprintIntersects(
     features: Feature<Polygon | MultiPolygon>[],
     footprint: Polygon | MultiPolygon
@@ -456,26 +504,6 @@ export class CreatePackageManager {
       }
     });
     return intersectedFeatures;
-  }
-
-  private async getFreeStorage(): Promise<number> {
-    const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
-    let otherRunningJobsSize = 0;
-
-    const inProcessingJobs: JobResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
-    if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
-      inProcessingJobs.forEach((job) => {
-        let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
-        if (job.percentage) {
-          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-          jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the needed size that left for this gpkg creation
-        }
-        otherRunningJobsSize += jobGpkgEstimatedSize;
-      });
-    }
-    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageEstimation.storageFactorBuffer;
-    this.logger.debug({ freeSpace: actualFreeSpace, totalSpace: storageStatus.size }, `Current storage free space for gpkgs location`);
-    return actualFreeSpace;
   }
 
   private async validateFreeSpace(estimatesGpkgSize: number): Promise<boolean> {
@@ -602,28 +630,6 @@ export class CreatePackageManager {
         return completedExists;
       }
       return processingExists;
-    }
-
-    return undefined;
-  }
-
-  private async checkForExportDuplicate(
-    dupParams: JobExportDuplicationParams,
-    callbackUrls?: ICallbackTargetExport[]
-  ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
-    let completedExists = await this.checkForExportCompleted(dupParams);
-    if (completedExists) {
-      return completedExists;
-    }
-
-    const processingExists = await this.checkForExportProcessing(dupParams, callbackUrls);
-    if (processingExists) {
-      // For race condition
-      completedExists = await this.checkForExportCompleted(dupParams);
-      if (completedExists) {
-        return completedExists;
-      }
-      return { ...processingExists, isDuplicated: true };
     }
 
     return undefined;
