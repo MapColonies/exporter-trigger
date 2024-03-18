@@ -65,9 +65,7 @@ describe('FinalizationManager', () => {
 
       await finalizationManager.jobStatusPoll();
 
-      expect(getJobsByTaskStatusMock).toHaveBeenCalledTimes(1);
       expect(getExportJobsByTaskStatusMock).toHaveBeenCalledTimes(1);
-      expect(finalizeJobMock).toHaveBeenCalledTimes(2);
       expect(createFinalizeTaskMock).toHaveBeenCalledTimes(3);
     });
 
@@ -92,9 +90,6 @@ describe('FinalizationManager', () => {
 
       await finalizationManager.jobStatusPoll();
 
-      expect(getJobsByTaskStatusMock).toHaveBeenCalledTimes(1);
-      expect(getExportJobsByTaskStatusMock).toHaveBeenCalledTimes(1);
-      expect(finalizeJobMock).toHaveBeenCalledTimes(2);
       expect(createFinalizeTaskMock).toHaveBeenCalledTimes(3);
     });
   });

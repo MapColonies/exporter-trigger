@@ -156,34 +156,8 @@ export class FinalizationManager {
   }
 
   public async jobStatusPoll(): Promise<boolean> {
-    const getMapExistsJobs = await this.handleGetMapJobs();
     const roiExistsJobs = await this.handleROIJobs();
-    return getMapExistsJobs || roiExistsJobs;
-  }
-
-  private async handleGetMapJobs(): Promise<boolean> {
-    let existsJobs = false;
-    const getMapJobs = await this.taskManager.getJobsByTaskStatus(); // for old getmap api - will be removed
-    const expirationDateUTC = getUTCDate();
-    expirationDateUTC.setDate(expirationDateUTC.getDate() + this.expirationDays);
-    this.logger.debug({ ...getMapJobs, msg: `Handling GetMap jobs` });
-    if (getMapJobs.completedJobs && getMapJobs.completedJobs.length > 0) {
-      existsJobs = true;
-      this.logger.info({ msg: `GETMAP Completed GetMap jobs detected, running finalize job` });
-      for (const job of getMapJobs.completedJobs) {
-        this.logger.info({ jobId: job.id, msg: `GETMAP Execute completed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
-        await this.taskManager.finalizeJob(job, expirationDateUTC);
-      }
-    } else if (getMapJobs.failedJobs && getMapJobs.failedJobs.length > 0) {
-      existsJobs = true;
-      this.logger.info({ msg: `GETMAP Failed jobs detected, running finalize job` });
-      for (const job of getMapJobs.failedJobs) {
-        this.logger.info({ jobId: job.id, msg: `GETMAP Execute Failed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
-        const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
-        await this.taskManager.finalizeJob(job, expirationDateUTC, false, gpkgFailedErr);
-      }
-    }
-    return existsJobs;
+    return roiExistsJobs;
   }
 
   private async handleROIJobs(): Promise<boolean> {

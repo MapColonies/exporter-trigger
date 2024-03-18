@@ -197,48 +197,6 @@ describe('TasksManager', () => {
       });
     });
 
-    describe('#finalizeJob', () => {
-      let sendCallbacksSpy: jest.SpyInstance;
-
-      it('should successfully finalize a job with status completed', async () => {
-        const expirationTime = new Date();
-        createJsonMetadataMock.mockResolvedValue({});
-        updateJobMock.mockResolvedValue({});
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendCallbacks');
-
-        const action = async () => tasksManager.finalizeJob(mockJob, expirationTime);
-        await expect(action()).resolves.not.toThrow();
-        expect(createJsonMetadataMock).toHaveBeenCalledTimes(1);
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should successfully finalize a job with status failed due to error while create json metadata file', async () => {
-        const expirationTime = new Date();
-        createJsonMetadataMock.mockRejectedValue({});
-        updateJobMock.mockResolvedValue({});
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendCallbacks');
-
-        const action = async () => tasksManager.finalizeJob(mockJob, expirationTime);
-        await expect(action()).resolves.not.toThrow();
-        expect(createJsonMetadataMock).toHaveBeenCalledTimes(1);
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should successfully finalize a job with job status failed without create json metadata file due to failed in task', async () => {
-        const expirationTime = new Date();
-        updateJobMock.mockResolvedValue({});
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendCallbacks');
-
-        const errMessage = 'gpkg failed to create';
-        const action = async () => tasksManager.finalizeJob(mockJob, expirationTime, false, errMessage);
-        await expect(action()).resolves.not.toThrow();
-        expect(createJsonMetadataMock).toHaveBeenCalledTimes(0);
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
-      });
-    });
   });
   describe('ROI', () => {
     describe('#getTaskStatusByJobId', () => {

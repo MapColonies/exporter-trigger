@@ -409,43 +409,6 @@ export class CreatePackageManager {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
 
-  private normalize2Polygon(bboxFromUser: Polygon | MultiPolygon | BBox | undefined): Polygon | undefined {
-    try {
-      if (isArray(bboxFromUser) && bboxFromUser.length === CreatePackageManager.bboxLength2d) {
-        this.logger.debug({ ...bboxFromUser, msg: `Export will be executed by provided BBox from request input` });
-        const resultPolygon = bboxPolygon(bboxFromUser as BBox);
-        return resultPolygon.geometry;
-      } else if (this.isAPolygon(bboxFromUser)) {
-        this.logger.debug({ ...bboxFromUser, msg: `Export will be executed by provided Footprint from request input` });
-        return bboxFromUser;
-      } else if (!bboxFromUser) {
-        this.logger.debug(`Export will be executed on entire layer's footprint`);
-        return undefined;
-      } else {
-        this.logger.warn({ ...bboxFromUser, msg: `Input bbox param illegal - should be bbox | polygon | null types` });
-        throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
-      }
-    } catch (error) {
-      this.logger.error({ bboxFromUser, msg: `Failed with error ${(error as Error).message}` });
-      throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
-    }
-  }
-
-  private isAPolygon(obj?: object): obj is Polygon {
-    if (obj === undefined) {
-      return false;
-    }
-    const isPolygon = 'type' in obj && 'coordinates' in obj && (obj as { type: string }).type === 'Polygon';
-    if (isPolygon) {
-      const errors = geojsonhint.hint(obj);
-      if (!isEmpty(errors)) {
-        this.logger.warn({ bboxFromUser: obj, errors }, `Not a polygon`);
-        return false;
-      }
-    }
-    return isPolygon;
-  }
-
   private sanitizeBbox(polygon: Polygon | MultiPolygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
     try {
       const intersaction = intersect(polygon, footprint);

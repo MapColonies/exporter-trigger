@@ -206,44 +206,6 @@ export class TasksManager {
     }
   }
 
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async finalizeJob(job: JobResponse, expirationDate: Date, isSuccess = true, reason?: string): Promise<void> {
-    let updateJobParams: IUpdateJobBody<IJobParameters> = {
-      status: isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED,
-      reason,
-      /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
-      percentage: isSuccess ? 100 : undefined,
-    };
-
-    const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDate);
-
-    try {
-      this.logger.info({ jobId: job.id, msg: `GetMap Finalize Job` });
-      const packageName = job.parameters.fileName;
-      if (isSuccess) {
-        const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
-        await this.packageManager.createJsonMetadata(packageFullPath, job);
-      }
-      const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
-      updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams, cleanupData } };
-
-      this.logger.info({ jobId: job.id, status: isSuccess, msg: `GetMap Update Job status` });
-      await this.jobManagerClient.updateJob(job.id, updateJobParams);
-    } catch (error) {
-      this.logger.error({
-        jobId: job.id,
-        err: error,
-        errorReason: (error as Error).message,
-        msg: `GetMap Could not finalize job, will updating to status failed`,
-      });
-      const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
-      updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams, cleanupData } };
-      await this.jobManagerClient.updateJob(job.id, updateJobParams);
-    }
-  }
-
   public async finalizeGPKGSuccess(job: JobFinalizeResponse, expirationDateUTC: Date): Promise<IUpdateJobBody<IJobExportParameters>> {
     // initialization to mutual finalized params
     const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDateUTC);

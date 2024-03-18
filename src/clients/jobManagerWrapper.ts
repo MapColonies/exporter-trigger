@@ -106,56 +106,6 @@ export class JobManagerWrapper extends JobManagerClient {
   /**
    * @deprecated The method should not be used
    */
-  public async create(data: IWorkerInput): Promise<ICreateJobResponse> {
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
-
-    const createJobRequest: CreateJobBody = {
-      resourceId: data.cswProductId,
-      version: data.version,
-      type: this.tilesJobType,
-      domain: this.jobDomain,
-      parameters: {
-        sanitizedBbox: data.sanitizedBbox,
-        targetResolution: data.targetResolution,
-        exportVersion: ExportVersion.GETMAP,
-        zoomLevel: data.zoomLevel,
-        callbacks: data.callbacks,
-        crs: data.crs,
-        fileName: data.fileName,
-        relativeDirectoryPath: data.relativeDirectoryPath,
-        gpkgEstimatedSize: data.gpkgEstimatedSize,
-      },
-      internalId: data.dbId,
-      productType: data.productType,
-      productName: data.cswProductId,
-      priority: data.priority,
-      status: OperationStatus.IN_PROGRESS,
-      additionalIdentifiers: data.sanitizedBbox.toString() + String(data.zoomLevel),
-      tasks: [
-        {
-          type: this.tilesTaskType,
-          parameters: {
-            isNewTarget: true,
-            targetFormat: data.targetFormat,
-            batches: data.batches,
-            sources: data.sources,
-          },
-        },
-      ],
-    };
-
-    const res = await this.createJob<IJobParameters, ITaskParameters>(createJobRequest);
-    return {
-      id: res.id,
-      taskIds: res.taskIds,
-      status: OperationStatus.IN_PROGRESS,
-    };
-  }
-
-  /**
-   * @deprecated The method should not be used
-   */
   public async findCompletedJob(jobParams: JobDuplicationParams): Promise<JobResponse | undefined> {
     const queryParams: IFindJobsRequest = {
       resourceId: jobParams.resourceId,

@@ -39,17 +39,6 @@ describe('JobManagerClient', () => {
     });
 
     describe('getMap', () => {
-      /**
-       * @deprecated GetMap API - will be deprecated on future
-       */
-      it('should create job successfully', async () => {
-        postFun = jest.fn();
-        (jobManagerClient as unknown as { post: unknown }).post = postFun.mockResolvedValue({ id: '123', taskIds: ['123'] });
-        await jobManagerClient.create(workerInput);
-
-        expect(postFun).toHaveBeenCalledTimes(1);
-      });
-
       it('should update job successfully', async () => {
         putFun = jest.fn();
         (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
