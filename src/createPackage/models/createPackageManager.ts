@@ -290,6 +290,29 @@ export class CreatePackageManager {
     return actualFreeSpace;
   }
 
+  @withSpanAsyncV4
+  private async checkForExportDuplicate(
+    dupParams: JobExportDuplicationParams,
+    callbackUrls?: ICallbackTargetExport[]
+  ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
+    let completedExists = await this.checkForExportCompleted(dupParams);
+    if (completedExists) {
+      return completedExists;
+    }
+
+    const processingExists = await this.checkForExportProcessing(dupParams, callbackUrls);
+    if (processingExists) {
+      // For race condition
+      completedExists = await this.checkForExportCompleted(dupParams);
+      if (completedExists) {
+        return completedExists;
+      }
+      return { ...processingExists, isDuplicated: true };
+    }
+
+    return undefined;
+  }
+
   /**
    * @deprecated GetMap API - will be deprecated on future
    */
@@ -607,29 +630,6 @@ export class CreatePackageManager {
         return completedExists;
       }
       return processingExists;
-    }
-
-    return undefined;
-  }
-
-  @withSpanAsyncV4
-  private async checkForExportDuplicate(
-    dupParams: JobExportDuplicationParams,
-    callbackUrls?: ICallbackTargetExport[]
-  ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
-    let completedExists = await this.checkForExportCompleted(dupParams);
-    if (completedExists) {
-      return completedExists;
-    }
-
-    const processingExists = await this.checkForExportProcessing(dupParams, callbackUrls);
-    if (processingExists) {
-      // For race condition
-      completedExists = await this.checkForExportCompleted(dupParams);
-      if (completedExists) {
-        return completedExists;
-      }
-      return { ...processingExists, isDuplicated: true };
     }
 
     return undefined;

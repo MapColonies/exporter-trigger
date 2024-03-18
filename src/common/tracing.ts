@@ -1,5 +1,5 @@
 import { Tracing } from '@map-colonies/telemetry';
-import { ExpressInstrumentation, ExpressLayerType  } from '@opentelemetry/instrumentation-express';
+import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { IGNORED_INCOMING_TRACE_ROUTES, IGNORED_OUTGOING_TRACE_ROUTES } from './constants';
 

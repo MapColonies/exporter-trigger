@@ -4,6 +4,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { Tracer } from '@opentelemetry/api';
 import { ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
 import { QueueClient } from './clients/queueClient';
@@ -17,7 +18,6 @@ import {
 } from './common/interfaces';
 import { JobManagerWrapper } from './clients/jobManagerWrapper';
 import { CallbackClient } from './clients/callbackClient';
-import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 
 export const FINALIZATION_MANGER_SYMBOL = Symbol('tasksFactory');
 
@@ -39,44 +39,8 @@ export class FinalizationManager {
     this.finalizeAttempts = config.get<number>('externalClientsConfig.clientsUrls.jobManager.finalizeTasksAttempts');
   }
 
-  public async sendExportCallbacks(
-    job: JobExportResponse | JobFinalizeResponse,
-    callbackParams: ICallbackDataExportBase | ICallbackExportResponse
-  ): Promise<void> {
-    try {
-      this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
-      const targetCallbacks = job.parameters.callbacks;
-      if (!targetCallbacks) {
-        return;
-      }
-      const callbackPromises: Promise<void>[] = [];
-      for (const target of targetCallbacks) {
-        const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
-        callbackPromises.push(this.callbackClient.send(target.url, params));
-      }
-
-      const promisesResponse = await Promise.allSettled(callbackPromises);
-      promisesResponse.forEach((response, index) => {
-        if (response.status === 'rejected') {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
-        }
-      });
-    } catch (error) {
-      this.logger.error({ err: error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
-    }
-  }
-
-  public async jobFinalizePoll(): Promise<boolean> {
-    const finalizeTask = await this.queueClient.queueHandlerForFinalizeTasks.dequeue<ITaskFinalizeParameters>(this.finalizeTaskType);
-    if (!finalizeTask) {
-      return false;
-    }
-    return await this.runFinalize(finalizeTask);
-  }
-
   @withSpanAsyncV4
-  private async runFinalize(finalizeTask : ITaskResponse<ITaskFinalizeParameters>) {
+  private async runFinalize(finalizeTask: ITaskResponse<ITaskFinalizeParameters>): Promise<boolean> {
     const expirationDateUtc = getUTCDate();
     expirationDateUtc.setDate(expirationDateUtc.getDate() + this.expirationDays);
     try {
@@ -153,6 +117,42 @@ export class FinalizationManager {
       await this.queueClient.queueHandlerForFinalizeTasks.reject(finalizeTask.jobId, finalizeTask.id, true);
     }
     return true;
+  }
+
+  public async sendExportCallbacks(
+    job: JobExportResponse | JobFinalizeResponse,
+    callbackParams: ICallbackDataExportBase | ICallbackExportResponse
+  ): Promise<void> {
+    try {
+      this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
+      const targetCallbacks = job.parameters.callbacks;
+      if (!targetCallbacks) {
+        return;
+      }
+      const callbackPromises: Promise<void>[] = [];
+      for (const target of targetCallbacks) {
+        const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
+        callbackPromises.push(this.callbackClient.send(target.url, params));
+      }
+
+      const promisesResponse = await Promise.allSettled(callbackPromises);
+      promisesResponse.forEach((response, index) => {
+        if (response.status === 'rejected') {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
+        }
+      });
+    } catch (error) {
+      this.logger.error({ err: error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
+    }
+  }
+
+  public async jobFinalizePoll(): Promise<boolean> {
+    const finalizeTask = await this.queueClient.queueHandlerForFinalizeTasks.dequeue<ITaskFinalizeParameters>(this.finalizeTaskType);
+    if (!finalizeTask) {
+      return false;
+    }
+    return this.runFinalize(finalizeTask);
   }
 
   public async jobStatusPoll(): Promise<boolean> {
