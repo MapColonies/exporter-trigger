@@ -2,13 +2,7 @@
 import { LayerMetadata, ProductType, RecordType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { FeatureCollection } from '@turf/helpers';
-import {
-  ExportVersion,
-ICreatePackage,
-  IJobExportParameters,
-  ITaskParameters,
-  IWorkerExportInput,
-} from '../../src/common/interfaces';
+import { ExportVersion, ICreatePackage, IJobExportParameters, ITaskParameters, IWorkerExportInput } from '../../src/common/interfaces';
 
 const layerMetadata: LayerMetadata = {
   type: 'RECORD_RASTER',

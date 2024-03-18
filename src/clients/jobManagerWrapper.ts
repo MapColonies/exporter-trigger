@@ -1,8 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
-import booleanEqual from '@turf/boolean-equal';
-import bboxPolygon from '@turf/bbox-polygon';
 import { IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { featureCollectionBooleanEqual, getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
@@ -172,7 +170,7 @@ export class JobManagerWrapper extends JobManagerClient {
     }
   }
 
-    //TODO: once will be only one kind of exported jobs, no need to filter by ROI's
+  //TODO: once will be only one kind of exported jobs, no need to filter by ROI's
   public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);

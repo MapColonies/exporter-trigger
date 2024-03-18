@@ -5,18 +5,11 @@ import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { tracerMock } from '../../mocks/clients/tracer';
-import {
-  completedExportJob,
-  fc1,
-  inProgressExportJob,
-  layerFromCatalog,
-  workerExportInput,
-} from '../../mocks/data';
+import { completedExportJob, fc1, inProgressExportJob, layerFromCatalog, workerExportInput } from '../../mocks/data';
 
 let jobManagerClient: JobManagerWrapper;
 let postFun: jest.Mock;
 let putFun: jest.Mock;
-let getGetMapJobs: jest.Mock;
 let get: jest.Mock;
 let getExportJobs: jest.Mock;
 let deleteFun: jest.Mock;

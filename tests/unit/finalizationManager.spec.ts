@@ -14,14 +14,8 @@ import {
   finalizeJobMock,
   getExportJobsByTaskStatusMock,
   getFinalizeJobByIdMock,
-  getJobsByTaskStatusMock,
 } from '../mocks/clients/taskManager';
-import {
-  ICallbackDataExportBase,
-  IExportJobStatusResponse,
-  IJobExportParameters,
-  ITaskFinalizeParameters,
-} from '../../src/common/interfaces';
+import { ICallbackDataExportBase, IExportJobStatusResponse, IJobExportParameters, ITaskFinalizeParameters } from '../../src/common/interfaces';
 import { completedExportJob, inProgressExportJob } from '../mocks/data';
 import { configMock, registerDefaultConfig } from '../mocks/config';
 import { jobManagerWrapperMock, updateJobMock, deleteTaskByIdMock } from '../mocks/clients/jobManagerWrapper';
@@ -63,8 +57,6 @@ describe('FinalizationManager', () => {
     });
 
     it('should poll failed jobs for roi jobs', async () => {
-
-
       const roiJobStatus: IExportJobStatusResponse = {
         completedJobs: [],
         failedJobs: [

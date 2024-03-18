@@ -1,5 +1,5 @@
 import { promises as fsPromise } from 'fs';
-import { sep, parse as parsePath } from 'path';
+import { sep } from 'path';
 import { Logger } from '@map-colonies/js-logger';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
@@ -10,24 +10,14 @@ import {
   bbox as PolygonBbox,
   intersect,
   combine as featureCombine,
-  bboxPolygon,
   FeatureCollection,
   Feature,
   Geometry,
 } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
-import {
-  degreesPerPixelToZoomLevel,
-  featureCollectionBooleanEqual,
-  ITileRange,
-  snapBBoxToTileGrid,
-  TileRanger,
-  bboxToTileRange,
-} from '@map-colonies/mc-utils';
+import { degreesPerPixelToZoomLevel, featureCollectionBooleanEqual, ITileRange, snapBBoxToTileGrid, bboxToTileRange } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
-import { isArray, isEmpty } from 'lodash';
-import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { feature, featureCollection } from '@turf/helpers';
@@ -49,30 +39,16 @@ import {
 } from '../../common/interfaces';
 import {
   calculateEstimateGpkgSize,
-  getGpkgRelativePath,
   getStorageStatus,
-  getGpkgNameWithoutExt,
   concatFsPaths,
   parseFeatureCollection,
   generateGeoIdentifier,
   getFilesha256Hash,
 } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
-import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
-import {
-  MergerSourceType,
-  IMapSource,
-  ITaskParameters,
-  IStorageStatusResponse,
-} from '../../common/interfaces';
+import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
+import { MergerSourceType, IMapSource, ITaskParameters, IStorageStatusResponse } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const geojsonhint: IHinter = require('@mapbox/geojsonhint') as IHinter;
-
-interface IHinter {
-  hint: (obj: object) => [];
-}
 
 @injectable()
 export class CreatePackageManager {

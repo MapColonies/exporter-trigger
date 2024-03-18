@@ -1,4 +1,3 @@
-import { sep } from 'path';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
@@ -15,13 +14,8 @@ import {
 } from '../../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
 import { callbackClientMock, sendMock } from '../../../mocks/clients/callbackClient';
-import { createExportJsonMetadataMock, createJsonMetadataMock, packageManagerMock } from '../../../mocks/clients/packageManager';
-import {
-  jobManagerWrapperMock,
-  getInProgressJobsMock as getInProgressJobsMock,
-  updateJobMock,
-  getExportJobsMock,
-} from '../../../mocks/clients/jobManagerWrapper';
+import { createExportJsonMetadataMock, packageManagerMock } from '../../../mocks/clients/packageManager';
+import { jobManagerWrapperMock, getExportJobsMock } from '../../../mocks/clients/jobManagerWrapper';
 import { mockCompletedJob } from '../../../mocks/data/mockJob';
 import * as utils from '../../../../src/common/utils';
 import { ArtifactType } from '../../../../src/common/enums';

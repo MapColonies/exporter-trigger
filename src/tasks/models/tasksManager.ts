@@ -5,7 +5,7 @@ import { IFindJobsRequest, IJobResponse, IUpdateJobBody, OperationStatus } from 
 import { NotFoundError } from '@map-colonies/error-types';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer } from '@opentelemetry/api';
-import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
+import { concatFsPaths } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {

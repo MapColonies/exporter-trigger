@@ -2,35 +2,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/naming-convention */
 import fs from 'fs';
-import { sep } from 'path';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
-import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { LayerMetadata } from '@map-colonies/mc-model-types';
-import { BBox, Polygon } from '@turf/helpers';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { tracerMock } from '../../../mocks/clients/tracer';
-import {
-  jobManagerWrapperMock,
-  findCompletedJobMock,
-  findInProgressJobMock,
-  findPendingJobMock,
-  updateJobMock,
-  createMock,
-  findExportJobMock,
-  createExportMock,
-} from '../../../mocks/clients/jobManagerWrapper';
+import { jobManagerWrapperMock, updateJobMock, findExportJobMock, createExportMock } from '../../../mocks/clients/jobManagerWrapper';
 import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalogManagerClient';
-import {
-  ExportVersion,
-  ICreateExportJobResponse,
-  ICreatePackageRoi,
-  ITaskParameters,
-  JobExportDuplicationParams,
-} from '../../../../src/common/interfaces';
+import { ExportVersion, ICreateExportJobResponse, ICreatePackageRoi, JobExportDuplicationParams } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
 import {
   completedExportJob,
-  layerFromCatalog,
   userInput,
   metadataExportJson,
   layerFromCatalogSample,
@@ -45,7 +26,6 @@ import {
   featuresRecordsSampleFcMinResolutionDeg,
 } from '../../../mocks/data';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
-import { METADA_JSON_FILE_EXTENSION } from '../../../../src/common/constants';
 import * as utils from '../../../../src/common/utils';
 
 jest.mock('fs', () => {

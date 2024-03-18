@@ -123,7 +123,6 @@ export interface JobExportDuplicationParams {
   roi: FeatureCollection;
 }
 
-
 export interface IJobParameters {
   targetResolution: number;
   relativeDirectoryPath: string;
