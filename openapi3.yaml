@@ -142,50 +142,6 @@ components:
             - Completed
       discriminator:
         propertyName: response
-    exportGetMap:
-      type: object
-      properties:
-        dbId:
-          type: string
-          format: uuid
-          description: ID as the primary key from the Raster Catalog
-        bbox:
-          oneOf:
-            - $ref: '#/components/schemas/BBox'
-            - $ref: '#/components/schemas/Geometry'
-        targetResolution:
-          type: number
-          description: >-
-            The target resolution in which the tiles will be created - DEGREE to
-            PIXEL. If empty - original layer's resolution is taken.
-        callbackURLs:
-          type: array
-          items:
-            type: string
-          description: The callback URL to notify the process if finished
-        crs:
-          $ref: '#/components/schemas/CRS'
-        priority:
-          type: number
-          description: The priority of the record. Maximum priority = most urgent.
-          minimum: 0
-          maximum: 999999999
-      required:
-        - dbId
-        - callbackURLs
-      example:
-        dbId: ef03ca54-c68e-4ca8-8432-50ae5ad7a7f8
-        bbox:
-          - 34.811938017107494
-          - 31.95475033759175
-          - 34.82237261707599
-          - 31.96426962177354
-        targetResolution: 0.0000429153442382812
-        callbackURLs:
-          - http://example.getmap.com/callback
-          - http://example.getmap.com/callback2
-        crs: EPSG:4326
-        priority: 0
     exportFromFeatures:
       type: object
       properties:
