@@ -27,9 +27,6 @@ export interface ICleanupData {
   cleanupExpirationTimeUTC?: Date;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
 export interface ICreatePackage extends IBaseCreatePackage {
   targetResolution?: number;
   bbox?: BBox | Polygon | MultiPolygon;

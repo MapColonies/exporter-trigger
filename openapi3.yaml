@@ -26,50 +26,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/internalError'
-  /create:
-    post:
-      tags:
-        - createGpkg
-      summary: Trigger export geopackage process
-      operationId: exportTilesToGpkg
-      deprecated: true
-      requestBody:
-        $ref: '#/components/requestBodies/ExportGetmapBody'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/createGpkgJobResponse'
-                  - $ref: '#/components/schemas/naiveCacheJobResponse'
-                discriminator:
-                  propertyName: response
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-        '404':
-          description: Could not find layer with matched dbId
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/internalError'
-        '507':
-          description: Insufficient Storage on disk for exporting
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
   /create/roi:
     post:
       tags:

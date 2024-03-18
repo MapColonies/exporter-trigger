@@ -60,7 +60,6 @@ import {
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
 import {
-  ICreatePackage,
   ICreateJobResponse,
   IWorkerInput,
   JobDuplicationParams,
@@ -384,112 +383,6 @@ export class CreatePackageManager {
       this.logger.error({ err: error, jobId: job.id, errReason: (error as Error).message, msg: `Failed on creating metadata json file` });
       return false;
     }
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
-    const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
-    const layerMetadata = layer.metadata;
-    let { productId: resourceId, productVersion: version, productType } = layerMetadata;
-    const { dbId, crs, priority, bbox: bboxFromUser, callbackURLs } = userInput;
-    const normalizedPolygon = this.normalize2Polygon(bboxFromUser);
-    const polygon = normalizedPolygon ?? layerMetadata.footprint;
-    const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
-    const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
-    const tileEstimatedSize = this.getTileEstimatedSize(layerMetadata.tileOutputFormat as TileOutputFormat);
-
-    resourceId = resourceId as string;
-    version = version as string;
-    productType = productType as ProductType;
-
-    const srcRes = layerMetadata.maxResolutionDeg as number;
-    const maxZoom = degreesPerPixelToZoomLevel(srcRes);
-    if (zoomLevel > maxZoom) {
-      throw new BadRequestError(`The requested resolution ${targetResolution} is larger than product resolution ${srcRes}`);
-    }
-
-    const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
-    if (sanitizedBbox === null) {
-      throw new BadRequestError(
-        `Requested ${JSON.stringify(polygon as Polygon)} has no intersection with requested layer ${layer.metadata.id as string}`
-      );
-    }
-
-    const dupParams: JobDuplicationParams = {
-      resourceId,
-      version,
-      dbId,
-      zoomLevel,
-      sanitizedBbox,
-      crs: crs ?? DEFAULT_CRS,
-    };
-
-    const callbacks = callbackURLs.map((url) => <ICallbackTarget>{ url, bbox: bboxFromUser ?? sanitizedBbox });
-    const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
-    if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
-      const completeResponseData = duplicationExist as ICallbackResponse;
-      completeResponseData.bbox = bboxFromUser ?? sanitizedBbox;
-      return duplicationExist;
-    } else if (duplicationExist) {
-      return duplicationExist;
-    }
-
-    // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
-    const batches: ITileRange[] = [];
-    for (let i = 0; i <= zoomLevel; i++) {
-      batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
-    }
-    // const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
-    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
-    if (this.storageEstimation.validateStorageSize) {
-      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
-      if (!isEnoughStorage) {
-        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
-      }
-    }
-    const separator = this.getSeparator();
-    const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, sanitizedBbox);
-    const packageRelativePath = getGpkgRelativePath(packageName, separator);
-    const sources: IMapSource[] = [
-      {
-        path: packageRelativePath,
-        type: 'GPKG',
-        extent: {
-          minX: sanitizedBbox[0],
-          minY: sanitizedBbox[1],
-          maxX: sanitizedBbox[2],
-          maxY: sanitizedBbox[3],
-        },
-      },
-      {
-        path: `${layerMetadata.id as string}${separator}${layerMetadata.displayPath as string}`, //tiles path
-        type: this.tilesProvider,
-      },
-    ];
-
-    const workerInput: IWorkerInput = {
-      sanitizedBbox,
-      targetResolution,
-      fileName: packageName,
-      relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
-      zoomLevel,
-      dbId,
-      exportVersion: ExportVersion.GETMAP,
-      version: version,
-      cswProductId: resourceId,
-      crs: crs ?? DEFAULT_CRS,
-      productType,
-      batches,
-      sources,
-      priority: priority ?? DEFAULT_PRIORITY,
-      callbacks: callbacks,
-      gpkgEstimatedSize: estimatesGpkgSize,
-      targetFormat: layerMetadata.tileOutputFormat,
-    };
-    const jobCreated = await this.jobManagerClient.create(workerInput);
-    return jobCreated;
   }
 
   private featuresFootprintIntersects(

@@ -4,7 +4,7 @@ import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { FeatureCollection } from '@turf/helpers';
 import {
   ExportVersion,
-  ICreatePackage,
+ICreatePackage,
   IJobExportParameters,
   IJobParameters,
   ITaskParameters,
@@ -1080,7 +1080,7 @@ export {
   workerInput,
   workerExportInput,
   jobs,
-  userInput,
+userInput,
   completedJob,
   inProgressJob,
   fc1,
