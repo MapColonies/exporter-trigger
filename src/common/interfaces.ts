@@ -1,4 +1,4 @@
-import { MultiPolygon, Polygon, BBox, FeatureCollection, Geometry } from '@turf/turf';
+import { BBox, FeatureCollection, Geometry } from '@turf/turf';
 import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IHttpRetryConfig, ITileRange } from '@map-colonies/mc-utils';
 import { TileOutputFormat } from '@map-colonies/mc-model-types';
@@ -16,38 +16,26 @@ export interface OpenApiConfig {
   uiPath: string;
 }
 
-export interface IBaseCreatePackage {
-  dbId: string;
-  crs?: string;
-  priority?: number;
-}
-
 export interface ICleanupData {
   directoryPath?: string;
   cleanupExpirationTimeUTC?: Date;
 }
 
-export interface ICreatePackage extends IBaseCreatePackage {
-  targetResolution?: number;
-  bbox?: BBox | Polygon | MultiPolygon;
-  callbackURLs: string[];
-}
-
-export interface ICreatePackageRoi extends IBaseCreatePackage {
+export interface ICreatePackageRoi {
+  dbId: string;
+  crs?: string;
+  priority?: number;
   roi?: FeatureCollection;
   callbackURLs?: string[];
   description?: string;
 }
 
-export interface ICallbackBase {
+export interface ICallbackTargetExport {
   url: string;
-}
-
-export interface ICallbackTargetExport extends ICallbackBase {
   roi: FeatureCollection;
 }
 
-export interface IWorkerInputBase {
+export interface IWorkerExportInput {
   dbId: string;
   relativeDirectoryPath: string;
   exportVersion: ExportVersion;
@@ -60,9 +48,6 @@ export interface IWorkerInputBase {
   sources: IMapSource[];
   gpkgEstimatedSize?: number;
   targetFormat?: TileOutputFormat;
-}
-
-export interface IWorkerExportInput extends IWorkerInputBase {
   callbacks?: ICallbackTargetExport[];
   roi: FeatureCollection;
   fileNamesTemplates: ILinkDefinition;
@@ -123,18 +108,6 @@ export interface JobExportDuplicationParams {
   roi: FeatureCollection;
 }
 
-export interface IJobParameters {
-  targetResolution: number;
-  relativeDirectoryPath: string;
-  crs: string;
-  exportVersion: ExportVersion;
-  sanitizedBbox: BBox;
-  zoomLevel: number;
-  fileName: string;
-  gpkgEstimatedSize?: number;
-  cleanupData?: ICleanupData;
-}
-
 export interface IJobExportParameters {
   relativeDirectoryPath: string;
   crs: string;
@@ -169,19 +142,6 @@ export interface ITaskParameters {
   targetFormat?: TileOutputFormat;
   batches: ITileRange[];
   sources: IMapSource[];
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface IInput {
-  jobId: string;
-  footprint?: Polygon | MultiPolygon;
-  bbox: BBox | true;
-  zoomLevel: number;
-  packageName: string;
-  callbackURLs: string[];
-  dbId: string;
 }
 
 export interface IExportJobStatusResponse {

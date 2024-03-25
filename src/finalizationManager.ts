@@ -156,11 +156,11 @@ export class FinalizationManager {
   }
 
   public async jobStatusPoll(): Promise<boolean> {
-    const roiExistsJobs = await this.handleROIJobs();
+    const roiExistsJobs = await this.handleExportJobs();
     return roiExistsJobs;
   }
 
-  private async handleROIJobs(): Promise<boolean> {
+  private async handleExportJobs(): Promise<boolean> {
     let existsJobs = false;
     const roiJobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
     this.logger.debug({ ...roiJobs, msg: `Handling ROI jobs` });

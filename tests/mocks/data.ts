@@ -2,7 +2,7 @@
 import { LayerMetadata, ProductType, RecordType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { FeatureCollection } from '@turf/helpers';
-import { ExportVersion, ICreatePackage, IJobExportParameters, ITaskParameters, IWorkerExportInput } from '../../src/common/interfaces';
+import { ExportVersion, IJobExportParameters, ITaskParameters, IWorkerExportInput } from '../../src/common/interfaces';
 
 const layerMetadata: LayerMetadata = {
   type: 'RECORD_RASTER',
@@ -191,14 +191,6 @@ const layerFromCatalogSample = {
     },
   ],
   metadata: layerMetadataSample,
-};
-
-const userInput: ICreatePackage = {
-  dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-  targetResolution: 0.00439453125,
-  callbackURLs: ['http://callback-url.com'],
-  bbox: [-5, 3, 25, 41],
-  crs: 'EPSG:4326',
 };
 
 const fc1: FeatureCollection = {
@@ -872,7 +864,6 @@ const pycswRecord = {
 export {
   layerFromCatalog,
   workerExportInput,
-  userInput,
   fc1,
   fcNoMaxResolutionDeg,
   fcBadMinResolutionDeg,
