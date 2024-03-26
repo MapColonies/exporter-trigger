@@ -14,16 +14,9 @@ import {
   finalizeJobMock,
   getExportJobsByTaskStatusMock,
   getFinalizeJobByIdMock,
-  getJobsByTaskStatusMock,
 } from '../mocks/clients/taskManager';
-import {
-  ICallbackDataExportBase,
-  IExportJobStatusResponse,
-  IJobExportParameters,
-  IJobStatusResponse,
-  ITaskFinalizeParameters,
-} from '../../src/common/interfaces';
-import { completedExportJob, inProgressJob, inProgressExportJob } from '../mocks/data';
+import { ICallbackDataExportBase, IExportJobStatusResponse, IJobExportParameters, ITaskFinalizeParameters } from '../../src/common/interfaces';
+import { completedExportJob, inProgressExportJob } from '../mocks/data';
 import { configMock, registerDefaultConfig } from '../mocks/config';
 import { jobManagerWrapperMock, updateJobMock, deleteTaskByIdMock } from '../mocks/clients/jobManagerWrapper';
 import { callbackClientMock } from '../mocks/clients/callbackClient';
@@ -44,12 +37,7 @@ describe('FinalizationManager', () => {
   });
 
   describe('#jobStatusPoll', () => {
-    it('should poll completed jobs for getmap and roi jobs', async () => {
-      const getmapJobStatus: IJobStatusResponse = {
-        completedJobs: [JSON.parse(JSON.stringify(inProgressJob)), JSON.parse(JSON.stringify(inProgressJob))],
-        failedJobs: [],
-      };
-
+    it('should poll completed jobs for roi jobs', async () => {
       const roiJobStatus: IExportJobStatusResponse = {
         completedJobs: [
           JSON.parse(JSON.stringify(inProgressExportJob)),
@@ -58,25 +46,17 @@ describe('FinalizationManager', () => {
         ],
         failedJobs: [],
       };
-      getJobsByTaskStatusMock.mockReturnValue(getmapJobStatus);
       getExportJobsByTaskStatusMock.mockReturnValue(roiJobStatus);
       finalizeJobMock.mockReturnValue(undefined);
       createFinalizeTaskMock.mockReturnValue(undefined);
 
       await finalizationManager.jobStatusPoll();
 
-      expect(getJobsByTaskStatusMock).toHaveBeenCalledTimes(1);
       expect(getExportJobsByTaskStatusMock).toHaveBeenCalledTimes(1);
-      expect(finalizeJobMock).toHaveBeenCalledTimes(2);
       expect(createFinalizeTaskMock).toHaveBeenCalledTimes(3);
     });
 
-    it('should poll failed jobs for getmap and roi jobs', async () => {
-      const getmapJobStatus: IJobStatusResponse = {
-        completedJobs: [],
-        failedJobs: [JSON.parse(JSON.stringify(inProgressJob)), JSON.parse(JSON.stringify(inProgressJob))],
-      };
-
+    it('should poll failed jobs for roi jobs', async () => {
       const roiJobStatus: IExportJobStatusResponse = {
         completedJobs: [],
         failedJobs: [
@@ -85,16 +65,12 @@ describe('FinalizationManager', () => {
           JSON.parse(JSON.stringify(inProgressExportJob)),
         ],
       };
-      getJobsByTaskStatusMock.mockReturnValue(getmapJobStatus);
       getExportJobsByTaskStatusMock.mockReturnValue(roiJobStatus);
       finalizeJobMock.mockReturnValue(undefined);
       createFinalizeTaskMock.mockReturnValue(undefined);
 
       await finalizationManager.jobStatusPoll();
 
-      expect(getJobsByTaskStatusMock).toHaveBeenCalledTimes(1);
-      expect(getExportJobsByTaskStatusMock).toHaveBeenCalledTimes(1);
-      expect(finalizeJobMock).toHaveBeenCalledTimes(2);
       expect(createFinalizeTaskMock).toHaveBeenCalledTimes(3);
     });
   });
