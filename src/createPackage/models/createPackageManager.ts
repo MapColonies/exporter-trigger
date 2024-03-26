@@ -3,6 +3,7 @@ import { sep } from 'path';
 import { Logger } from '@map-colonies/js-logger';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+// import { TileRanger } from '@map-colonies/mc-utils';
 import {
   Polygon,
   MultiPolygon,
@@ -462,4 +463,49 @@ export class CreatePackageManager {
     }
     return combinedFootprint;
   }
+
+  // TODO: remove and replace with generateTileGroups that is commented, when multiple tasks for GPKG target is possible
+  /* private generateTileGroups(polygon: Polygon | MultiPolygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] {
+    let intersaction: Feature<Polygon | MultiPolygon> | null;
+
+    try {
+      intersaction = intersect(polygon, footprint);
+      if (intersaction === null) {
+        throw new BadRequestError(
+          `Requested ${JSON.stringify(polygon)} has no intersection with requested layer footprint: ${JSON.stringify(footprint)}`
+        );
+      }
+    } catch (error) {
+      const message = `Error occurred while trying to generate tiles batches - intersaction error: ${JSON.stringify(error)}`;
+      this.logger.error({
+        firstPolygon: polygon,
+        secondPolygon: footprint,
+        zoom: zoom,
+        message: message,
+      });
+      throw new Error(message);
+    }
+
+    try {
+      const tileRanger = new TileRanger();
+      const tilesGroups: ITileRange[] = [];
+
+      for (let i = 0; i <= zoom; i++) {
+        const zoomTilesGroups = tileRanger.encodeFootprint(intersaction, i);
+        for (const group of zoomTilesGroups) {
+          tilesGroups.push(group);
+        }
+      }
+      return tilesGroups;
+    } catch (error) {
+      const message = `Error occurred while trying to generate tiles batches - encodeFootprint error: ${JSON.stringify(error)}`;
+      this.logger.error({
+        firstPolygon: polygon,
+        secondPolygon: footprint,
+        zoom: zoom,
+        message: message,
+      });
+      throw new Error(message);
+    }
+  } */
 }
