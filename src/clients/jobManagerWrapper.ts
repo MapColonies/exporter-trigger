@@ -49,12 +49,6 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   @withSpanAsyncV4
-  public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
-    const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);
-    return tasks;
-  }
-
-  @withSpanAsyncV4
   public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
@@ -101,6 +95,11 @@ export class JobManagerWrapper extends JobManagerClient {
       status: OperationStatus.IN_PROGRESS,
     };
     return createJobResponse;
+  }
+
+  public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
+    const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);
+    return tasks;
   }
 
   /**
