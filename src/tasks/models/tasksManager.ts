@@ -11,7 +11,6 @@ import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
   CreateFinalizeTaskBody,
   IArtifactDefinition,
-  ICallbackDataExportBase,
   ICallbackExportData,
   ICallbackExportResponse,
   ICleanupData,
@@ -109,10 +108,7 @@ export class TasksManager {
     return jobsStatus;
   }
 
-  public async sendExportCallbacks(
-    job: JobExportResponse | JobFinalizeResponse,
-    callbackParams: ICallbackDataExportBase | ICallbackExportResponse
-  ): Promise<void> {
+  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackExportData): Promise<void> {
     try {
       this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
@@ -216,7 +212,7 @@ export class TasksManager {
     job: JobExportResponse | JobFinalizeResponse,
     expirationDate: Date,
     errorReason?: string
-  ): Promise<ICallbackDataExportBase> {
+  ): Promise<ICallbackExportData> {
     let links: ILinkDefinition = { ...job.parameters.fileNamesTemplates }; // default file names in case of failure
     this.logger.info({ jobId: job.id, msg: `generate callback body for job: ${job.id}` });
 
@@ -263,7 +259,7 @@ export class TasksManager {
       },
     ];
 
-    const callbackParams: ICallbackDataExportBase = {
+    const callbackParams: ICallbackExportData = {
       links,
       expirationTime: expirationDate,
       fileSize,
@@ -272,6 +268,10 @@ export class TasksManager {
       errorReason,
       description: job.description,
       artifacts,
+      roi: {
+        type: 'FeatureCollection',
+        features: [],
+      },
     };
     this.logger.info({
       links: callbackParams.links,

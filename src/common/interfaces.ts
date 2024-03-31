@@ -38,7 +38,6 @@ export interface ICallbackTargetExport {
 export interface IWorkerExportInput {
   dbId: string;
   relativeDirectoryPath: string;
-  exportVersion: ExportVersion;
   priority?: number;
   crs: string;
   version: string;
@@ -65,7 +64,7 @@ export interface ICreateExportJobResponse {
   isDuplicated?: boolean;
 }
 
-export interface ICallbackDataExportBase {
+export interface ICallbackExportData {
   links?: ILinkDefinition;
   expirationTime?: Date;
   fileSize?: number;
@@ -74,9 +73,6 @@ export interface ICallbackDataExportBase {
   errorReason?: string;
   description?: string;
   artifacts?: IArtifactDefinition[];
-}
-
-export interface ICallbackExportData extends ICallbackDataExportBase {
   roi: FeatureCollection;
 }
 
@@ -111,7 +107,6 @@ export interface JobExportDuplicationParams {
 export interface IJobExportParameters {
   relativeDirectoryPath: string;
   crs: string;
-  exportVersion: ExportVersion;
   roi: FeatureCollection;
   callbacks?: ICallbackTargetExport[];
   callbackParams?: ICallbackExportResponse;
@@ -172,12 +167,6 @@ export interface IGeometryRecord extends IGeometryRecordBase {
   targetResolutionMeter: number;
   minResolutionDeg: number;
   minZoomLevel: number;
-}
-
-// todo - Temporary enum to define old\new api - will be removed after deleting getMap API
-export enum ExportVersion {
-  GETMAP = 'GETMAP',
-  ROI = 'ROI',
 }
 
 export type TaskResponse = ITaskResponse<ITaskParameters>;

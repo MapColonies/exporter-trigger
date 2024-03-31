@@ -8,7 +8,6 @@ import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import {
   CreateExportJobBody,
-  ExportVersion,
   ICreateExportJobResponse,
   IJobExportParameters,
   ITaskParameters,
@@ -55,7 +54,6 @@ export class JobManagerWrapper extends JobManagerClient {
       roi: data.roi,
       callbacks: data.callbacks,
       crs: data.crs,
-      exportVersion: ExportVersion.ROI,
       fileNamesTemplates: data.fileNamesTemplates,
       relativeDirectoryPath: data.relativeDirectoryPath,
       gpkgEstimatedSize: data.gpkgEstimatedSize,
@@ -175,9 +173,7 @@ export class JobManagerWrapper extends JobManagerClient {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
     const exportJobs = jobs?.filter((job) => {
-      if (job.parameters.exportVersion === ExportVersion.ROI) {
-        return job;
-      }
+      return job;
     });
     return exportJobs;
   }

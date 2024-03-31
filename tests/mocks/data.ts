@@ -2,7 +2,7 @@
 import { LayerMetadata, ProductType, RecordType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { FeatureCollection } from '@turf/helpers';
-import { ExportVersion, ICreatePackageRoi, IJobExportParameters, ITaskParameters, IWorkerExportInput } from '../../src/common/interfaces';
+import { ICreatePackageRoi, IJobExportParameters, ITaskParameters, IWorkerExportInput } from '../../src/common/interfaces';
 
 const layerMetadata: LayerMetadata = {
   type: 'RECORD_RASTER',
@@ -411,7 +411,6 @@ const workerExportInput: IWorkerExportInput = {
   },
   relativeDirectoryPath: '1a26c1661df10eee54f9727fcdb8b71d',
   dbId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
-  exportVersion: ExportVersion.ROI,
   version: '1.0',
   cswProductId: 'string',
   crs: 'EPSG:4326',
@@ -499,7 +498,6 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
         roi: fc1,
       },
     ],
-    exportVersion: ExportVersion.ROI,
     callbackParams: {
       roi: fc1,
       links: {
@@ -576,7 +574,6 @@ const inProgressExportJob: IJobResponse<IJobExportParameters, ITaskParameters> =
     crs: 'EPSG:4326',
     roi: fc1,
     callbacks: [{ url: 'http://localhost:6969', roi: fc1 }],
-    exportVersion: ExportVersion.ROI,
     gpkgEstimatedSize: 187500,
     fileNamesTemplates: {
       dataURI: 'Orthophoto_testArea_1_0_2023_03_01T15_09_50_924Z.gpkg',

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { ExportVersion, JobFinalizeResponse } from '../../../src/common/interfaces';
+import { JobFinalizeResponse } from '../../../src/common/interfaces';
 import { fc1 } from '../data';
 
 export const mockCompletedJob: JobFinalizeResponse = {
@@ -23,7 +23,6 @@ export const mockCompletedJob: JobFinalizeResponse = {
         roi: fc1,
       },
     ],
-    exportVersion: ExportVersion.ROI,
     gpkgEstimatedSize: 187500,
     fileNamesTemplates: {
       dataURI: 'Orthophoto_testArea_1_0_2023_02_28T15_09_50_924Z.gpkg',

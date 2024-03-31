@@ -4,7 +4,7 @@ import { NotFoundError } from '@map-colonies/error-types';
 import { ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
 import {
   CreateFinalizeTaskBody,
-  ICallbackDataExportBase,
+  ICallbackExportData,
   ICallbackExportResponse,
   ICallbackTargetExport,
   ITaskParameters,
@@ -181,7 +181,7 @@ describe('TasksManager', () => {
       it('should send callback data with the expected params for success jobs to all clients', async () => {
         sendMock.mockResolvedValue(200);
         const expirationTime = new Date();
-        const callbackData: ICallbackDataExportBase = {
+        const callbackData: ICallbackExportData = {
           links: {
             dataURI: 'http://download-service/downloads/test${sep}test.gpkg',
             metadataURI: 'http://download-service/downloads/test${sep}test.json',
@@ -191,6 +191,10 @@ describe('TasksManager', () => {
           expirationTime: expirationTime,
           fileSize: 2000,
           errorReason: undefined,
+          roi: {
+            type: 'FeatureCollection',
+            features: [],
+          },
         };
 
         const expectedCallbacksData = mockCompletedJob.parameters.callbacks as unknown as ICallbackTargetExport[];
@@ -208,7 +212,7 @@ describe('TasksManager', () => {
       it('should return callback data even if callback response got rejected', async () => {
         sendMock.mockRejectedValue({});
         const expirationTime = new Date();
-        const callbackData: ICallbackDataExportBase = {
+        const callbackData: ICallbackExportData = {
           links: {
             dataURI: 'http://download-service/downloads/test${sep}test.gpkg',
             metadataURI: 'http://download-service/downloads/test${sep}test.json',
@@ -218,6 +222,10 @@ describe('TasksManager', () => {
           expirationTime: expirationTime,
           fileSize: 2000,
           errorReason: undefined,
+          roi: {
+            type: 'FeatureCollection',
+            features: [],
+          },
         };
         const action = async () => tasksManager.sendExportCallbacks(mockCompletedJob, callbackData);
         await expect(action()).resolves.not.toThrow();

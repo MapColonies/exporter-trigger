@@ -8,7 +8,7 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { tracerMock } from '../../../mocks/clients/tracer';
 import { jobManagerWrapperMock, updateJobMock, findExportJobMock, createExportMock } from '../../../mocks/clients/jobManagerWrapper';
 import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalogManagerClient';
-import { ExportVersion, ICreateExportJobResponse, ICreatePackageRoi, JobExportDuplicationParams } from '../../../../src/common/interfaces';
+import { ICreateExportJobResponse, ICreatePackageRoi, JobExportDuplicationParams } from '../../../../src/common/interfaces';
 import { CreatePackageManager } from '../../../../src/createPackage/models/createPackageManager';
 import {
   completedExportJob,
@@ -368,7 +368,6 @@ describe('CreatePackageManager', () => {
         const jobUpdateParams = {
           parameters: {
             crs: 'EPSG:4326',
-            exportVersion: ExportVersion.ROI,
             callbacks: [
               { url: 'http://localhost:6969', roi: fc1 },
               { url: 'http://new-added-callback-url.com', roi: fc1 },

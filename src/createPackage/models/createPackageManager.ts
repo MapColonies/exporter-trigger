@@ -23,7 +23,6 @@ import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { feature, featureCollection } from '@turf/helpers';
 import {
-  ExportVersion,
   ICallbackExportResponse,
   ICallbackTargetExport,
   IConfig,
@@ -221,7 +220,6 @@ export class CreatePackageManager {
       fileNamesTemplates: fileNamesTemplates,
       relativeDirectoryPath: additionalIdentifiers,
       dbId,
-      exportVersion: ExportVersion.ROI,
       version: version,
       cswProductId: resourceId,
       crs: crs ?? DEFAULT_CRS,

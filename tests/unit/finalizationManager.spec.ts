@@ -15,7 +15,7 @@ import {
   getExportJobsByTaskStatusMock,
   getFinalizeJobByIdMock,
 } from '../mocks/clients/taskManager';
-import { ICallbackDataExportBase, IExportJobStatusResponse, IJobExportParameters, ITaskFinalizeParameters } from '../../src/common/interfaces';
+import { ICallbackExportData, IExportJobStatusResponse, IJobExportParameters, ITaskFinalizeParameters } from '../../src/common/interfaces';
 import { completedExportJob, inProgressExportJob } from '../mocks/data';
 import { configMock, registerDefaultConfig } from '../mocks/config';
 import { jobManagerWrapperMock, updateJobMock, deleteTaskByIdMock } from '../mocks/clients/jobManagerWrapper';
@@ -117,7 +117,7 @@ describe('FinalizationManager', () => {
       finalizeGPKGSuccessMock.mockReturnValue(expectedUpdateParams);
 
       await finalizationManager.jobFinalizePoll();
-      const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
+      const createdCallbackParam: ICallbackExportData = sendCallbacksSpy.mock.calls[0][1] as ICallbackExportData;
       expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
       expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
       expect(dequeueMock).toHaveBeenCalledTimes(1);
@@ -173,7 +173,7 @@ describe('FinalizationManager', () => {
       finalizeGPKGFailureMock.mockResolvedValue(expectedUpdateParams);
       await finalizationManager.jobFinalizePoll();
 
-      const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
+      const createdCallbackParam: ICallbackExportData = sendCallbacksSpy.mock.calls[0][1] as ICallbackExportData;
       expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
       expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
       expect(dequeueMock).toHaveBeenCalledTimes(1);
@@ -249,7 +249,7 @@ describe('FinalizationManager', () => {
 
       await finalizationManager.jobFinalizePoll();
 
-      const createdCallbackParam: ICallbackDataExportBase = sendCallbacksSpy.mock.calls[0][1] as ICallbackDataExportBase;
+      const createdCallbackParam: ICallbackExportData = sendCallbacksSpy.mock.calls[0][1] as ICallbackExportData;
       expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
       expect(createdCallbackParam).toStrictEqual(expectedCallbackParamData);
       expect(dequeueMock).toHaveBeenCalledTimes(1);
