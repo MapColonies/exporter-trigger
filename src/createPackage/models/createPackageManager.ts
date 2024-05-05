@@ -241,7 +241,7 @@ export class CreatePackageManager {
     // ROI vs layer validation section - zoom + geo intersection
     featuresRecords.forEach((record) => {
       if (record.zoomLevel > maxZoom) {
-        throw new BadRequestError(`The requested resolution ${record.targetResolutionDeg} is larger then product resolution ${srcRes as number}`);
+        throw new BadRequestError(`The requested resolution ${record.targetResolutionDeg} is larger then product resolution ${srcRes}`);
       }
 
       if (record.zoomLevel < record.minZoomLevel) {

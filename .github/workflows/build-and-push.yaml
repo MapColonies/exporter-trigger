@@ -1,4 +1,4 @@
-name: Build and push artifacts
+name: Match chart version and push to ACR
 
 on:
   push:
