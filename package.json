@@ -49,7 +49,7 @@
     "@map-colonies/mc-utils": "^2.0.0",
     "@map-colonies/openapi-express-viewer": "^3.0.0",
     "@map-colonies/read-pkg": "0.0.1",
-    "@map-colonies/telemetry": "5.3.1",
+    "@map-colonies/telemetry": "6.0.0",
     "@mapbox/geojsonhint": "3.1.0",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-metrics": "0.23.0",
