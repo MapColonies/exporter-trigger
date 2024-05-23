@@ -8,14 +8,7 @@ import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
 import { QueueClient } from './clients/queueClient';
-import {
-  ICallbackDataExportBase,
-  ICallbackExportData,
-  ICallbackExportResponse,
-  ITaskFinalizeParameters,
-  JobExportResponse,
-  JobFinalizeResponse,
-} from './common/interfaces';
+import { ICallbackExportData, ICallbackExportResponse, ITaskFinalizeParameters, JobExportResponse, JobFinalizeResponse } from './common/interfaces';
 import { JobManagerWrapper } from './clients/jobManagerWrapper';
 import { CallbackClient } from './clients/callbackClient';
 
@@ -119,10 +112,7 @@ export class FinalizationManager {
     return true;
   }
 
-  public async sendExportCallbacks(
-    job: JobExportResponse | JobFinalizeResponse,
-    callbackParams: ICallbackDataExportBase | ICallbackExportResponse
-  ): Promise<void> {
+  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackExportResponse): Promise<void> {
     try {
       this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
@@ -156,37 +146,11 @@ export class FinalizationManager {
   }
 
   public async jobStatusPoll(): Promise<boolean> {
-    const getMapExistsJobs = await this.handleGetMapJobs();
-    const roiExistsJobs = await this.handleROIJobs();
-    return getMapExistsJobs || roiExistsJobs;
+    const roiExistsJobs = await this.handleExportJobs();
+    return roiExistsJobs;
   }
 
-  private async handleGetMapJobs(): Promise<boolean> {
-    let existsJobs = false;
-    const getMapJobs = await this.taskManager.getJobsByTaskStatus(); // for old getmap api - will be removed
-    const expirationDateUTC = getUTCDate();
-    expirationDateUTC.setDate(expirationDateUTC.getDate() + this.expirationDays);
-    this.logger.debug({ ...getMapJobs, msg: `Handling GetMap jobs` });
-    if (getMapJobs.completedJobs && getMapJobs.completedJobs.length > 0) {
-      existsJobs = true;
-      this.logger.info({ msg: `GETMAP Completed GetMap jobs detected, running finalize job` });
-      for (const job of getMapJobs.completedJobs) {
-        this.logger.info({ jobId: job.id, msg: `GETMAP Execute completed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
-        await this.taskManager.finalizeJob(job, expirationDateUTC);
-      }
-    } else if (getMapJobs.failedJobs && getMapJobs.failedJobs.length > 0) {
-      existsJobs = true;
-      this.logger.info({ msg: `GETMAP Failed jobs detected, running finalize job` });
-      for (const job of getMapJobs.failedJobs) {
-        this.logger.info({ jobId: job.id, msg: `GETMAP Execute Failed job finalizing on BBOX (GetMap) exporting for job: ${job.id}` });
-        const gpkgFailedErr = `failed to create gpkg, job: ${job.id}`;
-        await this.taskManager.finalizeJob(job, expirationDateUTC, false, gpkgFailedErr);
-      }
-    }
-    return existsJobs;
-  }
-
-  private async handleROIJobs(): Promise<boolean> {
+  private async handleExportJobs(): Promise<boolean> {
     let existsJobs = false;
     const roiJobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
     this.logger.debug({ ...roiJobs, msg: `Handling ROI jobs` });

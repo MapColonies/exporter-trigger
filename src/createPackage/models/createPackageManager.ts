@@ -1,5 +1,5 @@
 import { promises as fsPromise } from 'fs';
-import { sep, parse as parsePath } from 'path';
+import { sep } from 'path';
 import { Logger } from '@map-colonies/js-logger';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
@@ -10,29 +10,18 @@ import {
   bbox as PolygonBbox,
   intersect,
   combine as featureCombine,
-  bboxPolygon,
   FeatureCollection,
   Feature,
   Geometry,
 } from '@turf/turf';
 import { inject, injectable } from 'tsyringe';
-import {
-  degreesPerPixelToZoomLevel,
-  featureCollectionBooleanEqual,
-  ITileRange,
-  snapBBoxToTileGrid,
-  TileRanger,
-  bboxToTileRange,
-} from '@map-colonies/mc-utils';
+import { degreesPerPixelToZoomLevel, featureCollectionBooleanEqual, ITileRange, snapBBoxToTileGrid, bboxToTileRange } from '@map-colonies/mc-utils';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
-import { isArray, isEmpty } from 'lodash';
-import booleanEqual from '@turf/boolean-equal';
 import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { feature, featureCollection } from '@turf/helpers';
 import {
-  ExportVersion,
   ICallbackExportResponse,
   ICallbackTargetExport,
   IConfig,
@@ -49,38 +38,16 @@ import {
 } from '../../common/interfaces';
 import {
   calculateEstimateGpkgSize,
-  getGpkgRelativePath,
   getStorageStatus,
-  getGpkgNameWithoutExt,
   concatFsPaths,
   parseFeatureCollection,
   generateGeoIdentifier,
   getFilesha256Hash,
 } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
-import { DEFAULT_CRS, DEFAULT_PRIORITY, METADA_JSON_FILE_EXTENSION as METADATA_JSON_FILE_EXTENSION, SERVICES } from '../../common/constants';
-import {
-  ICreatePackage,
-  ICreateJobResponse,
-  IWorkerInput,
-  JobDuplicationParams,
-  IJobParameters,
-  ICallbackResposne as ICallbackResponse,
-  JobResponse,
-  MergerSourceType,
-  IMapSource,
-  ICallbackTarget,
-  ITaskParameters,
-  IStorageStatusResponse,
-} from '../../common/interfaces';
+import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
+import { MergerSourceType, IMapSource, ITaskParameters, IStorageStatusResponse } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const geojsonhint: IHinter = require('@mapbox/geojsonhint') as IHinter;
-
-interface IHinter {
-  hint: (obj: object) => [];
-}
 
 @injectable()
 export class CreatePackageManager {
@@ -252,7 +219,6 @@ export class CreatePackageManager {
       fileNamesTemplates: fileNamesTemplates,
       relativeDirectoryPath: additionalIdentifiers,
       dbId,
-      exportVersion: ExportVersion.ROI,
       version: version,
       cswProductId: resourceId,
       crs: crs ?? DEFAULT_CRS,
@@ -274,7 +240,7 @@ export class CreatePackageManager {
     const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
     let otherRunningJobsSize = 0;
 
-    const inProcessingJobs: JobResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
+    const inProcessingJobs: JobExportResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
     if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
       inProcessingJobs.forEach((job) => {
         let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
@@ -311,29 +277,6 @@ export class CreatePackageManager {
     }
 
     return undefined;
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async createJsonMetadata(fullGpkgPath: string, job: JobResponse): Promise<void> {
-    this.logger.info({
-      jobId: job.id,
-      msg: `Creating metadata.json file for gpkg in path "${this.gpkgsLocation}/${fullGpkgPath}" for jobId ${job.id}`,
-    });
-    const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
-
-    const parsedPath = parsePath(fullGpkgPath);
-    const directoryName = parsedPath.dir;
-    const metadataFileName = parsedPath.name.concat(METADATA_JSON_FILE_EXTENSION);
-    const metadataFilePath = `${directoryName}${sep}${metadataFileName}`;
-    const sanitizedBboxToPolygon = bboxPolygon(job.parameters.sanitizedBbox);
-
-    record.metadata.footprint = sanitizedBboxToPolygon;
-    record.metadata.maxResolutionDeg = job.parameters.targetResolution;
-
-    const recordMetadata = JSON.stringify(record.metadata);
-    await fsPromise.writeFile(metadataFilePath, recordMetadata);
   }
 
   public async createExportJsonMetadata(job: JobExportResponse | JobFinalizeResponse): Promise<boolean> {
@@ -386,112 +329,6 @@ export class CreatePackageManager {
     }
   }
 
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async createPackage(userInput: ICreatePackage): Promise<ICreateJobResponse | ICallbackResponse> {
-    const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
-    const layerMetadata = layer.metadata;
-    let { productId: resourceId, productVersion: version, productType } = layerMetadata;
-    const { dbId, crs, priority, bbox: bboxFromUser, callbackURLs } = userInput;
-    const normalizedPolygon = this.normalize2Polygon(bboxFromUser);
-    const polygon = normalizedPolygon ?? layerMetadata.footprint;
-    const targetResolution = (userInput.targetResolution ?? layerMetadata.maxResolutionDeg) as number;
-    const zoomLevel = degreesPerPixelToZoomLevel(targetResolution);
-    const tileEstimatedSize = this.getTileEstimatedSize(layerMetadata.tileOutputFormat as TileOutputFormat);
-
-    resourceId = resourceId as string;
-    version = version as string;
-    productType = productType as ProductType;
-
-    const srcRes = layerMetadata.maxResolutionDeg as number;
-    const maxZoom = degreesPerPixelToZoomLevel(srcRes);
-    if (zoomLevel > maxZoom) {
-      throw new BadRequestError(`The requested resolution ${targetResolution} is larger than product resolution ${srcRes}`);
-    }
-
-    const sanitizedBbox = this.sanitizeBbox(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
-    if (sanitizedBbox === null) {
-      throw new BadRequestError(
-        `Requested ${JSON.stringify(polygon as Polygon)} has no intersection with requested layer ${layer.metadata.id as string}`
-      );
-    }
-
-    const dupParams: JobDuplicationParams = {
-      resourceId,
-      version,
-      dbId,
-      zoomLevel,
-      sanitizedBbox,
-      crs: crs ?? DEFAULT_CRS,
-    };
-
-    const callbacks = callbackURLs.map((url) => <ICallbackTarget>{ url, bbox: bboxFromUser ?? sanitizedBbox });
-    const duplicationExist = await this.checkForDuplicate(dupParams, callbacks);
-    if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
-      const completeResponseData = duplicationExist as ICallbackResponse;
-      completeResponseData.bbox = bboxFromUser ?? sanitizedBbox;
-      return duplicationExist;
-    } else if (duplicationExist) {
-      return duplicationExist;
-    }
-
-    // TODO: remove and replace with `generateTileGroups` that is commented, when multiple tasks for GPKG target is possible
-    const batches: ITileRange[] = [];
-    for (let i = 0; i <= zoomLevel; i++) {
-      batches.push(bboxToTileRange(sanitizedBbox as BBox2d, i));
-    }
-    // const batches = this.generateTileGroups(polygon as Polygon, layerMetadata.footprint as Polygon | MultiPolygon, zoomLevel);
-    const estimatesGpkgSize = calculateEstimateGpkgSize(batches, tileEstimatedSize); // size of requested gpkg export
-    if (this.storageEstimation.validateStorageSize) {
-      const isEnoughStorage = await this.validateFreeSpace(estimatesGpkgSize);
-      if (!isEnoughStorage) {
-        throw new InsufficientStorage(`There isn't enough free disk space to executing export`);
-      }
-    }
-    const separator = this.getSeparator();
-    const packageName = this.generatePackageName(productType, resourceId, version, zoomLevel, sanitizedBbox);
-    const packageRelativePath = getGpkgRelativePath(packageName, separator);
-    const sources: IMapSource[] = [
-      {
-        path: packageRelativePath,
-        type: 'GPKG',
-        extent: {
-          minX: sanitizedBbox[0],
-          minY: sanitizedBbox[1],
-          maxX: sanitizedBbox[2],
-          maxY: sanitizedBbox[3],
-        },
-      },
-      {
-        path: `${layerMetadata.id as string}${separator}${layerMetadata.displayPath as string}`, //tiles path
-        type: this.tilesProvider,
-      },
-    ];
-
-    const workerInput: IWorkerInput = {
-      sanitizedBbox,
-      targetResolution,
-      fileName: packageName,
-      relativeDirectoryPath: getGpkgNameWithoutExt(packageName),
-      zoomLevel,
-      dbId,
-      exportVersion: ExportVersion.GETMAP,
-      version: version,
-      cswProductId: resourceId,
-      crs: crs ?? DEFAULT_CRS,
-      productType,
-      batches,
-      sources,
-      priority: priority ?? DEFAULT_PRIORITY,
-      callbacks: callbacks,
-      gpkgEstimatedSize: estimatesGpkgSize,
-      targetFormat: layerMetadata.tileOutputFormat,
-    };
-    const jobCreated = await this.jobManagerClient.create(workerInput);
-    return jobCreated;
-  }
-
   private featuresFootprintIntersects(
     features: Feature<Polygon | MultiPolygon>[],
     footprint: Polygon | MultiPolygon
@@ -516,43 +353,6 @@ export class CreatePackageManager {
     return this.tilesProvider === 'S3' ? '/' : sep;
   }
 
-  private normalize2Polygon(bboxFromUser: Polygon | MultiPolygon | BBox | undefined): Polygon | undefined {
-    try {
-      if (isArray(bboxFromUser) && bboxFromUser.length === CreatePackageManager.bboxLength2d) {
-        this.logger.debug({ ...bboxFromUser, msg: `Export will be executed by provided BBox from request input` });
-        const resultPolygon = bboxPolygon(bboxFromUser as BBox);
-        return resultPolygon.geometry;
-      } else if (this.isAPolygon(bboxFromUser)) {
-        this.logger.debug({ ...bboxFromUser, msg: `Export will be executed by provided Footprint from request input` });
-        return bboxFromUser;
-      } else if (!bboxFromUser) {
-        this.logger.debug(`Export will be executed on entire layer's footprint`);
-        return undefined;
-      } else {
-        this.logger.warn({ ...bboxFromUser, msg: `Input bbox param illegal - should be bbox | polygon | null types` });
-        throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
-      }
-    } catch (error) {
-      this.logger.error({ bboxFromUser, msg: `Failed with error ${(error as Error).message}` });
-      throw new BadRequestError('Input bbox param illegal - should be bbox | polygon | null types');
-    }
-  }
-
-  private isAPolygon(obj?: object): obj is Polygon {
-    if (obj === undefined) {
-      return false;
-    }
-    const isPolygon = 'type' in obj && 'coordinates' in obj && (obj as { type: string }).type === 'Polygon';
-    if (isPolygon) {
-      const errors = geojsonhint.hint(obj);
-      if (!isEmpty(errors)) {
-        this.logger.warn({ bboxFromUser: obj, errors }, `Not a polygon`);
-        return false;
-      }
-    }
-    return isPolygon;
-  }
-
   private sanitizeBbox(polygon: Polygon | MultiPolygon, footprint: Polygon | MultiPolygon, zoom: number): BBox | null {
     try {
       const intersaction = intersect(polygon, footprint);
@@ -566,7 +366,103 @@ export class CreatePackageManager {
     }
   }
 
-  private generateTileGroups(polygon: Polygon | MultiPolygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] {
+  private async checkForExportCompleted(dupParams: JobExportDuplicationParams): Promise<ICallbackExportResponse | undefined> {
+    this.logger.info({ ...dupParams, roi: undefined, msg: `Checking for COMPLETED duplications with parameters` });
+    const responseJob = await this.jobManagerClient.findExportJob(OperationStatus.COMPLETED, dupParams);
+    if (responseJob) {
+      await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
+      return {
+        ...responseJob.parameters.callbackParams,
+        status: OperationStatus.COMPLETED,
+      } as ICallbackExportResponse;
+    }
+  }
+
+  private async checkForExportProcessing(
+    dupParams: JobExportDuplicationParams,
+    newCallbacks?: ICallbackTargetExport[]
+  ): Promise<ICreateExportJobResponse | undefined> {
+    this.logger.info({ ...dupParams, roi: undefined, msg: `Checking for PROCESSING duplications with parameters` });
+    const processingJob =
+      (await this.jobManagerClient.findExportJob(OperationStatus.IN_PROGRESS, dupParams, true)) ??
+      (await this.jobManagerClient.findExportJob(OperationStatus.PENDING, dupParams, true));
+    if (processingJob) {
+      await this.updateExportCallbackURLs(processingJob, newCallbacks);
+      return {
+        jobId: processingJob.id,
+        taskIds: (processingJob.tasks as unknown as IJobResponse<IJobExportParameters, ITaskParameters>[]).map((t) => t.id),
+        status: OperationStatus.IN_PROGRESS,
+      };
+    }
+  }
+
+  private async updateExportCallbackURLs(processingJob: JobExportResponse, newCallbacks?: ICallbackTargetExport[]): Promise<void> {
+    if (!newCallbacks) {
+      return;
+    }
+
+    if (!processingJob.parameters.callbacks) {
+      processingJob.parameters.callbacks = newCallbacks;
+    } else {
+      const callbacks = processingJob.parameters.callbacks;
+      for (const newCallback of newCallbacks) {
+        const hasCallback = callbacks.findIndex((callback) => {
+          const exist = callback.url === newCallback.url;
+          if (!exist) {
+            return false;
+          }
+
+          const sameROI = featureCollectionBooleanEqual(callback.roi, newCallback.roi);
+          return sameROI;
+        });
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+        if (hasCallback === -1) {
+          callbacks.push(newCallback);
+        }
+      }
+    }
+    await this.jobManagerClient.updateJob<IJobExportParameters>(processingJob.id, {
+      parameters: processingJob.parameters,
+    });
+  }
+
+  private generateExportFileNames(productType: string, productId: string, productVersion: string, featuresRecords: IGeometryRecord[]): string {
+    const maxZoom = Math.max(...featuresRecords.map((feature) => feature.zoomLevel));
+    let currentDateStr = new Date().toJSON();
+    currentDateStr = `${currentDateStr}`.replaceAll('-', '_').replaceAll('.', '_').replaceAll(':', '_');
+    return `${productType}_${productId}_${productVersion.replaceAll('.', '_')}_${maxZoom}_${currentDateStr}`;
+  }
+
+  private getTileEstimatedSize(tileOutputFormat: TileOutputFormat): number {
+    let tileEstimatedSize;
+    if (tileOutputFormat === TileOutputFormat.JPEG) {
+      tileEstimatedSize = this.storageEstimation.jpegTileEstimatedSizeInBytes;
+    } else {
+      tileEstimatedSize = this.storageEstimation.pngTileEstimatedSizeInBytes;
+    }
+    this.logger.debug(`single tile size defined as ${tileOutputFormat} from configuration: ${tileEstimatedSize} bytes`);
+
+    return tileEstimatedSize;
+  }
+
+  private getExportedPackageFootprint(
+    features: Feature<Polygon | MultiPolygon>[],
+    footprint: Polygon | MultiPolygon,
+    jobId: string
+  ): MultiPolygon | undefined {
+    let combinedFootprint = undefined;
+    try {
+      const intersectedFeatures = this.featuresFootprintIntersects(features, footprint);
+      const fc: FeatureCollection<Polygon | MultiPolygon> = featureCollection(intersectedFeatures);
+      combinedFootprint = featureCombine(fc).features[0].geometry as unknown as MultiPolygon;
+    } catch (error) {
+      this.logger.error({ jobId, msg: `Failed to match features intersection with footprint with error: ${(error as Error).message}` });
+    }
+    return combinedFootprint;
+  }
+
+  // TODO: remove and replace with generateTileGroups that is commented, when multiple tasks for GPKG target is possible
+  /* private generateTileGroups(polygon: Polygon | MultiPolygon, footprint: Polygon | MultiPolygon, zoom: number): ITileRange[] {
     let intersaction: Feature<Polygon | MultiPolygon> | null;
 
     try {
@@ -608,204 +504,5 @@ export class CreatePackageManager {
       });
       throw new Error(message);
     }
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private async checkForDuplicate(
-    dupParams: JobDuplicationParams,
-    callbackUrls: ICallbackTarget[]
-  ): Promise<ICallbackResponse | ICreateJobResponse | undefined> {
-    let completedExists = await this.checkForCompleted(dupParams);
-    if (completedExists) {
-      return completedExists;
-    }
-
-    const processingExists = await this.checkForProcessing(dupParams, callbackUrls);
-    if (processingExists) {
-      // For race condition
-      completedExists = await this.checkForCompleted(dupParams);
-      if (completedExists) {
-        return completedExists;
-      }
-      return processingExists;
-    }
-
-    return undefined;
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private async checkForCompleted(dupParams: JobDuplicationParams): Promise<ICallbackResponse | undefined> {
-    this.logger.info(dupParams, `Checking for COMPLETED duplications with parameters`);
-    const responseJob = await this.jobManagerClient.findCompletedJob(dupParams);
-    if (responseJob) {
-      await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
-      return {
-        ...responseJob.parameters.callbackParams,
-        status: OperationStatus.COMPLETED,
-      } as ICallbackResponse;
-    }
-  }
-
-  private async checkForExportCompleted(dupParams: JobExportDuplicationParams): Promise<ICallbackExportResponse | undefined> {
-    this.logger.info({ ...dupParams, roi: undefined, msg: `Checking for COMPLETED duplications with parameters` });
-    const responseJob = await this.jobManagerClient.findExportJob(OperationStatus.COMPLETED, dupParams);
-    if (responseJob) {
-      await this.jobManagerClient.validateAndUpdateExpiration(responseJob.id);
-      return {
-        ...responseJob.parameters.callbackParams,
-        status: OperationStatus.COMPLETED,
-      } as ICallbackExportResponse;
-    }
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private async checkForProcessing(dupParams: JobDuplicationParams, newCallbacks: ICallbackTarget[]): Promise<ICreateJobResponse | undefined> {
-    this.logger.info(dupParams, `Checking for PROCESSING duplications with parameters`);
-    const processingJob = (await this.jobManagerClient.findInProgressJob(dupParams)) ?? (await this.jobManagerClient.findPendingJob(dupParams));
-    if (processingJob) {
-      await this.updateCallbackURLs(processingJob, newCallbacks);
-      return {
-        id: processingJob.id,
-        taskIds: (processingJob.tasks as unknown as IJobResponse<IJobParameters, ITaskParameters>[]).map((t) => t.id),
-        status: OperationStatus.IN_PROGRESS,
-      };
-    }
-  }
-
-  private async checkForExportProcessing(
-    dupParams: JobExportDuplicationParams,
-    newCallbacks?: ICallbackTargetExport[]
-  ): Promise<ICreateExportJobResponse | undefined> {
-    this.logger.info({ ...dupParams, roi: undefined, msg: `Checking for PROCESSING duplications with parameters` });
-    const processingJob =
-      (await this.jobManagerClient.findExportJob(OperationStatus.IN_PROGRESS, dupParams, true)) ??
-      (await this.jobManagerClient.findExportJob(OperationStatus.PENDING, dupParams, true));
-    if (processingJob) {
-      await this.updateExportCallbackURLs(processingJob, newCallbacks);
-      return {
-        jobId: processingJob.id,
-        taskIds: (processingJob.tasks as unknown as IJobResponse<IJobExportParameters, ITaskParameters>[]).map((t) => t.id),
-        status: OperationStatus.IN_PROGRESS,
-      };
-    }
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private async updateCallbackURLs(processingJob: JobResponse, newCallbacks: ICallbackTarget[]): Promise<void> {
-    const callbacks = processingJob.parameters.callbacks;
-    for (const newCallback of newCallbacks) {
-      const hasCallback = callbacks.findIndex((callback) => {
-        const exist = callback.url === newCallback.url;
-        if (!exist) {
-          return false;
-        }
-
-        if (this.isAPolygon(callback.bbox) && this.isAPolygon(newCallback.bbox)) {
-          return booleanEqual(newCallback.bbox, callback.bbox);
-        } else if (this.isAPolygon(callback.bbox) || this.isAPolygon(newCallback.bbox)) {
-          return false;
-        }
-        // else both BBoxes
-        let sameBboxCoordinate = false;
-        for (let i = 0; i < callback.bbox.length; i++) {
-          sameBboxCoordinate = callback.bbox[i] === newCallback.bbox[i];
-          if (!sameBboxCoordinate) {
-            sameBboxCoordinate = false;
-            break;
-          }
-        }
-        return sameBboxCoordinate;
-      });
-      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-      if (hasCallback === -1) {
-        callbacks.push(newCallback);
-      }
-    }
-    await this.jobManagerClient.updateJob<IJobParameters>(processingJob.id, {
-      parameters: processingJob.parameters,
-    });
-  }
-
-  private async updateExportCallbackURLs(processingJob: JobExportResponse, newCallbacks?: ICallbackTargetExport[]): Promise<void> {
-    if (!newCallbacks) {
-      return;
-    }
-
-    if (!processingJob.parameters.callbacks) {
-      processingJob.parameters.callbacks = newCallbacks;
-    } else {
-      const callbacks = processingJob.parameters.callbacks;
-      for (const newCallback of newCallbacks) {
-        const hasCallback = callbacks.findIndex((callback) => {
-          const exist = callback.url === newCallback.url;
-          if (!exist) {
-            return false;
-          }
-
-          const sameROI = featureCollectionBooleanEqual(callback.roi, newCallback.roi);
-          return sameROI;
-        });
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        if (hasCallback === -1) {
-          callbacks.push(newCallback);
-        }
-      }
-    }
-    await this.jobManagerClient.updateJob<IJobExportParameters>(processingJob.id, {
-      parameters: processingJob.parameters,
-    });
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  private generatePackageName(productType: string, productId: string, productVersion: string, zoomLevel: number, bbox: BBox): string {
-    const numberOfDecimals = 5;
-    const bboxToString = bbox.map((val) => String(val.toFixed(numberOfDecimals)).replace('.', '_').replace(/-/g, 'm')).join('');
-    const productVersionConvention = productVersion.replace('.', '_');
-    return `${productType}_${productId}_${productVersionConvention}_${zoomLevel}_${bboxToString}.gpkg`;
-  }
-
-  private generateExportFileNames(productType: string, productId: string, productVersion: string, featuresRecords: IGeometryRecord[]): string {
-    const maxZoom = Math.max(...featuresRecords.map((feature) => feature.zoomLevel));
-    let currentDateStr = new Date().toJSON();
-    currentDateStr = `${currentDateStr}`.replaceAll('-', '_').replaceAll('.', '_').replaceAll(':', '_');
-    return `${productType}_${productId}_${productVersion.replaceAll('.', '_')}_${maxZoom}_${currentDateStr}`;
-  }
-
-  private getTileEstimatedSize(tileOutputFormat: TileOutputFormat): number {
-    let tileEstimatedSize;
-    if (tileOutputFormat === TileOutputFormat.JPEG) {
-      tileEstimatedSize = this.storageEstimation.jpegTileEstimatedSizeInBytes;
-    } else {
-      tileEstimatedSize = this.storageEstimation.pngTileEstimatedSizeInBytes;
-    }
-    this.logger.debug(`single tile size defined as ${tileOutputFormat} from configuration: ${tileEstimatedSize} bytes`);
-
-    return tileEstimatedSize;
-  }
-
-  private getExportedPackageFootprint(
-    features: Feature<Polygon | MultiPolygon>[],
-    footprint: Polygon | MultiPolygon,
-    jobId: string
-  ): MultiPolygon | undefined {
-    let combinedFootprint = undefined;
-    try {
-      const intersectedFeatures = this.featuresFootprintIntersects(features, footprint);
-      const fc: FeatureCollection<Polygon | MultiPolygon> = featureCollection(intersectedFeatures);
-      combinedFootprint = featureCombine(fc).features[0].geometry as unknown as MultiPolygon;
-    } catch (error) {
-      this.logger.error({ jobId, msg: `Failed to match features intersection with footprint with error: ${(error as Error).message}` });
-    }
-    return combinedFootprint;
-  }
+  } */
 }

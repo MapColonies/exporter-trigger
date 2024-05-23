@@ -5,27 +5,21 @@ import { IFindJobsRequest, IJobResponse, IUpdateJobBody, OperationStatus } from 
 import { NotFoundError } from '@map-colonies/error-types';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer } from '@opentelemetry/api';
-import { concatFsPaths, getGpkgFullPath, getGpkgRelativePath } from '../../common/utils';
+import { concatFsPaths } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
   CreateFinalizeTaskBody,
   IArtifactDefinition,
-  ICallbackData,
-  ICallbackDataBase,
-  ICallbackDataExportBase,
   ICallbackExportData,
   ICallbackExportResponse,
   ICleanupData,
   IExportJobStatusResponse,
   IJobExportParameters,
-  IJobParameters,
-  IJobStatusResponse,
   ILinkDefinition,
   ITaskFinalizeParameters,
   JobExportResponse,
   JobFinalizeResponse,
-  JobResponse,
 } from '../../common/interfaces';
 import { CallbackClient } from '../../clients/callbackClient';
 import { getFileSize } from '../../common/utils';
@@ -92,70 +86,6 @@ export class TasksManager {
     }
   }
 
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async sendCallbacks(job: JobResponse, expirationDate: Date, errorReason?: string): Promise<ICallbackDataBase | undefined> {
-    let fileUri = '';
-    let fileRelativePath = '';
-    try {
-      this.logger.info(`Sending callback for job: ${job.id}`);
-      const packageName = job.parameters.fileName;
-      const success = errorReason === undefined;
-      let fileSize = 0;
-      if (success) {
-        fileRelativePath = getGpkgRelativePath(packageName);
-        const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
-        fileUri = `${this.downloadServerUrl}/downloads/${fileRelativePath}`;
-        fileSize = await getFileSize(packageFullPath);
-      }
-      const callbackParams: ICallbackDataBase = {
-        fileUri,
-        expirationTime: expirationDate,
-        fileSize,
-        dbId: job.internalId as string,
-        packageName: packageName,
-        requestId: job.id,
-        targetResolution: job.parameters.targetResolution,
-        success,
-        errorReason,
-      };
-
-      const targetCallbacks = job.parameters.callbacks;
-      const callbackPromises: Promise<void>[] = [];
-      for (const target of targetCallbacks) {
-        const params: ICallbackData = { ...callbackParams, bbox: target.bbox };
-        callbackPromises.push(this.callbackClient.send(target.url, params));
-      }
-
-      const promisesResponse = await Promise.allSettled(callbackPromises);
-      promisesResponse.forEach((response, index) => {
-        if (response.status === 'rejected') {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
-        }
-      });
-
-      return callbackParams;
-    } catch (error) {
-      this.logger.error({ jobId: job.id, err: error, reason: (error as Error).message, msg: `Sending callback has failed` });
-    }
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async getJobsByTaskStatus(): Promise<IJobStatusResponse> {
-    const jobs = await this.jobManagerClient.getInProgressJobs();
-    const completedJobs = jobs?.filter((job) => job.completedTasks === job.taskCount);
-    const failedJobs = jobs?.filter((job) => job.failedTasks === job.taskCount);
-    const jobsStatus = {
-      completedJobs: completedJobs,
-      failedJobs: failedJobs,
-    };
-    return jobsStatus;
-  }
-
   public async getFinalizeJobById(jobId: string): Promise<IJobResponse<IJobExportParameters, ITaskFinalizeParameters>> {
     const job = await this.jobManagerClient.getJob<IJobExportParameters, ITaskFinalizeParameters>(jobId);
     return job;
@@ -178,10 +108,7 @@ export class TasksManager {
     return jobsStatus;
   }
 
-  public async sendExportCallbacks(
-    job: JobExportResponse | JobFinalizeResponse,
-    callbackParams: ICallbackDataExportBase | ICallbackExportResponse
-  ): Promise<void> {
+  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackExportData): Promise<void> {
     try {
       this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
       const targetCallbacks = job.parameters.callbacks;
@@ -203,44 +130,6 @@ export class TasksManager {
       });
     } catch (error) {
       this.logger.error({ err: error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
-    }
-  }
-
-  /**
-   * @deprecated GetMap API - will be deprecated on future
-   */
-  public async finalizeJob(job: JobResponse, expirationDate: Date, isSuccess = true, reason?: string): Promise<void> {
-    let updateJobParams: IUpdateJobBody<IJobParameters> = {
-      status: isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED,
-      reason,
-      /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
-      percentage: isSuccess ? 100 : undefined,
-    };
-
-    const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDate);
-
-    try {
-      this.logger.info({ jobId: job.id, msg: `GetMap Finalize Job` });
-      const packageName = job.parameters.fileName;
-      if (isSuccess) {
-        const packageFullPath = getGpkgFullPath(this.gpkgsLocation, packageName);
-        await this.packageManager.createJsonMetadata(packageFullPath, job);
-      }
-      const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
-      updateJobParams = { ...updateJobParams, parameters: { ...job.parameters, callbackParams, cleanupData } };
-
-      this.logger.info({ jobId: job.id, status: isSuccess, msg: `GetMap Update Job status` });
-      await this.jobManagerClient.updateJob(job.id, updateJobParams);
-    } catch (error) {
-      this.logger.error({
-        jobId: job.id,
-        err: error,
-        errorReason: (error as Error).message,
-        msg: `GetMap Could not finalize job, will updating to status failed`,
-      });
-      const callbackParams = await this.sendCallbacks(job, expirationDate, reason);
-      updateJobParams = { ...updateJobParams, status: OperationStatus.FAILED, parameters: { ...job.parameters, callbackParams, cleanupData } };
-      await this.jobManagerClient.updateJob(job.id, updateJobParams);
     }
   }
 
@@ -312,7 +201,7 @@ export class TasksManager {
     return updateJobParams;
   }
 
-  private generateCleanupEntity(job: JobResponse | JobExportResponse | JobFinalizeResponse, expirationDate: Date): ICleanupData {
+  private generateCleanupEntity(job: JobExportResponse | JobFinalizeResponse, expirationDate: Date): ICleanupData {
     const cleanupData = { directoryPath: job.parameters.relativeDirectoryPath, cleanupExpirationTimeUTC: expirationDate };
     this.logger.info({ jobId: job.id, cleanupData, msg: `Generated new cleanupData param for job parameters` });
     return cleanupData;
@@ -323,7 +212,7 @@ export class TasksManager {
     job: JobExportResponse | JobFinalizeResponse,
     expirationDate: Date,
     errorReason?: string
-  ): Promise<ICallbackDataExportBase> {
+  ): Promise<ICallbackExportData> {
     let links: ILinkDefinition = { ...job.parameters.fileNamesTemplates }; // default file names in case of failure
     this.logger.info({ jobId: job.id, msg: `generate callback body for job: ${job.id}` });
 
@@ -370,7 +259,7 @@ export class TasksManager {
       },
     ];
 
-    const callbackParams: ICallbackDataExportBase = {
+    const callbackParams: ICallbackExportData = {
       links,
       expirationTime: expirationDate,
       fileSize,
@@ -379,6 +268,10 @@ export class TasksManager {
       errorReason,
       description: job.description,
       artifacts,
+      roi: {
+        type: 'FeatureCollection',
+        features: [],
+      },
     };
     this.logger.info({
       links: callbackParams.links,
