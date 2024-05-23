@@ -3,7 +3,6 @@ import { sep } from 'path';
 import { Logger } from '@map-colonies/js-logger';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-// import { TileRanger } from '@map-colonies/mc-utils';
 import {
   Polygon,
   MultiPolygon,
