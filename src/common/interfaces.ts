@@ -113,11 +113,13 @@ export interface IJobExportParameters {
   fileNamesTemplates: ILinkDefinition;
   gpkgEstimatedSize?: number;
   cleanupData?: ICleanupData;
+  traceParentContext?: ITraceParentContext;
 }
 
 export interface ITaskFinalizeParameters {
   reason?: string;
   exporterTaskStatus: OperationStatus;
+  traceParentContext?: ITraceParentContext;
 }
 
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
@@ -215,4 +217,9 @@ export interface IExternalClientsConfig {
   };
   httpRetry: IHttpRetryConfig;
   disableHttpClientLogs: boolean;
+}
+
+export interface ITraceParentContext {
+  traceparent?: string;
+  tracestate?: string;
 }

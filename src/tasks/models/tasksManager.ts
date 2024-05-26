@@ -4,7 +4,7 @@ import config from 'config';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Tracer } from '@opentelemetry/api';
+import { Tracer, context, propagation } from '@opentelemetry/api';
 import { concatFsPaths } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
@@ -18,6 +18,7 @@ import {
   IJobExportParameters,
   ILinkDefinition,
   ITaskFinalizeParameters,
+  ITraceParentContext,
   JobExportResponse,
   JobFinalizeResponse,
 } from '../../common/interfaces';
@@ -66,10 +67,13 @@ export class TasksManager {
   @withSpanAsyncV4
   public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
     const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
+    const traceContext: ITraceParentContext = {};
+    propagation.inject(context.active(), traceContext);
     this.logger.info({ jobId: job.id, operationStatus, msg: `create finalize task` });
     const taskParameters: ITaskFinalizeParameters = {
       reason,
       exporterTaskStatus: operationStatus,
+      traceParentContext: traceContext,
     };
 
     const createTaskRequest: CreateFinalizeTaskBody = {

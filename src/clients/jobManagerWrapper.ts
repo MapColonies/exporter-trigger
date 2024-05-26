@@ -4,8 +4,9 @@ import { Logger } from '@map-colonies/js-logger';
 import { IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { featureCollectionBooleanEqual, getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Tracer } from '@opentelemetry/api';
+import { Tracer, context, propagation } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
+import { ITraceParentContext } from '../common/interfaces';
 import {
   CreateExportJobBody,
   ICreateExportJobResponse,
@@ -44,6 +45,9 @@ export class JobManagerWrapper extends JobManagerClient {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
 
+    const traceContext: ITraceParentContext = {};
+    propagation.inject(context.active(), traceContext);
+
     const jobParameters: IJobExportParameters = {
       roi: data.roi,
       callbacks: data.callbacks,
@@ -51,6 +55,7 @@ export class JobManagerWrapper extends JobManagerClient {
       fileNamesTemplates: data.fileNamesTemplates,
       relativeDirectoryPath: data.relativeDirectoryPath,
       gpkgEstimatedSize: data.gpkgEstimatedSize,
+      traceParentContext: traceContext,
     };
 
     const createJobRequest: CreateExportJobBody = {

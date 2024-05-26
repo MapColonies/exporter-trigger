@@ -248,7 +248,7 @@ describe('TasksManager', () => {
         const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
-          parameters: { exporterTaskStatus: OperationStatus.COMPLETED },
+          parameters: { exporterTaskStatus: OperationStatus.COMPLETED, traceParentContext: {} },
           status: OperationStatus.PENDING,
           blockDuplication: true,
         };
@@ -261,11 +261,11 @@ describe('TasksManager', () => {
         expect(enqueueTask).toHaveBeenCalledWith(mockCompletedJob.id, expectedCreateTaskRequest);
       });
 
-      it('should create new not success finalize task', async () => {
+      it('should create new failed finalize task', async () => {
         const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
-          parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED },
+          parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED, traceParentContext: {} },
           status: OperationStatus.PENDING,
           blockDuplication: true,
         };
