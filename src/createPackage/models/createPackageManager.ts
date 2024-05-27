@@ -1,5 +1,5 @@
-import { promises as fsPromise } from 'fs';
-import { sep } from 'path';
+import { promises as fsPromise } from 'node:fs';
+import { sep } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';

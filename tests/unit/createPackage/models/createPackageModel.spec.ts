@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/naming-convention */
-import fs from 'fs';
+import { promises as fsPromise } from 'node:fs';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
@@ -28,13 +28,13 @@ import {
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
 import * as utils from '../../../../src/common/utils';
 
-jest.mock('fs', () => {
+jest.mock('node:fs', () => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return {
-    ...jest.requireActual('fs'),
+    ...jest.requireActual('node:fs'),
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     promises: {
-      ...jest.requireActual('fs/promises'),
+      ...jest.requireActual('node:fs'),
       writeFile: jest.fn(),
     },
   };
@@ -65,7 +65,7 @@ describe('CreatePackageManager', () => {
         findLayerMock.mockResolvedValue(layerFromCatalogSample);
 
         await createPackageManager.createExportJsonMetadata({ ...completedExportJob });
-        expect(fs.promises.writeFile).toHaveBeenCalledTimes(1);
+        expect(fsPromise.writeFile).toHaveBeenCalledTimes(1);
         expect(parseFeatureCollectionSpy).toHaveBeenCalledTimes(1);
         expect(parseFeatureCollectionSpy).toHaveBeenCalledWith(completedExportJob.parameters.roi);
         expect(getFilesha256HashSpy).toHaveBeenCalledTimes(1);
@@ -80,7 +80,7 @@ describe('CreatePackageManager', () => {
           completedExportJob.parameters.relativeDirectoryPath,
           completedExportJob.parameters.fileNamesTemplates.metadataURI
         );
-        expect(fs.promises.writeFile).toHaveBeenCalledWith(expectedFileName, JSON.stringify(metadataExportJson));
+        expect(fsPromise.writeFile).toHaveBeenCalledWith(expectedFileName, JSON.stringify(metadataExportJson));
       });
 
       it('should fail on metadata.json creation(because finding layer from catalog)', async () => {
@@ -91,7 +91,7 @@ describe('CreatePackageManager', () => {
         expect(result).toBe(false);
         expect(parseFeatureCollectionSpy).toHaveBeenCalledTimes(0);
         expect(concatFsPathsSpy).toHaveBeenCalledTimes(0);
-        expect(fs.promises.writeFile).toHaveBeenCalledTimes(0);
+        expect(fsPromise.writeFile).toHaveBeenCalledTimes(0);
       });
     });
     describe('#create', () => {

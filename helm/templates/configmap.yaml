@@ -1,8 +1,8 @@
 {{- $chartName := include "exporter-trigger.name" . -}}
 {{- $tracingUrl := include "exporter-trigger.tracingUrl" . -}}
 {{- $metricsUrl := include "exporter-trigger.metricsUrl" . -}}
-{{- $tracingEnabled := include "raster-catalog-manager.tracingEnabled" . -}}
-{{- $metricsEnabled := include "raster-catalog-manager.metricsEnabled" . -}}
+{{- $tracingEnabled := include "exporter-trigger.tracingEnabled" . -}}
+{{- $metricsEnabled := include "exporter-trigger.metricsEnabled" . -}}
 {{- $serviceUrls := (include "common.serviceUrls.merged" .) | fromYaml }}
 {{- $jobManagement := (include "common.jobManagement.merged" .) | fromYaml }}
 {{- $storage := (include "common.storage.merged" .) | fromYaml }}
