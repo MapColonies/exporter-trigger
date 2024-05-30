@@ -5,8 +5,26 @@ import checkDiskSpace from 'check-disk-space';
 import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
 import { FeatureCollection, Geometry } from '@turf/helpers';
 import md5 from 'md5';
-import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
+import { INFRA_CONVENTIONS } from '@map-colonies/telemetry/conventions';
+import { Link, SpanOptions } from '@opentelemetry/api';
+import { ITaskResponse } from '@map-colonies/mc-priority-queue';
+import { Logger } from '@map-colonies/js-logger';
+import { IGeometryRecord, IStorageStatusResponse, ITaskFinalizeParameters, ITraceParentContext } from './interfaces';
 import { ZOOM_ZERO_RESOLUTION } from './constants';
+
+const getSpanLinkOption = (context: ITraceParentContext): Link[] => {
+  if (context.traceparent === undefined) {
+    throw Error(`TraceParentContext is undefined`);
+  }
+  const parts = context.traceparent.split('-');
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  if (parts.length !== 4) {
+    const invalidParts = `${parts.join('|')}`;
+    throw Error(`TraceParentContext include not valid traceparent object: ${invalidParts}`);
+  }
+  const spanLinks: Link[] = [{ context: { spanId: parts[2], traceFlags: parseInt(parts[3]), traceId: parts[1] } }];
+  return spanLinks;
+};
 
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;
@@ -81,6 +99,31 @@ export const generateGeoIdentifier = (geo: FeatureCollection): string => {
   const stringifiedGeo = JSON.stringify(geo);
   const additionalIdentifiers = md5(stringifiedGeo);
   return additionalIdentifiers;
+};
+
+/**
+ * This function parse Task and generate SpanOption object to be passed, attach Link object to Span parent if exists, and metadata attributes
+ * @param tilesTask export task to be executed
+ * @returns SpanOption object with attributes and optional links array
+ */
+export const getInitialSpanOption = (tilesTask: ITaskResponse<ITaskFinalizeParameters>, logger: Logger): SpanOptions => {
+  const spanOptions: SpanOptions = {
+    attributes: {
+      [INFRA_CONVENTIONS.infra.jobManagement.jobId]: tilesTask.jobId,
+      [INFRA_CONVENTIONS.infra.jobManagement.taskId]: tilesTask.id,
+    },
+  };
+  try {
+    if (tilesTask.parameters.traceParentContext) {
+      const spanLinks = getSpanLinkOption(tilesTask.parameters.traceParentContext); // add link to trigging parent trace (overseer)
+      spanOptions.links = spanLinks;
+    }
+  } catch (err) {
+    const logWarnMsg = `No trace parent link data exists`;
+    const logObj = { jobId: tilesTask.jobId, taskId: tilesTask.id, err };
+    logger.warn({ ...logObj, msg: logWarnMsg });
+  }
+  return spanOptions;
 };
 
 export const parseFeatureCollection = (featuresCollection: FeatureCollection): IGeometryRecord[] => {

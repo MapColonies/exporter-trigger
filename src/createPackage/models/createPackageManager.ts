@@ -3,22 +3,24 @@ import { sep } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import {
+import type {
   Polygon,
   MultiPolygon,
   BBox,
-  bbox as PolygonBbox,
-  intersect,
-  combine as featureCombine,
+  // bbox as PolygonBbox,
+  // intersect,
+  // combine as featureCombine,
   FeatureCollection,
   Feature,
   Geometry,
-} from '@turf/turf';
+} from '@turf/helpers';
+import intersect from '@turf/intersect';
+import PolygonBbox from '@turf/bbox';
+import featureCombine from '@turf/combine';
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel, featureCollectionBooleanEqual, ITileRange, snapBBoxToTileGrid, bboxToTileRange } from '@map-colonies/mc-utils';
-import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { type IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
-import { BBox2d } from '@turf/helpers/dist/js/lib/geojson';
 import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { feature, featureCollection } from '@turf/helpers';
 import {
@@ -48,6 +50,9 @@ import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerCl
 import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
 import { MergerSourceType, IMapSource, ITaskParameters, IStorageStatusResponse } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
+
+// not imported by turf in this version, should be fixed in 7.0.0
+type BBox2d = [number, number, number, number];
 
 @injectable()
 export class CreatePackageManager {
@@ -359,7 +364,7 @@ export class CreatePackageManager {
       if (intersaction === null) {
         return null;
       }
-      const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom);
+      const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom) as BBox2d;
       return sanitized;
     } catch (error) {
       throw new Error(`Error occurred while trying to sanitized bbox: ${JSON.stringify(error)}`);

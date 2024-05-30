@@ -1,6 +1,6 @@
 import httpStatusCodes from 'http-status-codes';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { feature, featureCollection, Geometry } from '@turf/turf';
+import { feature, featureCollection, Geometry } from '@turf/helpers';
 import { getApp } from '../../../src/app';
 import { RasterCatalogManagerClient } from '../../../src/clients/rasterCatalogManagerClient';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';

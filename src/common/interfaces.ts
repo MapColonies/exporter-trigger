@@ -1,4 +1,4 @@
-import { BBox, FeatureCollection, Geometry } from '@turf/turf';
+import { BBox, FeatureCollection, Geometry } from '@turf/helpers';
 import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IHttpRetryConfig, ITileRange } from '@map-colonies/mc-utils';
 import { TileOutputFormat } from '@map-colonies/mc-model-types';
@@ -139,6 +139,7 @@ export interface ITaskParameters {
   targetFormat?: TileOutputFormat;
   batches: ITileRange[];
   sources: IMapSource[];
+  traceParentContext?: ITraceParentContext;
 }
 
 export interface IExportJobStatusResponse {
