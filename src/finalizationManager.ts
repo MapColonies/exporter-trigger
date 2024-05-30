@@ -72,7 +72,7 @@ export class FinalizationManager {
 
   private async handleFinalize(finalizeTask: ITaskResponse<ITaskFinalizeParameters>): Promise<boolean> {
     const spanOptions = getInitialSpanOption(finalizeTask, this.logger);
-    await this.tracer.startActiveSpan('runFinalize', spanOptions, async (span) => {
+    return this.tracer.startActiveSpan('runFinalize', spanOptions, async (span) => {
       try {
         const shouldNotWait = await this.runFinalize(finalizeTask);
         span.setStatus({ code: shouldNotWait ? SpanStatusCode.OK : SpanStatusCode.ERROR });
@@ -85,8 +85,6 @@ export class FinalizationManager {
         span.end();
       }
     });
-
-    return this.runFinalize(finalizeTask);
   }
 
   private async runFinalize(finalizeTask: ITaskResponse<ITaskFinalizeParameters>): Promise<boolean> {
