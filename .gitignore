@@ -114,3 +114,6 @@ reports
 
 # Helm
 local.yaml
+
+# Config
+local.json

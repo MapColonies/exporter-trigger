@@ -101,6 +101,27 @@ Returns the cloud provider docker registry url from global if exists or from the
 {{- end -}}
 
 {{/*
+Returns if tracing is enabled from global if exists or from the chart's values
+*/}}
+{{- define "exporter-trigger.tracingEnabled" -}}
+{{- if .Values.global.tracing.enabled }}
+    {{- .Values.global.tracing.enabled -}}
+{{- else -}}
+    {{- .Values.env.tracing.enabled -}}
+{{- end -}}
+{{- end -}}
+{{/*
+Returns if metrics is enabled from global if exists or from the chart's values
+*/}}
+{{- define "exporter-trigger.metricsEnabled" -}}
+{{- if .Values.global.metrics.enabled }}
+    {{- .Values.global.metrics.enabled -}}
+{{- else -}}
+    {{- .Values.env.metrics.enabled -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns the tracing url from global if exists or from the chart's values
 */}}
 {{- define "exporter-trigger.tracingUrl" -}}
@@ -112,7 +133,7 @@ Returns the tracing url from global if exists or from the chart's values
 {{- end -}}
 
 {{/*
-Returns the tracing url from global if exists or from the chart's values
+Returns the metrics url from global if exists or from the chart's values
 */}}
 {{- define "exporter-trigger.metricsUrl" -}}
 {{- if .Values.global.metrics.url }}
