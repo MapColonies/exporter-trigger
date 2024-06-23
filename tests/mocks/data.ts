@@ -11,6 +11,7 @@ import {
   IWorkerExportInput,
   IWorkerInput,
 } from '../../src/common/interfaces';
+import { TileFormatStrategy } from '../../src/common/enums';
 
 const layerMetadata: LayerMetadata = {
   type: 'RECORD_RASTER',
@@ -267,6 +268,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       parameters: {
         isNewTarget: true,
         targetFormat: TileOutputFormat.PNG,
+        outputFormatStrategy: TileFormatStrategy.Mixed,
         batches: [],
         sources: [],
       },
@@ -327,6 +329,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
       parameters: {
         isNewTarget: true,
         targetFormat: TileOutputFormat.PNG,
+        outputFormatStrategy: TileFormatStrategy.Mixed,
         batches: [],
         sources: [],
       },
@@ -757,6 +760,7 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
       parameters: {
         isNewTarget: true,
         targetFormat: TileOutputFormat.JPEG,
+        outputFormatStrategy: TileFormatStrategy.Mixed,
         batches: [],
         sources: [],
       },
@@ -816,6 +820,7 @@ const inProgressExportJob: IJobResponse<IJobExportParameters, ITaskParameters> =
       parameters: {
         isNewTarget: true,
         targetFormat: TileOutputFormat.JPEG,
+        outputFormatStrategy: TileFormatStrategy.Mixed,
         batches: [],
         sources: [],
       },

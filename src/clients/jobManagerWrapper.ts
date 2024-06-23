@@ -23,6 +23,7 @@ import {
   JobResponse,
   TaskResponse,
 } from '../common/interfaces';
+import { TileFormatStrategy } from '../common/enums';
 
 @injectable()
 export class JobManagerWrapper extends JobManagerClient {
@@ -81,6 +82,7 @@ export class JobManagerWrapper extends JobManagerClient {
           parameters: {
             isNewTarget: true,
             targetFormat: data.targetFormat,
+            outputFormatStrategy: TileFormatStrategy.Mixed,
             batches: data.batches,
             sources: data.sources,
           },
@@ -129,6 +131,7 @@ export class JobManagerWrapper extends JobManagerClient {
           parameters: {
             isNewTarget: true,
             targetFormat: data.targetFormat,
+            outputFormatStrategy: TileFormatStrategy.Mixed,
             batches: data.batches,
             sources: data.sources,
           },
