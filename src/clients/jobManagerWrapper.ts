@@ -82,7 +82,7 @@ export class JobManagerWrapper extends JobManagerClient {
           parameters: {
             isNewTarget: true,
             targetFormat: data.targetFormat,
-            outputFormatStrategy: TileFormatStrategy.Mixed,
+            outputFormatStrategy: data.outputFormatStrategy,
             batches: data.batches,
             sources: data.sources,
           },
@@ -131,7 +131,7 @@ export class JobManagerWrapper extends JobManagerClient {
           parameters: {
             isNewTarget: true,
             targetFormat: data.targetFormat,
-            outputFormatStrategy: TileFormatStrategy.Mixed,
+            outputFormatStrategy: data.outputFormatStrategy,
             batches: data.batches,
             sources: data.sources,
           },
