@@ -23,7 +23,6 @@ import {
   JobResponse,
   TaskResponse,
 } from '../common/interfaces';
-import { TileFormatStrategy } from '../common/enums';
 
 @injectable()
 export class JobManagerWrapper extends JobManagerClient {

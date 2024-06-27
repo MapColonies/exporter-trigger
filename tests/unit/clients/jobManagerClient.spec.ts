@@ -207,18 +207,19 @@ describe('JobManagerClient', () => {
           workerExportInput.outputFormatStrategy = TileFormatStrategy.Fixed;
           const response = await jobManagerClient.createExport(workerExportInput);
           expect(createJob).toHaveBeenCalledTimes(1);
-          expect(createJob).toHaveBeenCalledWith(
-            {
-              ...jobPayloadWithMixedForFixedStrategyCheck, 
-              tasks: [{
-                ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0], 
-                parameters: { 
-                  ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0].parameters,  
-                  outputFormatStrategy: TileFormatStrategy.Fixed
-                }
-              }],
-              parameters: expect.anything()
-            })
+          expect(createJob).toHaveBeenCalledWith({
+            ...jobPayloadWithMixedForFixedStrategyCheck,
+            tasks: [
+              {
+                ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0],
+                parameters: {
+                  ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0].parameters,
+                  outputFormatStrategy: TileFormatStrategy.Fixed,
+                },
+              },
+            ],
+            parameters: expect.anything() as unknown,
+          });
           expect(response).toStrictEqual(expectedResponse);
         });
       });

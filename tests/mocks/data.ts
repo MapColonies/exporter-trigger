@@ -1081,46 +1081,46 @@ const pycswRecord = {
 };
 
 const jobPayloadWithMixedForFixedStrategyCheck = {
-  "additionalIdentifiers": "1a26c1661df10eee54f9727fcdb8b71d",
-  "description": undefined,
-  "domain": "RASTER",
-  "internalId": "0c3e455f-4aeb-4258-982d-f7773469a92d",
-  "parameters": undefined,
-  "priority": 0,
-  "productName": "string",
-  "productType": "OrthophotoHistory",
-  "resourceId": "string",
-  "status": "In-Progress",
-  "tasks": [
-      {
-          "parameters": {
-              "batches": [],
-              "isNewTarget": true,
-              "outputFormatStrategy": "mixed",
-              "sources": [
-                  {
-                      "extent": {
-                          "maxX": 37.42414218385065,
-                          "maxY": 17.95036866237062,
-                          "minX": 25.120393802953117,
-                          "minY": -16.979479051947962
-                      },
-                      "path": "1a26c1661df10eee54f9727fcdb8b71d/OrthophotoHistory_string_1_0_5_2023_03_02T05_43_27_066Z.gpkg",
-                      "type": "GPKG"
-                  },
-                  {
-                      "path": "undefined/undefined",
-                      "type": "S3"
-                  }
-              ],
-              "targetFormat": undefined
+  additionalIdentifiers: '1a26c1661df10eee54f9727fcdb8b71d',
+  description: undefined,
+  domain: 'RASTER',
+  internalId: '0c3e455f-4aeb-4258-982d-f7773469a92d',
+  parameters: undefined,
+  priority: 0,
+  productName: 'string',
+  productType: 'OrthophotoHistory',
+  resourceId: 'string',
+  status: 'In-Progress',
+  tasks: [
+    {
+      parameters: {
+        batches: [],
+        isNewTarget: true,
+        outputFormatStrategy: 'mixed',
+        sources: [
+          {
+            extent: {
+              maxX: 37.42414218385065,
+              maxY: 17.95036866237062,
+              minX: 25.120393802953117,
+              minY: -16.979479051947962,
+            },
+            path: '1a26c1661df10eee54f9727fcdb8b71d/OrthophotoHistory_string_1_0_5_2023_03_02T05_43_27_066Z.gpkg',
+            type: 'GPKG',
           },
-          "type": "rasterTilesExporter"
-      }
+          {
+            path: 'undefined/undefined',
+            type: 'S3',
+          },
+        ],
+        targetFormat: undefined,
+      },
+      type: 'rasterTilesExporter',
+    },
   ],
-  "type": "rasterTilesExporter",
-  "version": "1.0"
-}
+  type: 'rasterTilesExporter',
+  version: '1.0',
+};
 
 export {
   layerFromCatalog,
@@ -1146,5 +1146,5 @@ export {
   layerMetadataRoi,
   layerMetadataSample,
   pycswRecord,
-  jobPayloadWithMixedForFixedStrategyCheck
+  jobPayloadWithMixedForFixedStrategyCheck,
 };
