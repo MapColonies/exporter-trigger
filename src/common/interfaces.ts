@@ -2,7 +2,7 @@ import { MultiPolygon, Polygon, BBox, FeatureCollection, Geometry } from '@turf/
 import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IHttpRetryConfig, ITileRange } from '@map-colonies/mc-utils';
 import { TileOutputFormat } from '@map-colonies/mc-model-types';
-import { ArtifactType } from './enums';
+import { ArtifactType, TileFormatStrategy } from './enums';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -70,6 +70,7 @@ export interface IWorkerInputBase {
   sources: IMapSource[];
   gpkgEstimatedSize?: number;
   targetFormat?: TileOutputFormat;
+  outputFormatStrategy?: TileFormatStrategy;
 }
 
 /**
@@ -243,6 +244,7 @@ export interface IMapSource {
 export interface ITaskParameters {
   isNewTarget: boolean;
   targetFormat?: TileOutputFormat;
+  outputFormatStrategy?: TileFormatStrategy;
   batches: ITileRange[];
   sources: IMapSource[];
 }

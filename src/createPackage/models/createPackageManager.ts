@@ -72,6 +72,7 @@ import {
   IStorageStatusResponse,
 } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
+import { TileFormatStrategy } from '../../common/enums';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const geojsonhint: IHinter = require('@mapbox/geojsonhint') as IHinter;
@@ -203,6 +204,7 @@ export class CreatePackageManager {
       callbacks: callbacks,
       gpkgEstimatedSize: estimatesGpkgSize,
       targetFormat: layerMetadata.tileOutputFormat,
+      outputFormatStrategy: TileFormatStrategy.MIXED,
     };
     const jobCreated = await this.jobManagerClient.create(workerInput);
     return jobCreated;
@@ -366,6 +368,7 @@ export class CreatePackageManager {
       gpkgEstimatedSize: estimatesGpkgSize,
       description,
       targetFormat: layerMetadata.tileOutputFormat,
+      outputFormatStrategy: TileFormatStrategy.MIXED,
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);
     return jobCreated;
