@@ -195,6 +195,34 @@ describe('JobManagerClient', () => {
           expect(response).toStrictEqual(expectedResponse);
         });
 
+        it('should create Export job successfully with Mixed tiles strategy', async () => {
+          const inProgressJobIds = { jobId: '123', taskIds: ['123'] };
+          const expectedResponse: ICreateExportJobResponse = {
+            ...inProgressJobIds,
+            status: OperationStatus.IN_PROGRESS,
+          };
+
+          createJob = jest.fn();
+          (jobManagerClient as unknown as { createJob: unknown }).createJob = createJob.mockResolvedValue({ id: '123', taskIds: ['123'] });
+          workerExportInput.outputFormatStrategy = TileFormatStrategy.Mixed;
+          const response = await jobManagerClient.createExport(workerExportInput);
+          expect(createJob).toHaveBeenCalledTimes(1);
+          expect(createJob).toHaveBeenCalledWith({
+            ...jobPayloadWithMixedForFixedStrategyCheck,
+            tasks: [
+              {
+                ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0],
+                parameters: {
+                  ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0].parameters,
+                  outputFormatStrategy: TileFormatStrategy.Mixed,
+                },
+              },
+            ],
+            parameters: expect.anything() as unknown,
+          });
+          expect(response).toStrictEqual(expectedResponse);
+        });
+
         it('should create Export job successfully with Fixed tiles strategy', async () => {
           const inProgressJobIds = { jobId: '123', taskIds: ['123'] };
           const expectedResponse: ICreateExportJobResponse = {
