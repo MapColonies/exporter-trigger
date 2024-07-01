@@ -195,7 +195,7 @@ describe('JobManagerClient', () => {
           expect(response).toStrictEqual(expectedResponse);
         });
 
-        it('should create Export job successfully with Mixed tiles strategy', async () => {
+        it('should create Export job successfully with MIXED tiles strategy', async () => {
           const inProgressJobIds = { jobId: '123', taskIds: ['123'] };
           const expectedResponse: ICreateExportJobResponse = {
             ...inProgressJobIds,
@@ -204,7 +204,7 @@ describe('JobManagerClient', () => {
 
           createJob = jest.fn();
           (jobManagerClient as unknown as { createJob: unknown }).createJob = createJob.mockResolvedValue({ id: '123', taskIds: ['123'] });
-          workerExportInput.outputFormatStrategy = TileFormatStrategy.Mixed;
+          workerExportInput.outputFormatStrategy = TileFormatStrategy.MIXED;
           const response = await jobManagerClient.createExport(workerExportInput);
           expect(createJob).toHaveBeenCalledTimes(1);
           expect(createJob).toHaveBeenCalledWith({
@@ -214,7 +214,7 @@ describe('JobManagerClient', () => {
                 ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0],
                 parameters: {
                   ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0].parameters,
-                  outputFormatStrategy: TileFormatStrategy.Mixed,
+                  outputFormatStrategy: TileFormatStrategy.MIXED,
                 },
               },
             ],
@@ -223,7 +223,7 @@ describe('JobManagerClient', () => {
           expect(response).toStrictEqual(expectedResponse);
         });
 
-        it('should create Export job successfully with Fixed tiles strategy', async () => {
+        it('should create Export job successfully with FIXED tiles strategy', async () => {
           const inProgressJobIds = { jobId: '123', taskIds: ['123'] };
           const expectedResponse: ICreateExportJobResponse = {
             ...inProgressJobIds,
@@ -232,7 +232,7 @@ describe('JobManagerClient', () => {
 
           createJob = jest.fn();
           (jobManagerClient as unknown as { createJob: unknown }).createJob = createJob.mockResolvedValue({ id: '123', taskIds: ['123'] });
-          workerExportInput.outputFormatStrategy = TileFormatStrategy.Fixed;
+          workerExportInput.outputFormatStrategy = TileFormatStrategy.FIXED;
           const response = await jobManagerClient.createExport(workerExportInput);
           expect(createJob).toHaveBeenCalledTimes(1);
           expect(createJob).toHaveBeenCalledWith({
@@ -242,7 +242,7 @@ describe('JobManagerClient', () => {
                 ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0],
                 parameters: {
                   ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0].parameters,
-                  outputFormatStrategy: TileFormatStrategy.Fixed,
+                  outputFormatStrategy: TileFormatStrategy.FIXED,
                 },
               },
             ],

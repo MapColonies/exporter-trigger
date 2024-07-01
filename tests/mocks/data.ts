@@ -268,7 +268,7 @@ const completedJob: IJobResponse<IJobParameters, ITaskParameters> = {
       parameters: {
         isNewTarget: true,
         targetFormat: TileOutputFormat.PNG,
-        outputFormatStrategy: TileFormatStrategy.Mixed,
+        outputFormatStrategy: TileFormatStrategy.MIXED,
         batches: [],
         sources: [],
       },
@@ -329,7 +329,7 @@ const inProgressJob: IJobResponse<IJobParameters, ITaskParameters> = {
       parameters: {
         isNewTarget: true,
         targetFormat: TileOutputFormat.PNG,
-        outputFormatStrategy: TileFormatStrategy.Mixed,
+        outputFormatStrategy: TileFormatStrategy.MIXED,
         batches: [],
         sources: [],
       },
@@ -760,7 +760,7 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
       parameters: {
         isNewTarget: true,
         targetFormat: TileOutputFormat.JPEG,
-        outputFormatStrategy: TileFormatStrategy.Mixed,
+        outputFormatStrategy: TileFormatStrategy.MIXED,
         batches: [],
         sources: [],
       },
@@ -820,7 +820,7 @@ const inProgressExportJob: IJobResponse<IJobExportParameters, ITaskParameters> =
       parameters: {
         isNewTarget: true,
         targetFormat: TileOutputFormat.JPEG,
-        outputFormatStrategy: TileFormatStrategy.Mixed,
+        outputFormatStrategy: TileFormatStrategy.MIXED,
         batches: [],
         sources: [],
       },

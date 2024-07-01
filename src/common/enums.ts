@@ -5,10 +5,8 @@ enum ArtifactType {
 }
 
 export enum TileFormatStrategy {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  Fixed = 'fixed',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  Mixed = 'mixed',
+  FIXED = 'fixed',
+  MIXED = 'mixed',
 }
 
 export { ArtifactType };

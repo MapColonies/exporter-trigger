@@ -204,7 +204,7 @@ export class CreatePackageManager {
       callbacks: callbacks,
       gpkgEstimatedSize: estimatesGpkgSize,
       targetFormat: layerMetadata.tileOutputFormat,
-      outputFormatStrategy: TileFormatStrategy.Mixed,
+      outputFormatStrategy: TileFormatStrategy.MIXED,
     };
     const jobCreated = await this.jobManagerClient.create(workerInput);
     return jobCreated;
@@ -368,7 +368,7 @@ export class CreatePackageManager {
       gpkgEstimatedSize: estimatesGpkgSize,
       description,
       targetFormat: layerMetadata.tileOutputFormat,
-      outputFormatStrategy: TileFormatStrategy.Mixed,
+      outputFormatStrategy: TileFormatStrategy.MIXED,
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);
     return jobCreated;
