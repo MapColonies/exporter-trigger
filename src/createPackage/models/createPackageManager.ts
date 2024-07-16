@@ -1,7 +1,7 @@
 import { promises as fsPromise } from 'node:fs';
 import { sep } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
-import { Tracer } from '@opentelemetry/api';
+import { SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import type {
   Polygon,
@@ -78,11 +78,88 @@ export class CreatePackageManager {
   }
 
   @withSpanAsyncV4
+  private async getFreeStorage(): Promise<number> {
+    const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
+    let otherRunningJobsSize = 0;
+
+    const inProcessingJobs: JobExportResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
+    if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
+      inProcessingJobs.forEach((job) => {
+        let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
+        if (job.percentage) {
+          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+          jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the needed size that left for this gpkg creation
+        }
+        otherRunningJobsSize += jobGpkgEstimatedSize;
+      });
+    }
+    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageEstimation.storageFactorBuffer;
+    this.logger.debug({ freeSpace: actualFreeSpace, totalSpace: storageStatus.size }, `Current storage free space for gpkgs location`);
+    return actualFreeSpace;
+  }
+
+  @withSpanAsyncV4
+  private async checkForExportDuplicate(
+    dupParams: JobExportDuplicationParams,
+    callbackUrls?: ICallbackTargetExport[]
+  ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
+    let completedExists = await this.checkForExportCompleted(dupParams);
+    if (completedExists) {
+      return completedExists;
+    }
+
+    const processingExists = await this.checkForExportProcessing(dupParams, callbackUrls);
+    if (processingExists) {
+      // For race condition
+      completedExists = await this.checkForExportCompleted(dupParams);
+      if (completedExists) {
+        return completedExists;
+      }
+      return { ...processingExists, isDuplicated: true };
+    }
+
+    return undefined;
+  }
+
+  /*
+  public async startCreatePackageRoiSpan(jobCreated: ICreateExportJobResponse, userInput: ICreatePackageRoi) :Promise<ICreateExportJobResponse | ICallbackExportResponse>{ //IJobResponse<IJobExportParameters, ITaskParameters>
+    const spanOptions = getInitialSpanOption(jobCreated, this.logger);
+    return this.tracer.startActiveSpan('createPackageRoi', spanOptions, async (span) => {
+      try {
+        const shouldNotWait = await this.createPackageRoi(userInput);
+        span.setStatus({ code: SpanStatusCode.OK });
+        return shouldNotWait;
+      } catch (err) {
+        span.setStatus({ code: SpanStatusCode.ERROR });
+        span.recordException(err as Error);
+        throw err;
+      } finally {
+        span.end();
+      }
+    });
+  }
+  */
+
   public async createPackageRoi(userInput: ICreatePackageRoi): Promise<ICreateExportJobResponse | ICallbackExportResponse> {
     const { dbId, crs, priority, callbackURLs, description } = userInput;
     let roi = userInput.roi;
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
+    // Start the main span
+    const mainSpan = this.tracer.startSpan('createPackageRoi');
+
+    // Create a context with the main span
+    const spanContext = trace.setSpan(context.active(), mainSpan);
+
+    // Save the span context
+    const mainTraceIds = {
+      traceId: mainSpan.spanContext().traceId,
+      spanId: mainSpan.spanContext().spanId,
+    };
+
+    // Execute main logic within the main span's context
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    const jobCreated = await context.with(spanContext, async () => {
     if (!roi) {
       // convert and wrap layer's footprint to featureCollection
       const layerMaxResolutionDeg = layerMetadata.maxResolutionDeg;
@@ -127,8 +204,7 @@ export class CreatePackageManager {
       );
       if (!record.sanitizedBox) {
         throw new BadRequestError(
-          `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${
-            layer.metadata.id as string
+            `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${layer.metadata.id as string
           }`
         );
       }
@@ -235,53 +311,12 @@ export class CreatePackageManager {
       gpkgEstimatedSize: estimatesGpkgSize,
       description,
       targetFormat: layerMetadata.tileOutputFormat,
+        traceContext: mainTraceIds,
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);
+      return jobCreated
+    });
     return jobCreated;
-  }
-
-  @withSpanAsyncV4
-  private async getFreeStorage(): Promise<number> {
-    const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
-    let otherRunningJobsSize = 0;
-
-    const inProcessingJobs: JobExportResponse[] | undefined = await this.jobManagerClient.getInProgressJobs();
-    if (inProcessingJobs !== undefined && inProcessingJobs.length !== 0) {
-      inProcessingJobs.forEach((job) => {
-        let jobGpkgEstimatedSize = job.parameters.gpkgEstimatedSize as number;
-        if (job.percentage) {
-          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-          jobGpkgEstimatedSize = (1 - job.percentage / 100) * jobGpkgEstimatedSize; // the needed size that left for this gpkg creation
-        }
-        otherRunningJobsSize += jobGpkgEstimatedSize;
-      });
-    }
-    const actualFreeSpace = storageStatus.free - otherRunningJobsSize * this.storageEstimation.storageFactorBuffer;
-    this.logger.debug({ freeSpace: actualFreeSpace, totalSpace: storageStatus.size }, `Current storage free space for gpkgs location`);
-    return actualFreeSpace;
-  }
-
-  @withSpanAsyncV4
-  private async checkForExportDuplicate(
-    dupParams: JobExportDuplicationParams,
-    callbackUrls?: ICallbackTargetExport[]
-  ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
-    let completedExists = await this.checkForExportCompleted(dupParams);
-    if (completedExists) {
-      return completedExists;
-    }
-
-    const processingExists = await this.checkForExportProcessing(dupParams, callbackUrls);
-    if (processingExists) {
-      // For race condition
-      completedExists = await this.checkForExportCompleted(dupParams);
-      if (completedExists) {
-        return completedExists;
-      }
-      return { ...processingExists, isDuplicated: true };
-    }
-
-    return undefined;
   }
 
   public async createExportJsonMetadata(job: JobExportResponse | JobFinalizeResponse): Promise<boolean> {

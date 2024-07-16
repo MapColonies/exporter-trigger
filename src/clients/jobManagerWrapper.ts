@@ -45,8 +45,15 @@ export class JobManagerWrapper extends JobManagerClient {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
 
-    const traceContext: ITraceParentContext = {};
-    propagation.inject(context.active(), traceContext);
+    // const spanOptions = {
+    //   parent: {
+    //     traceId: data.traceContext.traceId,
+    //     spanId: data.traceContext.spanId,
+    //     traceFlags: TraceFlags.SAMPLED,
+    //   },
+    // };
+    // propagation.inject(context.active(), spanOptions);
+    const createExportSpan = this.tracer.startSpan("createExport");
 
     const jobParameters: IJobExportParameters = {
       roi: data.roi,
@@ -55,7 +62,7 @@ export class JobManagerWrapper extends JobManagerClient {
       fileNamesTemplates: data.fileNamesTemplates,
       relativeDirectoryPath: data.relativeDirectoryPath,
       gpkgEstimatedSize: data.gpkgEstimatedSize,
-      traceParentContext: traceContext,
+      traceContext: data.traceContext
     };
 
     const createJobRequest: CreateExportJobBody = {
@@ -89,6 +96,7 @@ export class JobManagerWrapper extends JobManagerClient {
       taskIds: res.taskIds,
       status: OperationStatus.IN_PROGRESS,
     };
+    createExportSpan.end();
     return createJobResponse;
   }
 

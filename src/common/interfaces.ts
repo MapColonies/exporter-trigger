@@ -51,6 +51,7 @@ export interface IWorkerExportInput {
   roi: FeatureCollection;
   fileNamesTemplates: ILinkDefinition;
   description?: string;
+  traceContext: ITraceParentContext;
 }
 
 export interface IBasicResponse {
@@ -62,6 +63,7 @@ export interface ICreateExportJobResponse {
   taskIds: string[];
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
   isDuplicated?: boolean;
+  traceContext?: ITraceParentContext;
 }
 
 export interface ICallbackExportData {
@@ -113,7 +115,7 @@ export interface IJobExportParameters {
   fileNamesTemplates: ILinkDefinition;
   gpkgEstimatedSize?: number;
   cleanupData?: ICleanupData;
-  traceParentContext?: ITraceParentContext;
+  traceContext?: ITraceParentContext;
 }
 
 export interface ITaskFinalizeParameters {
@@ -198,7 +200,7 @@ export interface IJobManager extends IClientBase {
   dequeueFinalizeIntervalMs: number;
 }
 
-export interface IRasterCatalogManager extends IClientBase {}
+export interface IRasterCatalogManager extends IClientBase { }
 
 export interface IHeartbeatManager extends IClientBase {
   heartbeatIntervalMs: number;
@@ -221,6 +223,6 @@ export interface IExternalClientsConfig {
 }
 
 export interface ITraceParentContext {
-  traceparent?: string;
-  tracestate?: string;
+  traceId: string;
+  spanId: string;
 }

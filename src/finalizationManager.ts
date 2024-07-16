@@ -1,16 +1,17 @@
 import config from 'config';
 import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { SpanStatusCode, Tracer } from '@opentelemetry/api';
+import { context, propagation, SpanStatusCode, Tracer } from '@opentelemetry/api';
 import { ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
 import { getInitialSpanOption } from './common/utils';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
 import { QueueClient } from './clients/queueClient';
-import { ICallbackExportData, ICallbackExportResponse, ITaskFinalizeParameters, JobExportResponse, JobFinalizeResponse } from './common/interfaces';
+import { ICallbackExportData, ICallbackExportResponse, ITaskFinalizeParameters, ITraceParentContext, JobExportResponse, JobFinalizeResponse } from './common/interfaces';
 import { JobManagerWrapper } from './clients/jobManagerWrapper';
 import { CallbackClient } from './clients/callbackClient';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 
 export const FINALIZATION_MANGER_SYMBOL = Symbol('tasksFactory');
 
@@ -62,29 +63,12 @@ export class FinalizationManager {
     if (!finalizeTask) {
       return false;
     }
-    return this.handleFinalize(finalizeTask);
+    return this.runFinalize(finalizeTask);
   }
 
   public async jobStatusPoll(): Promise<boolean> {
     const roiExistsJobs = await this.handleExportJobs();
     return roiExistsJobs;
-  }
-
-  private async handleFinalize(finalizeTask: ITaskResponse<ITaskFinalizeParameters>): Promise<boolean> {
-    const spanOptions = getInitialSpanOption(finalizeTask, this.logger);
-    return this.tracer.startActiveSpan('runFinalize', spanOptions, async (span) => {
-      try {
-        const shouldNotWait = await this.runFinalize(finalizeTask);
-        span.setStatus({ code: shouldNotWait ? SpanStatusCode.OK : SpanStatusCode.ERROR });
-        return shouldNotWait;
-      } catch (err) {
-        span.setStatus({ code: SpanStatusCode.ERROR });
-        span.recordException(err as Error);
-        throw err;
-      } finally {
-        span.end();
-      }
-    });
   }
 
   private async runFinalize(finalizeTask: ITaskResponse<ITaskFinalizeParameters>): Promise<boolean> {
@@ -96,6 +80,14 @@ export class FinalizationManager {
       const taskId = finalizeTask.id;
       this.logger.info({ jobId, taskId, msg: `Found new finalize task for jobId: ${jobId}` });
       const job = await this.taskManager.getFinalizeJobById(jobId);
+      if(job.parameters.traceContext){      
+        const traceContext: ITraceParentContext = {
+        traceId: job.parameters.traceContext.traceId,
+        spanId: job.parameters.traceContext.spanId
+      };
+      propagation.inject(context.active(), traceContext);
+    }
+    const finalizieSpan = this.tracer.startSpan('runFinalize')
       if (attempts <= this.finalizeAttempts) {
         const isSuccess = finalizeTask.parameters.exporterTaskStatus === OperationStatus.COMPLETED ? true : false;
         let errReason = finalizeTask.parameters.reason;
@@ -153,6 +145,7 @@ export class FinalizationManager {
         };
         await this.sendExportCallbacks(job, failedCallback);
       }
+      finalizieSpan.end();
     } catch (error) {
       // close the task if exception accrued
       this.logger.error({
@@ -165,7 +158,7 @@ export class FinalizationManager {
     }
     return true;
   }
-
+  @withSpanAsyncV4
   private async handleExportJobs(): Promise<boolean> {
     let existsJobs = false;
     const roiJobs = await this.taskManager.getExportJobsByTaskStatus(); // new api by roi,
