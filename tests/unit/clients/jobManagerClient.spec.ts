@@ -195,61 +195,36 @@ describe('JobManagerClient', () => {
           expect(response).toStrictEqual(expectedResponse);
         });
 
-        it('should create Export job successfully with MIXED tiles strategy', async () => {
-          const inProgressJobIds = { jobId: '123', taskIds: ['123'] };
-          const expectedResponse: ICreateExportJobResponse = {
-            ...inProgressJobIds,
-            status: OperationStatus.IN_PROGRESS,
-          };
+        it.each([TileFormatStrategy.MIXED, TileFormatStrategy.FIXED])(
+          'should create Export job successfully with %p tiles strategy',
+          async (strategy: TileFormatStrategy) => {
+            const inProgressJobIds = { jobId: '123', taskIds: ['123'] };
+            const expectedResponse: ICreateExportJobResponse = {
+              ...inProgressJobIds,
+              status: OperationStatus.IN_PROGRESS,
+            };
 
-          createJob = jest.fn();
-          (jobManagerClient as unknown as { createJob: unknown }).createJob = createJob.mockResolvedValue({ id: '123', taskIds: ['123'] });
-          workerExportInput.outputFormatStrategy = TileFormatStrategy.MIXED;
-          const response = await jobManagerClient.createExport(workerExportInput);
-          expect(createJob).toHaveBeenCalledTimes(1);
-          expect(createJob).toHaveBeenCalledWith({
-            ...jobPayloadWithMixedForFixedStrategyCheck,
-            tasks: [
-              {
-                ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0],
-                parameters: {
-                  ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0].parameters,
-                  outputFormatStrategy: TileFormatStrategy.MIXED,
+            createJob = jest.fn();
+            (jobManagerClient as unknown as { createJob: unknown }).createJob = createJob.mockResolvedValue({ id: '123', taskIds: ['123'] });
+            workerExportInput.outputFormatStrategy = strategy;
+            const response = await jobManagerClient.createExport(workerExportInput);
+            expect(createJob).toHaveBeenCalledTimes(1);
+            expect(createJob).toHaveBeenCalledWith({
+              ...jobPayloadWithMixedForFixedStrategyCheck,
+              tasks: [
+                {
+                  ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0],
+                  parameters: {
+                    ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0].parameters,
+                    outputFormatStrategy: strategy,
+                  },
                 },
-              },
-            ],
-            parameters: expect.anything() as unknown,
-          });
-          expect(response).toStrictEqual(expectedResponse);
-        });
-
-        it('should create Export job successfully with FIXED tiles strategy', async () => {
-          const inProgressJobIds = { jobId: '123', taskIds: ['123'] };
-          const expectedResponse: ICreateExportJobResponse = {
-            ...inProgressJobIds,
-            status: OperationStatus.IN_PROGRESS,
-          };
-
-          createJob = jest.fn();
-          (jobManagerClient as unknown as { createJob: unknown }).createJob = createJob.mockResolvedValue({ id: '123', taskIds: ['123'] });
-          workerExportInput.outputFormatStrategy = TileFormatStrategy.FIXED;
-          const response = await jobManagerClient.createExport(workerExportInput);
-          expect(createJob).toHaveBeenCalledTimes(1);
-          expect(createJob).toHaveBeenCalledWith({
-            ...jobPayloadWithMixedForFixedStrategyCheck,
-            tasks: [
-              {
-                ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0],
-                parameters: {
-                  ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0].parameters,
-                  outputFormatStrategy: TileFormatStrategy.FIXED,
-                },
-              },
-            ],
-            parameters: expect.anything() as unknown,
-          });
-          expect(response).toStrictEqual(expectedResponse);
-        });
+              ],
+              parameters: expect.anything() as unknown,
+            });
+            expect(response).toStrictEqual(expectedResponse);
+          }
+        );
       });
 
       describe('Get Export Jobs', () => {
