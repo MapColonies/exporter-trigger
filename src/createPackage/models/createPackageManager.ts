@@ -1,7 +1,7 @@
 import { promises as fsPromise } from 'node:fs';
 import { sep } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
-import { SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api';
+import { SpanKind, SpanOptions, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import type {
   Polygon,
@@ -50,7 +50,6 @@ import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerCl
 import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
 import { MergerSourceType, IMapSource, ITaskParameters, IStorageStatusResponse } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
-
 // not imported by turf in this version, should be fixed in 7.0.0
 type BBox2d = [number, number, number, number];
 
@@ -105,6 +104,8 @@ export class CreatePackageManager {
   ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
     let completedExists = await this.checkForExportCompleted(dupParams);
     if (completedExists) {
+      const span = trace.getActiveSpan()
+      span?.addEvent("export.detect.duplicate", {duplicate: true})
       return completedExists;
     }
 
@@ -121,45 +122,23 @@ export class CreatePackageManager {
     return undefined;
   }
 
-  /*
-  public async startCreatePackageRoiSpan(jobCreated: ICreateExportJobResponse, userInput: ICreatePackageRoi) :Promise<ICreateExportJobResponse | ICallbackExportResponse>{ //IJobResponse<IJobExportParameters, ITaskParameters>
-    const spanOptions = getInitialSpanOption(jobCreated, this.logger);
-    return this.tracer.startActiveSpan('createPackageRoi', spanOptions, async (span) => {
-      try {
-        const shouldNotWait = await this.createPackageRoi(userInput);
-        span.setStatus({ code: SpanStatusCode.OK });
-        return shouldNotWait;
-      } catch (err) {
-        span.setStatus({ code: SpanStatusCode.ERROR });
-        span.recordException(err as Error);
-        throw err;
-      } finally {
-        span.end();
-      }
-    });
-  }
-  */
-
   public async createPackageRoi(userInput: ICreatePackageRoi): Promise<ICreateExportJobResponse | ICallbackExportResponse> {
     const { dbId, crs, priority, callbackURLs, description } = userInput;
     let roi = userInput.roi;
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
-    // Start the main span
-    const mainSpan = this.tracer.startSpan('createPackageRoi');
 
-    // Create a context with the main span
-    const spanContext = trace.setSpan(context.active(), mainSpan);
-
-    // Save the span context
+    const spanOptions: SpanOptions = {
+      kind: SpanKind.PRODUCER,
+      //root: true
+    };
+    const mainSpan = this.tracer.startSpan('jobManager.job create', spanOptions);
+    trace.setSpan(context.active(), mainSpan);
     const mainTraceIds = {
       traceId: mainSpan.spanContext().traceId,
       spanId: mainSpan.spanContext().spanId,
     };
 
-    // Execute main logic within the main span's context
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    const jobCreated = await context.with(spanContext, async () => {
     if (!roi) {
       // convert and wrap layer's footprint to featureCollection
       const layerMaxResolutionDeg = layerMetadata.maxResolutionDeg;
@@ -204,7 +183,7 @@ export class CreatePackageManager {
       );
       if (!record.sanitizedBox) {
         throw new BadRequestError(
-            `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${layer.metadata.id as string
+          `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${layer.metadata.id as string
           }`
         );
       }
@@ -311,12 +290,11 @@ export class CreatePackageManager {
       gpkgEstimatedSize: estimatesGpkgSize,
       description,
       targetFormat: layerMetadata.tileOutputFormat,
-        traceContext: mainTraceIds,
+      traceContext: mainTraceIds,
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);
-      return jobCreated
-    });
-    return jobCreated;
+    mainSpan.end();
+    return jobCreated
   }
 
   public async createExportJsonMetadata(job: JobExportResponse | JobFinalizeResponse): Promise<boolean> {
@@ -367,6 +345,7 @@ export class CreatePackageManager {
       this.logger.error({ err: error, jobId: job.id, errReason: (error as Error).message, msg: `Failed on creating metadata json file` });
       return false;
     }
+
   }
 
   private featuresFootprintIntersects(

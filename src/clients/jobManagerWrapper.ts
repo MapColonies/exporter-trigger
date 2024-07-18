@@ -3,10 +3,8 @@ import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { featureCollectionBooleanEqual, getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
-import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Tracer, context, propagation } from '@opentelemetry/api';
+import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
-import { ITraceParentContext } from '../common/interfaces';
 import {
   CreateExportJobBody,
   ICreateExportJobResponse,
@@ -40,20 +38,10 @@ export class JobManagerWrapper extends JobManagerClient {
     this.jobDomain = config.get<string>('externalClientsConfig.clientsUrls.jobManager.jobDomain');
   }
 
-  @withSpanAsyncV4
   public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
-
-    // const spanOptions = {
-    //   parent: {
-    //     traceId: data.traceContext.traceId,
-    //     spanId: data.traceContext.spanId,
-    //     traceFlags: TraceFlags.SAMPLED,
-    //   },
-    // };
-    // propagation.inject(context.active(), spanOptions);
-    const createExportSpan = this.tracer.startSpan("createExport");
+    const createExportSpan = this.tracer.startSpan("jobManager.job publish");
 
     const jobParameters: IJobExportParameters = {
       roi: data.roi,

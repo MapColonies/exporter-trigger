@@ -4,7 +4,7 @@ import config from 'config';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Tracer, context, propagation } from '@opentelemetry/api';
+import { Context, SpanContext, SpanKind, SpanOptions, Tracer, context, propagation, trace } from '@opentelemetry/api';
 import { concatFsPaths } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
@@ -18,7 +18,6 @@ import {
   IJobExportParameters,
   ILinkDefinition,
   ITaskFinalizeParameters,
-  ITraceParentContext,
   JobExportResponse,
   JobFinalizeResponse,
 } from '../../common/interfaces';
@@ -50,6 +49,12 @@ export class TasksManager {
   }
 
   @withSpanAsyncV4
+  public async getFinalizeJobById(jobId: string): Promise<IJobResponse<IJobExportParameters, ITaskFinalizeParameters>> {
+    const job = await this.jobManagerClient.getJob<IJobExportParameters, ITaskFinalizeParameters>(jobId);
+    return job;
+  }
+  
+  @withSpanAsyncV4
   public async getTaskStatusByJobId(jobId: string): Promise<ITaskStatusResponse> {
     const tasks = await this.jobManagerClient.getTasksByJobId(jobId);
 
@@ -64,16 +69,36 @@ export class TasksManager {
     return statusResponse;
   }
 
-  @withSpanAsyncV4
   public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
+    let createFinalizeTaskSpan;
+    const FLAG_SAMPLED = 1;
+
+    if (job.parameters.traceContext) {
+      const traceContext: SpanContext = {
+        traceId: job.parameters.traceContext.traceId,
+        spanId: job.parameters.traceContext.spanId,
+        traceFlags: FLAG_SAMPLED
+      };
+      const activeContext: Context = propagation.extract(context.active(), traceContext);
+      const spanOptions: SpanOptions = {
+        kind: SpanKind.CONSUMER,
+        links: [
+          {
+            context: traceContext,
+          },
+        ],
+      };
+      createFinalizeTaskSpan = this.tracer.startSpan('jobManager.task publish', spanOptions, activeContext)
+      trace.setSpan(activeContext, createFinalizeTaskSpan);
+    }
     const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
-    const traceContext: ITraceParentContext = {};
-    propagation.inject(context.active(), traceContext);
+    // const traceContext: ITraceParentContext = {};
+    // propagation.inject(context.active(), traceContext);
     this.logger.info({ jobId: job.id, operationStatus, msg: `create finalize task` });
     const taskParameters: ITaskFinalizeParameters = {
       reason,
       exporterTaskStatus: operationStatus,
-      traceParentContext: traceContext,
+      // traceParentContext: traceContext,
     };
 
     const createTaskRequest: CreateFinalizeTaskBody = {
@@ -88,11 +113,9 @@ export class TasksManager {
     } catch (error) {
       this.logger.warn({ jobId: job.id, err: error, msg: `failed to create new finalize task` });
     }
-  }
-
-  public async getFinalizeJobById(jobId: string): Promise<IJobResponse<IJobExportParameters, ITaskFinalizeParameters>> {
-    const job = await this.jobManagerClient.getJob<IJobExportParameters, ITaskFinalizeParameters>(jobId);
-    return job;
+    if (createFinalizeTaskSpan) {
+      createFinalizeTaskSpan.end();
+    }
   }
 
   public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
@@ -137,6 +160,7 @@ export class TasksManager {
     }
   }
 
+  @withSpanAsyncV4
   public async finalizeGPKGSuccess(job: JobFinalizeResponse, expirationDateUTC: Date): Promise<IUpdateJobBody<IJobExportParameters>> {
     // initialization to mutual finalized params
     const cleanupData: ICleanupData = this.generateCleanupEntity(job, expirationDateUTC);
