@@ -4,4 +4,9 @@ enum ArtifactType {
   GPKG = 'GPKG',
 }
 
+export enum TileFormatStrategy {
+  FIXED = 'fixed',
+  MIXED = 'mixed',
+}
+
 export { ArtifactType };
