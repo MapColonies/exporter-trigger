@@ -31,6 +31,10 @@ const registerDefaultConfig = (): void => {
         level: 'info',
         prettyPrint: false,
       },
+      tracing: {
+        enabled: false,
+        url: "http://mock_trace_url/collector"
+      },
     },
     server: {
       port: '8080',

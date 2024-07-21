@@ -480,6 +480,10 @@ const workerExportInput: IWorkerExportInput = {
     },
   ],
   gpkgEstimatedSize: 0,
+  traceContext: {
+    spanId: "123",
+    traceId: "456"
+  }
 };
 
 const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = {

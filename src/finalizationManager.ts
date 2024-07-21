@@ -1,7 +1,7 @@
 import config from 'config';
 import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { Context, context, propagation, Span, SpanAttributes, SpanContext, SpanKind, SpanOptions, SpanStatusCode, trace, Tracer } from '@opentelemetry/api';
+import { Context, context, propagation, Span, SpanKind, Tracer } from '@opentelemetry/api';
 import { ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
 // import { getInitialSpanOption } from './common/utils';
@@ -12,26 +12,8 @@ import { QueueClient } from './clients/queueClient';
 import { ICallbackExportData, ICallbackExportResponse, ITaskFinalizeParameters, JobExportResponse, JobFinalizeResponse } from './common/interfaces';
 import { JobManagerWrapper } from './clients/jobManagerWrapper';
 import { CallbackClient } from './clients/callbackClient';
+import { createSpanMetadata } from './common/utils';
 
-function createSpanMetadata(context?: { traceId: string, spanId: string }): { traceContext: SpanContext | undefined; spanOptions: SpanOptions | undefined; } {
-  const FLAG_SAMPLED = 1;
-  if (!context) {
-    return { spanOptions: undefined, traceContext: undefined }
-  }
-  const traceContext: SpanContext = {
-    ...context,
-    traceFlags: FLAG_SAMPLED
-  };
-  const spanOptions: SpanOptions = {
-    kind: SpanKind.CONSUMER,
-    links: [
-      {
-        context: traceContext,
-      },
-    ],
-  };
-  return { traceContext, spanOptions };
-}
 
 export const FINALIZATION_MANGER_SYMBOL = Symbol('tasksFactory');
 
@@ -91,11 +73,6 @@ export class FinalizationManager {
     if (!finalizeTask) {
       return false;
     }
-    
-    // const { traceContext, spanOptions } = createSpanMetadata(finalizeTask.parameters.traceParentContext);
-    // const activeContext: Context = propagation.extract(context.active(), traceContext);
-    // const findFinalizieSpan = this.tracer.startActiveSpan('jobManager.job receive', spanOptions, activeContext)
-    // trace.setSpan(activeContext, findFinalizieSpan);
 
     return this.runFinalize(finalizeTask);
   }
@@ -133,7 +110,7 @@ export class FinalizationManager {
       this.logger.info({ jobId, taskId, msg: `Found new finalize task for jobId: ${jobId}` });
       const job = await this.taskManager.getFinalizeJobById(jobId);
 
-      const { traceContext, spanOptions } = createSpanMetadata(job.parameters.traceContext);
+      const { traceContext, spanOptions } = createSpanMetadata('runFinalize' ,SpanKind.CONSUMER ,job.parameters.traceContext);
       const activeContext: Context = propagation.extract(context.active(), traceContext);
       finalizeSpan = this.tracer.startSpan('jobManager.job process', spanOptions, activeContext)
 

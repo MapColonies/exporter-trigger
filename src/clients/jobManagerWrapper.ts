@@ -4,6 +4,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { featureCollectionBooleanEqual, getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
 import {
   CreateExportJobBody,
@@ -37,6 +38,17 @@ export class JobManagerWrapper extends JobManagerClient {
     this.tilesTaskType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskTilesType');
     this.jobDomain = config.get<string>('externalClientsConfig.clientsUrls.jobManager.jobDomain');
   }
+
+    //TODO: once will be only one kind of exported jobs, no need to filter by ROI's
+    @withSpanAsyncV4
+    public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
+      this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
+      const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
+      const exportJobs = jobs?.filter((job) => {
+        return job;
+      });
+      return exportJobs;
+    }
 
   public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {
     const expirationDate = new Date();
@@ -166,16 +178,6 @@ export class JobManagerWrapper extends JobManagerClient {
       const msg = 'Will not update expiration date, as current expiration date is later than current expiration date';
       this.logger.info({ jobId, oldExpirationDate, newExpirationDate, msg });
     }
-  }
-
-  //TODO: once will be only one kind of exported jobs, no need to filter by ROI's
-  public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
-    this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
-    const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
-    const exportJobs = jobs?.filter((job) => {
-      return job;
-    });
-    return exportJobs;
   }
 
   private findExportJobWithMatchingParams(jobs: JobExportResponse[], jobParams: JobExportDuplicationParams): JobExportResponse | undefined {

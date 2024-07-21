@@ -5,7 +5,7 @@ import { promises as fsPromise } from 'node:fs';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { tracerMock } from '../../../mocks/clients/tracer';
+import { trace } from '@opentelemetry/api';
 import { jobManagerWrapperMock, updateJobMock, findExportJobMock, createExportMock } from '../../../mocks/clients/jobManagerWrapper';
 import { catalogManagerMock, findLayerMock } from '../../../mocks/clients/catalogManagerClient';
 import { ICreateExportJobResponse, ICreatePackageRoi, JobExportDuplicationParams } from '../../../../src/common/interfaces';
@@ -46,7 +46,7 @@ describe('CreatePackageManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    createPackageManager = new CreatePackageManager(configMock, logger, tracerMock, jobManagerWrapperMock, catalogManagerMock);
+    createPackageManager = new CreatePackageManager(configMock, logger, trace.getTracer('testTracer'), jobManagerWrapperMock, catalogManagerMock);
   });
 
   afterEach(() => {

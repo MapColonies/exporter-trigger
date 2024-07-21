@@ -5,26 +5,9 @@ import checkDiskSpace from 'check-disk-space';
 import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
 import { FeatureCollection, Geometry } from '@turf/helpers';
 import md5 from 'md5';
-import { INFRA_CONVENTIONS, RASTER_CONVENTIONS } from '@map-colonies/telemetry/conventions';
-import { Link, SpanOptions } from '@opentelemetry/api';
-import { ICreateJobResponse, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { Logger } from '@map-colonies/js-logger';
-import { CreateExportJobBody, ICreateExportJobResponse, IGeometryRecord, IJobExportParameters, IStorageStatusResponse, ITaskFinalizeParameters, ITaskParameters, ITraceParentContext, IWorkerExportInput } from './interfaces';
+import { SpanContext, SpanKind, SpanOptions } from '@opentelemetry/api';
+import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
 import { ZOOM_ZERO_RESOLUTION } from './constants';
-
-// const getSpanLinkOption = (context: ITraceParentContext): Link[] => {
-//   if (context.traceparent === undefined) {
-//     throw Error(`TraceParentContext is undefined`);
-//   }
-//   const parts = context.traceparent.split('-');
-//   // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-//   if (parts.length !== 4) {
-//     const invalidParts = `${parts.join('|')}`;
-//     throw Error(`TraceParentContext include not valid traceparent object: ${invalidParts}`);
-//   }
-//   const spanLinks: Link[] = [{ context: { spanId: parts[2], traceFlags: parseInt(parts[3]), traceId: parts[1] } }];
-//   return spanLinks;
-// };
 
 export const getFileSize = async (filePath: string): Promise<number> => {
   const fileSizeInBytes = (await fsPromise.stat(filePath)).size;
@@ -101,31 +84,29 @@ export const generateGeoIdentifier = (geo: FeatureCollection): string => {
   return additionalIdentifiers;
 };
 
-/**
- * This function parse Task and generate SpanOption object to be passed, attach Link object to Span parent if exists, and metajobRes attributes
- * @param createJobRequest export job params
- * @returns SpanOption object with attributes and optional links array
- */
-// export const getInitialSpanOption = (createJobRequest: ICreateExportJobResponse, logger: Logger): SpanOptions => {
-//   const spanOptions: SpanOptions = {
-//     attributes: {
-//       [INFRA_CONVENTIONS.infra.jobManagement.jobId]: createJobRequest.jobId,
-//       [INFRA_CONVENTIONS.infra.jobManagement.taskIds]: createJobRequest.taskIds,
-//       [INFRA_CONVENTIONS.infra.jobManagement.status]: createJobRequest.status,
-//     },
-//   };
-//   try {
-//     if (createJobRequest.traceContext) {
-//       const spanLinks = getSpanLinkOption(createJobRequest.traceContext); // add link to trigging parent trace (TODO: export-management)
-//       spanOptions.links = spanLinks;
-//     }
-//   } catch (err) {
-//     const logWarnMsg = `No trace parent link createJobRequest exists`;
-//     const logObj = { jobId: createJobRequest.jobId, tasksIds: createJobRequest.taskIds, err };
-//     logger.warn({ ...logObj, msg: logWarnMsg });
-//   }
-//   return spanOptions;
-// };
+export function createSpanMetadata(functioName?: string ,spanKind?: SpanKind, context?: { traceId: string, spanId: string }): { traceContext: SpanContext | undefined; spanOptions: SpanOptions | undefined; } {
+  const FLAG_SAMPLED = 1;
+  if (!context) {
+    return { spanOptions: undefined, traceContext: undefined }
+  }
+  const traceContext: SpanContext = {
+    ...context,
+    traceFlags: FLAG_SAMPLED
+  };
+  const spanOptions: SpanOptions = {
+    kind: spanKind,
+    links: [
+      {
+        context: traceContext,
+      },
+    ],
+    attributes: {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'code.function': functioName
+    }
+  };
+  return { traceContext, spanOptions };
+}
 
 export const parseFeatureCollection = (featuresCollection: FeatureCollection): IGeometryRecord[] => {
   const parsedGeoRecord: IGeometryRecord[] = [];

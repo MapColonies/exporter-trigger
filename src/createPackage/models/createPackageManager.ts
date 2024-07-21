@@ -1,7 +1,7 @@
 import { promises as fsPromise } from 'node:fs';
 import { sep } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
-import { SpanKind, SpanOptions, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api';
+import { SpanKind, SpanOptions, Tracer, context, trace } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import type {
   Polygon,
@@ -129,8 +129,7 @@ export class CreatePackageManager {
     const layerMetadata = layer.metadata;
 
     const spanOptions: SpanOptions = {
-      kind: SpanKind.PRODUCER,
-      //root: true
+      kind: SpanKind.PRODUCER
     };
     const mainSpan = this.tracer.startSpan('jobManager.job create', spanOptions);
     trace.setSpan(context.active(), mainSpan);

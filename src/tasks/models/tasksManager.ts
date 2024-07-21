@@ -4,8 +4,8 @@ import config from 'config';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Context, SpanContext, SpanKind, SpanOptions, Tracer, context, propagation, trace } from '@opentelemetry/api';
-import { concatFsPaths } from '../../common/utils';
+import { Context, SpanKind, Tracer, context, propagation, trace } from '@opentelemetry/api';
+import { concatFsPaths, createSpanMetadata } from '../../common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import {
@@ -53,7 +53,7 @@ export class TasksManager {
     const job = await this.jobManagerClient.getJob<IJobExportParameters, ITaskFinalizeParameters>(jobId);
     return job;
   }
-  
+
   @withSpanAsyncV4
   public async getTaskStatusByJobId(jobId: string): Promise<ITaskStatusResponse> {
     const tasks = await this.jobManagerClient.getTasksByJobId(jobId);
@@ -69,55 +69,7 @@ export class TasksManager {
     return statusResponse;
   }
 
-  public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
-    let createFinalizeTaskSpan;
-    const FLAG_SAMPLED = 1;
-
-    if (job.parameters.traceContext) {
-      const traceContext: SpanContext = {
-        traceId: job.parameters.traceContext.traceId,
-        spanId: job.parameters.traceContext.spanId,
-        traceFlags: FLAG_SAMPLED
-      };
-      const activeContext: Context = propagation.extract(context.active(), traceContext);
-      const spanOptions: SpanOptions = {
-        kind: SpanKind.CONSUMER,
-        links: [
-          {
-            context: traceContext,
-          },
-        ],
-      };
-      createFinalizeTaskSpan = this.tracer.startSpan('jobManager.task publish', spanOptions, activeContext)
-      trace.setSpan(activeContext, createFinalizeTaskSpan);
-    }
-    const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
-    // const traceContext: ITraceParentContext = {};
-    // propagation.inject(context.active(), traceContext);
-    this.logger.info({ jobId: job.id, operationStatus, msg: `create finalize task` });
-    const taskParameters: ITaskFinalizeParameters = {
-      reason,
-      exporterTaskStatus: operationStatus,
-      // traceParentContext: traceContext,
-    };
-
-    const createTaskRequest: CreateFinalizeTaskBody = {
-      type: taskType,
-      parameters: taskParameters,
-      status: OperationStatus.PENDING,
-      blockDuplication: true,
-    };
-    //to protect race condition of multi-triggers, protection on crash while enqueue same task
-    try {
-      await this.jobManagerClient.enqueueTask(job.id, createTaskRequest);
-    } catch (error) {
-      this.logger.warn({ jobId: job.id, err: error, msg: `failed to create new finalize task` });
-    }
-    if (createFinalizeTaskSpan) {
-      createFinalizeTaskSpan.end();
-    }
-  }
-
+  @withSpanAsyncV4
   public async getExportJobsByTaskStatus(): Promise<IExportJobStatusResponse> {
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
@@ -133,31 +85,6 @@ export class TasksManager {
       failedJobs: failedJobs,
     };
     return jobsStatus;
-  }
-
-  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackExportData): Promise<void> {
-    try {
-      this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
-      const targetCallbacks = job.parameters.callbacks;
-      if (!targetCallbacks) {
-        return;
-      }
-      const callbackPromises: Promise<void>[] = [];
-      for (const target of targetCallbacks) {
-        const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
-        callbackPromises.push(this.callbackClient.send(target.url, params));
-      }
-
-      const promisesResponse = await Promise.allSettled(callbackPromises);
-      promisesResponse.forEach((response, index) => {
-        if (response.status === 'rejected') {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
-        }
-      });
-    } catch (error) {
-      this.logger.error({ err: error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
-    }
   }
 
   @withSpanAsyncV4
@@ -198,6 +125,60 @@ export class TasksManager {
     };
 
     return updateJobParams;
+  }
+
+  public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
+    const { traceContext, spanOptions } = createSpanMetadata('createFinalizeTask' ,SpanKind.PRODUCER, job.parameters.traceContext);
+    const activeContext: Context = propagation.extract(context.active(), traceContext);
+    const createFinalizeTaskSpan = this.tracer.startSpan('jobManager.task publish', spanOptions, activeContext)
+    trace.setSpan(activeContext, createFinalizeTaskSpan);
+
+    const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
+
+    this.logger.info({ jobId: job.id, operationStatus, msg: `create finalize task` });
+    const taskParameters: ITaskFinalizeParameters = {
+      reason,
+      exporterTaskStatus: operationStatus,
+    };
+
+    const createTaskRequest: CreateFinalizeTaskBody = {
+      type: taskType,
+      parameters: taskParameters,
+      status: OperationStatus.PENDING,
+      blockDuplication: true,
+    };
+    //to protect race condition of multi-triggers, protection on crash while enqueue same task
+    try {
+      await this.jobManagerClient.enqueueTask(job.id, createTaskRequest);
+    } catch (error) {
+      this.logger.warn({ jobId: job.id, err: error, msg: `failed to create new finalize task` });
+    }
+    createFinalizeTaskSpan.end();
+  }
+
+  public async sendExportCallbacks(job: JobExportResponse | JobFinalizeResponse, callbackParams: ICallbackExportData): Promise<void> {
+    try {
+      this.logger.info({ jobId: job.id, callbacks: job.parameters.callbacks, msg: `Sending callback for job: ${job.id}` });
+      const targetCallbacks = job.parameters.callbacks;
+      if (!targetCallbacks) {
+        return;
+      }
+      const callbackPromises: Promise<void>[] = [];
+      for (const target of targetCallbacks) {
+        const params: ICallbackExportData = { ...callbackParams, roi: job.parameters.roi };
+        callbackPromises.push(this.callbackClient.send(target.url, params));
+      }
+
+      const promisesResponse = await Promise.allSettled(callbackPromises);
+      promisesResponse.forEach((response, index) => {
+        if (response.status === 'rejected') {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          this.logger.error({ reason: response.reason, url: targetCallbacks[index].url, jobId: job.id, msg: `Failed to send callback to url` });
+        }
+      });
+    } catch (error) {
+      this.logger.error({ err: error, callbacksUrls: job.parameters.callbacks, jobId: job.id, msg: `Sending callback has failed` });
+    }
   }
 
   public async finalizeGPKGFailure(job: JobFinalizeResponse, expirationDateUTC: Date, reason: string): Promise<IUpdateJobBody<IJobExportParameters>> {

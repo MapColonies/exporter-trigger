@@ -1,10 +1,10 @@
 import jsLogger from '@map-colonies/js-logger';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
+import { trace } from '@opentelemetry/api';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
-import { tracerMock } from '../../mocks/clients/tracer';
 import { completedExportJob, fc1, inProgressExportJob, layerFromCatalog, workerExportInput } from '../../mocks/data';
 
 let jobManagerClient: JobManagerWrapper;
@@ -19,7 +19,7 @@ describe('JobManagerClient', () => {
     beforeEach(() => {
       registerDefaultConfig();
       const logger = jsLogger({ enabled: false });
-      jobManagerClient = new JobManagerWrapper(logger, tracerMock);
+      jobManagerClient = new JobManagerWrapper(logger, trace.getTracer('testTracer'));
     });
 
     afterEach(() => {

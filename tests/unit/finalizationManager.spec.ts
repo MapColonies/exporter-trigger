@@ -4,6 +4,7 @@
 import jsLogger from '@map-colonies/js-logger';
 import { ITaskResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
+import { trace } from '@opentelemetry/api';
 import { FinalizationManager } from '../../src/finalizationManager';
 import { ackMock, dequeueMock, queueClientMock, rejectMock } from '../mocks/clients/queueClient';
 import {
@@ -20,7 +21,6 @@ import { completedExportJob, inProgressExportJob } from '../mocks/data';
 import { configMock, registerDefaultConfig } from '../mocks/config';
 import { jobManagerWrapperMock, updateJobMock, deleteTaskByIdMock } from '../mocks/clients/jobManagerWrapper';
 import { callbackClientMock } from '../mocks/clients/callbackClient';
-import { tracerMock } from '../mocks/clients/tracer';
 
 let finalizationManager: FinalizationManager;
 
@@ -28,7 +28,7 @@ describe('FinalizationManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    finalizationManager = new FinalizationManager(logger, tracerMock, taskManagerMock, queueClientMock, callbackClientMock, jobManagerWrapperMock);
+    finalizationManager = new FinalizationManager(logger, trace.getTracer('testTracer'), taskManagerMock, queueClientMock, callbackClientMock, jobManagerWrapperMock);
   });
 
   afterEach(() => {

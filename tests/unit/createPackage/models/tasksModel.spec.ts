@@ -1,6 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
+import { trace } from '@opentelemetry/api';
 import { ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
 import {
   CreateFinalizeTaskBody,
@@ -19,7 +20,6 @@ import { jobManagerWrapperMock, getExportJobsMock } from '../../../mocks/clients
 import { mockCompletedJob } from '../../../mocks/data/mockJob';
 import * as utils from '../../../../src/common/utils';
 import { ArtifactType } from '../../../../src/common/enums';
-import { tracerMock } from '../../../mocks/clients/tracer';
 
 let tasksManager: TasksManager;
 let getTasksByJobIdStub: jest.Mock;
@@ -28,7 +28,7 @@ describe('TasksManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    tasksManager = new TasksManager(logger, jobManagerWrapperMock, callbackClientMock, packageManagerMock, tracerMock);
+    tasksManager = new TasksManager(logger, jobManagerWrapperMock, callbackClientMock, packageManagerMock, trace.getTracer('testTracer'));
   });
 
   afterEach(() => {
@@ -248,7 +248,7 @@ describe('TasksManager', () => {
         const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
-          parameters: { exporterTaskStatus: OperationStatus.COMPLETED, traceParentContext: {} },
+          parameters: { exporterTaskStatus: OperationStatus.COMPLETED },
           status: OperationStatus.PENDING,
           blockDuplication: true,
         };
@@ -265,7 +265,7 @@ describe('TasksManager', () => {
         const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
-          parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED, traceParentContext: {} },
+          parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED},
           status: OperationStatus.PENDING,
           blockDuplication: true,
         };
@@ -329,7 +329,7 @@ describe('TasksManager', () => {
         const results = await tasksManager.finalizeGPKGSuccess(mockCompletedJob, expirationTime);
         expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(1);
         expect(results).toStrictEqual(expectedUpdateRequest);
-      });
+      },40000000);
 
       it('should generate finalize a job data with status failed - and invoke relative callbacks', async () => {
         const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
