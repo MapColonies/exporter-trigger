@@ -5,7 +5,14 @@ import { trace } from '@opentelemetry/api';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
-import { completedExportJob, fc1, inProgressExportJob, jobPayloadWithMixedForFixedStrategyCheck, layerFromCatalog, workerExportInput } from '../../mocks/data';
+import {
+  completedExportJob,
+  fc1,
+  inProgressExportJob,
+  jobPayloadWithMixedForFixedStrategyCheck,
+  layerFromCatalog,
+  workerExportInput,
+} from '../../mocks/data';
 import { TileFormatStrategy } from '../../../src/common/enums';
 
 let jobManagerClient: JobManagerWrapper;
