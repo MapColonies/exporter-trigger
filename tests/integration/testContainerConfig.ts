@@ -17,14 +17,14 @@ function getContainerConfig(): InjectionObject<unknown>[] {
     jobType: externalClientsConfig.exportJobAndTaskTypes.jobType,
     tilesTaskType: externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType,
   };
-  
-const testTracer = trace.getTracer('testTracer')
+
+  const testTracer = trace.getTracer('testTracer');
 
   return [
     { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
     { token: SERVICES.CONFIG, provider: { useValue: configMock } },
     { token: SERVICES.QUEUE_CONFIG, provider: { useValue: queueConfig } },
-    { token: SERVICES.TRACER, provider: { useValue: testTracer  } },
+    { token: SERVICES.TRACER, provider: { useValue: testTracer } },
   ];
 }
 const resetContainer = (clearInstances = true): void => {

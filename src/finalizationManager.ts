@@ -14,7 +14,6 @@ import { JobManagerWrapper } from './clients/jobManagerWrapper';
 import { CallbackClient } from './clients/callbackClient';
 import { createSpanMetadata } from './common/utils';
 
-
 export const FINALIZATION_MANGER_SYMBOL = Symbol('tasksFactory');
 
 @singleton()
@@ -110,9 +109,9 @@ export class FinalizationManager {
       this.logger.info({ jobId, taskId, msg: `Found new finalize task for jobId: ${jobId}` });
       const job = await this.taskManager.getFinalizeJobById(jobId);
 
-      const { traceContext, spanOptions } = createSpanMetadata('runFinalize' ,SpanKind.CONSUMER ,job.parameters.traceContext);
+      const { traceContext, spanOptions } = createSpanMetadata('runFinalize', SpanKind.CONSUMER, job.parameters.traceContext);
       const activeContext: Context = propagation.extract(context.active(), traceContext);
-      finalizeSpan = this.tracer.startSpan('jobManager.job process', spanOptions, activeContext)
+      finalizeSpan = this.tracer.startSpan('jobManager.job process', spanOptions, activeContext);
 
       if (attempts <= this.finalizeAttempts) {
         const isSuccess = finalizeTask.parameters.exporterTaskStatus === OperationStatus.COMPLETED ? true : false;
@@ -133,8 +132,8 @@ export class FinalizationManager {
 
             await this.sendExportCallbacks(job, updateJobResults.parameters?.callbackParams as ICallbackExportResponse);
           } else {
-            const errorMsg = `failed on finalization. reject and increase attempts to task`
-            const error = new Error(errorMsg)
+            const errorMsg = `failed on finalization. reject and increase attempts to task`;
+            const error = new Error(errorMsg);
             this.logger.info({
               jobId,
               taskId,
@@ -164,9 +163,9 @@ export class FinalizationManager {
         }
         // finalizing only task - reached to max attempts
       } else {
-        const warnMsg = { jobId, taskId, msg: `Failed finalizing job, reached to max attempts of ${attempts}\\${this.finalizeAttempts}` }
+        const warnMsg = { jobId, taskId, msg: `Failed finalizing job, reached to max attempts of ${attempts}\\${this.finalizeAttempts}` };
         this.logger.warn(warnMsg);
-        finalizeSpan.addEvent("warn", warnMsg);
+        finalizeSpan.addEvent('warn', warnMsg);
 
         await this.queueClient.queueHandlerForFinalizeTasks.reject(jobId, taskId, false);
         await this.jobManagerClient.updateJob(job.id, { status: OperationStatus.FAILED, percentage: undefined });
@@ -190,7 +189,7 @@ export class FinalizationManager {
         msg: `Failed finalizing job - [${(error as Error).message}]`,
       });
       finalizeSpan?.recordException(error as Error);
-      
+
       await this.queueClient.queueHandlerForFinalizeTasks.reject(finalizeTask.jobId, finalizeTask.id, true);
     } finally {
       finalizeSpan?.end();

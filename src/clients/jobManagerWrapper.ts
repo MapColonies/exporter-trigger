@@ -39,21 +39,21 @@ export class JobManagerWrapper extends JobManagerClient {
     this.jobDomain = config.get<string>('externalClientsConfig.clientsUrls.jobManager.jobDomain');
   }
 
-    //TODO: once will be only one kind of exported jobs, no need to filter by ROI's
-    @withSpanAsyncV4
-    public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
-      this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
-      const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
-      const exportJobs = jobs?.filter((job) => {
-        return job;
-      });
-      return exportJobs;
-    }
+  //TODO: once will be only one kind of exported jobs, no need to filter by ROI's
+  @withSpanAsyncV4
+  public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
+    this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
+    const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
+    const exportJobs = jobs?.filter((job) => {
+      return job;
+    });
+    return exportJobs;
+  }
 
   public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.expirationDays);
-    const createExportSpan = this.tracer.startSpan("jobManager.job publish");
+    const createExportSpan = this.tracer.startSpan('jobManager.job publish');
 
     const jobParameters: IJobExportParameters = {
       roi: data.roi,
@@ -62,7 +62,7 @@ export class JobManagerWrapper extends JobManagerClient {
       fileNamesTemplates: data.fileNamesTemplates,
       relativeDirectoryPath: data.relativeDirectoryPath,
       gpkgEstimatedSize: data.gpkgEstimatedSize,
-      traceContext: data.traceContext
+      traceContext: data.traceContext,
     };
 
     const createJobRequest: CreateExportJobBody = {

@@ -265,7 +265,7 @@ describe('TasksManager', () => {
         const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
-          parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED},
+          parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED },
           status: OperationStatus.PENDING,
           blockDuplication: true,
         };
@@ -329,7 +329,7 @@ describe('TasksManager', () => {
         const results = await tasksManager.finalizeGPKGSuccess(mockCompletedJob, expirationTime);
         expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(1);
         expect(results).toStrictEqual(expectedUpdateRequest);
-      },40000000);
+      }, 40000000);
 
       it('should generate finalize a job data with status failed - and invoke relative callbacks', async () => {
         const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');

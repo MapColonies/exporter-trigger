@@ -84,14 +84,18 @@ export const generateGeoIdentifier = (geo: FeatureCollection): string => {
   return additionalIdentifiers;
 };
 
-export function createSpanMetadata(functioName?: string ,spanKind?: SpanKind, context?: { traceId: string, spanId: string }): { traceContext: SpanContext | undefined; spanOptions: SpanOptions | undefined; } {
+export function createSpanMetadata(
+  functioName?: string,
+  spanKind?: SpanKind,
+  context?: { traceId: string; spanId: string }
+): { traceContext: SpanContext | undefined; spanOptions: SpanOptions | undefined } {
   const FLAG_SAMPLED = 1;
   if (!context) {
-    return { spanOptions: undefined, traceContext: undefined }
+    return { spanOptions: undefined, traceContext: undefined };
   }
   const traceContext: SpanContext = {
     ...context,
-    traceFlags: FLAG_SAMPLED
+    traceFlags: FLAG_SAMPLED,
   };
   const spanOptions: SpanOptions = {
     kind: spanKind,
@@ -102,8 +106,8 @@ export function createSpanMetadata(functioName?: string ,spanKind?: SpanKind, co
     ],
     attributes: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      'code.function': functioName
-    }
+      'code.function': functioName,
+    },
   };
   return { traceContext, spanOptions };
 }

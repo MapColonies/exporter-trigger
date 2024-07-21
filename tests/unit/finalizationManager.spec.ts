@@ -28,7 +28,14 @@ describe('FinalizationManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    finalizationManager = new FinalizationManager(logger, trace.getTracer('testTracer'), taskManagerMock, queueClientMock, callbackClientMock, jobManagerWrapperMock);
+    finalizationManager = new FinalizationManager(
+      logger,
+      trace.getTracer('testTracer'),
+      taskManagerMock,
+      queueClientMock,
+      callbackClientMock,
+      jobManagerWrapperMock
+    );
   });
 
   afterEach(() => {

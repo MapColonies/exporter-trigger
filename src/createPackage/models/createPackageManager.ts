@@ -104,8 +104,8 @@ export class CreatePackageManager {
   ): Promise<ICallbackExportResponse | ICreateExportJobResponse | undefined> {
     let completedExists = await this.checkForExportCompleted(dupParams);
     if (completedExists) {
-      const span = trace.getActiveSpan()
-      span?.addEvent("export.detect.duplicate", {duplicate: true})
+      const span = trace.getActiveSpan();
+      span?.addEvent('export.detect.duplicate', { duplicate: true });
       return completedExists;
     }
 
@@ -129,7 +129,7 @@ export class CreatePackageManager {
     const layerMetadata = layer.metadata;
 
     const spanOptions: SpanOptions = {
-      kind: SpanKind.PRODUCER
+      kind: SpanKind.PRODUCER,
     };
     const mainSpan = this.tracer.startSpan('jobManager.job create', spanOptions);
     trace.setSpan(context.active(), mainSpan);
@@ -182,7 +182,8 @@ export class CreatePackageManager {
       );
       if (!record.sanitizedBox) {
         throw new BadRequestError(
-          `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${layer.metadata.id as string
+          `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${
+            layer.metadata.id as string
           }`
         );
       }
@@ -293,7 +294,7 @@ export class CreatePackageManager {
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);
     mainSpan.end();
-    return jobCreated
+    return jobCreated;
   }
 
   public async createExportJsonMetadata(job: JobExportResponse | JobFinalizeResponse): Promise<boolean> {
@@ -344,7 +345,6 @@ export class CreatePackageManager {
       this.logger.error({ err: error, jobId: job.id, errReason: (error as Error).message, msg: `Failed on creating metadata json file` });
       return false;
     }
-
   }
 
   private featuresFootprintIntersects(

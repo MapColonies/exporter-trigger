@@ -33,7 +33,7 @@ const registerDefaultConfig = (): void => {
       },
       tracing: {
         enabled: false,
-        url: "http://mock_trace_url/collector"
+        url: 'http://mock_trace_url/collector',
       },
     },
     server: {

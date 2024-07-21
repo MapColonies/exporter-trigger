@@ -128,9 +128,9 @@ export class TasksManager {
   }
 
   public async createFinalizeTask(job: JobExportResponse, taskType: string, isSuccess = true, reason?: string): Promise<void> {
-    const { traceContext, spanOptions } = createSpanMetadata('createFinalizeTask' ,SpanKind.PRODUCER, job.parameters.traceContext);
+    const { traceContext, spanOptions } = createSpanMetadata('createFinalizeTask', SpanKind.PRODUCER, job.parameters.traceContext);
     const activeContext: Context = propagation.extract(context.active(), traceContext);
-    const createFinalizeTaskSpan = this.tracer.startSpan('jobManager.task publish', spanOptions, activeContext)
+    const createFinalizeTaskSpan = this.tracer.startSpan('jobManager.task publish', spanOptions, activeContext);
     trace.setSpan(activeContext, createFinalizeTaskSpan);
 
     const operationStatus = isSuccess ? OperationStatus.COMPLETED : OperationStatus.FAILED;
