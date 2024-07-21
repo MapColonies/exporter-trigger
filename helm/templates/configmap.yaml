@@ -36,7 +36,7 @@ data:
   HTTP_RETRY_SHOULD_RESET_TIMEOUT: {{ .Values.env.httpRetry.shouldResetTimeout | quote }}
   DISABLE_HTTP_CLIENT_LOGS: {{ .Values.env.disableHttpClientLogs | quote }}
   TILES_PROVIDER: {{ $storage.tilesStorageProvider | quote }}
-  DOWNLOAD_SERVER_URL: {{ $serviceUrls.downloadServer | quote }}
+  DOWNLOAD_SERVER_PUBLIC_DNS: {{ $serviceUrls.downloadServerPublicDNS | quote }}
   FINALIZE_POLLING_TIMEOUT_MS: {{ .Values.env.finalizePollingTimeMS | quote }}
   JPEG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.jpegTileEstimatedSizeInBytes | quote }}
   PNG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.pngTileEstimatedSizeInBytes | quote }}

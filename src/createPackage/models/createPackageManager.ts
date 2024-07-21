@@ -50,6 +50,7 @@ import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerCl
 import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
 import { MergerSourceType, IMapSource, ITaskParameters, IStorageStatusResponse } from '../../common/interfaces';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
+import { TileFormatStrategy } from '../../common/enums';
 // not imported by turf in this version, should be fixed in 7.0.0
 type BBox2d = [number, number, number, number];
 
@@ -291,6 +292,7 @@ export class CreatePackageManager {
       description,
       targetFormat: layerMetadata.tileOutputFormat,
       traceContext: mainTraceIds,
+      outputFormatStrategy: TileFormatStrategy.MIXED,
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);
     mainSpan.end();

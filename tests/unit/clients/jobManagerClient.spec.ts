@@ -5,7 +5,8 @@ import { trace } from '@opentelemetry/api';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
-import { completedExportJob, fc1, inProgressExportJob, layerFromCatalog, workerExportInput } from '../../mocks/data';
+import { completedExportJob, fc1, inProgressExportJob, jobPayloadWithMixedForFixedStrategyCheck, layerFromCatalog, workerExportInput } from '../../mocks/data';
+import { TileFormatStrategy } from '../../../src/common/enums';
 
 let jobManagerClient: JobManagerWrapper;
 let postFun: jest.Mock;
@@ -13,6 +14,7 @@ let putFun: jest.Mock;
 let get: jest.Mock;
 let getExportJobs: jest.Mock;
 let deleteFun: jest.Mock;
+let createJob: jest.Mock;
 
 describe('JobManagerClient', () => {
   describe('#createJob', () => {
@@ -51,6 +53,37 @@ describe('JobManagerClient', () => {
           expect(postFun).toHaveBeenCalledTimes(1);
           expect(response).toStrictEqual(expectedResponse);
         });
+
+        it.each([TileFormatStrategy.MIXED, TileFormatStrategy.FIXED])(
+          'should create Export job successfully with %p tiles strategy',
+          async (strategy: TileFormatStrategy) => {
+            const inProgressJobIds = { jobId: '123', taskIds: ['123'] };
+            const expectedResponse: ICreateExportJobResponse = {
+              ...inProgressJobIds,
+              status: OperationStatus.IN_PROGRESS,
+            };
+
+            createJob = jest.fn();
+            (jobManagerClient as unknown as { createJob: unknown }).createJob = createJob.mockResolvedValue({ id: '123', taskIds: ['123'] });
+            workerExportInput.outputFormatStrategy = strategy;
+            const response = await jobManagerClient.createExport(workerExportInput);
+            expect(createJob).toHaveBeenCalledTimes(1);
+            expect(createJob).toHaveBeenCalledWith({
+              ...jobPayloadWithMixedForFixedStrategyCheck,
+              tasks: [
+                {
+                  ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0],
+                  parameters: {
+                    ...jobPayloadWithMixedForFixedStrategyCheck.tasks[0].parameters,
+                    outputFormatStrategy: strategy,
+                  },
+                },
+              ],
+              parameters: expect.anything() as unknown,
+            });
+            expect(response).toStrictEqual(expectedResponse);
+          }
+        );
       });
 
       describe('Get Export Jobs', () => {
@@ -192,6 +225,7 @@ describe('JobManagerClient', () => {
           expect(putFun).toHaveBeenCalledTimes(0);
         });
       });
+
       describe('Get tasks by job id', () => {
         it('should getting all task that match specific job id provided (uuid-string)', async () => {
           get = jest.fn();
@@ -201,6 +235,7 @@ describe('JobManagerClient', () => {
           expect(response).toBeDefined();
         });
       });
+
       describe('delete tasks by job id and task id', () => {
         it('should pass deletion on provided taskId', async () => {
           deleteFun = jest.fn();

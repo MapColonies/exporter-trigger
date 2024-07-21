@@ -7,7 +7,7 @@ global:
     catalogManager: ""
     heartbeatManager: ""
     jobManager: ""
-    downloadServer: ""
+    downloadServerPublicDNS: ""
   jobManagement:
     jobDomain: ""
     exporter:
@@ -28,7 +28,7 @@ serviceUrls:
   catalogManager: ""
   heartbeatManager: ""
   jobManager: ""
-  downloadServer: ""
+  downloadServerPublicDNS: ""
 jobManagement:
   jobDomain: RASTER
   exporter:

@@ -63,7 +63,7 @@
   },
   "tilesProvider": "TILES_PROVIDER",
   "gpkgsLocation": "GPKGS_LOCATION",
-  "downloadServerUrl": "DOWNLOAD_SERVER_URL",
+  "downloadServerUrl": "DOWNLOAD_SERVER_PUBLIC_DNS",
   "finalizePollingTimeMS": {
     "__name": "FINALIZE_POLLING_TIMEOUT_MS",
     "__format": "number"

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.18.1](https://github.com/MapColonies/exporter-trigger/compare/v2.18.0...v2.18.1) (2024-07-18)
+
+## [2.18.0](https://github.com/MapColonies/exporter-trigger/compare/v2.17.9...v2.18.0) (2024-07-18)
+
+
+### Features
+
+* add mixed support to task params (MAPCO-4210) ([#92](https://github.com/MapColonies/exporter-trigger/issues/92)) ([f8ae623](https://github.com/MapColonies/exporter-trigger/commit/f8ae623c26704b8d5e4a4e932dedfcc487b70b7f))
+
+### [2.17.9](https://github.com/MapColonies/exporter-trigger/compare/v2.17.8...v2.17.9) (2024-05-06)
+
 ### [2.17.8](https://github.com/MapColonies/exporter-trigger/compare/v2.17.7...v2.17.8) (2024-02-20)
 
 ### [2.17.7](https://github.com/MapColonies/exporter-trigger/compare/v2.17.6...v2.17.7) (2024-02-20)
