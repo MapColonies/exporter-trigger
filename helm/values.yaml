@@ -67,6 +67,13 @@ image:
   # annotation2: annotation-value-2
 podAnnotations: {}
 
+tracing:
+  enabled: false
+  url: ""
+metrics:
+  enabled: false
+  url: ""
+
 env:
   port: 8080
   targetPort: 8080
@@ -78,12 +85,6 @@ env:
   finalizePollingTimeMS: 2000
   disableHttpClientLogs: false
   cleanupExpirationDays: 30
-  tracing:
-    enabled: false
-    url: http://localhost:55681/v1/traces
-  metrics:
-    enabled: false
-    url: http://localhost:55681/v1/metrics
   httpRetry:
     attempts: 5
     delay: exponential
