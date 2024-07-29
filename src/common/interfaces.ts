@@ -2,6 +2,7 @@ import { BBox, FeatureCollection, Geometry } from '@turf/helpers';
 import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IHttpRetryConfig, ITileRange } from '@map-colonies/mc-utils';
 import { TileOutputFormat } from '@map-colonies/mc-model-types';
+import { SpanContext } from '@opentelemetry/api';
 import { ArtifactType, TileFormatStrategy } from './enums';
 
 export interface IConfig {
@@ -52,7 +53,7 @@ export interface IWorkerExportInput {
   roi: FeatureCollection;
   fileNamesTemplates: ILinkDefinition;
   description?: string;
-  traceContext: ITraceParentContext;
+  traceContext: SpanContext;
 }
 
 export interface IBasicResponse {
@@ -64,7 +65,7 @@ export interface ICreateExportJobResponse {
   taskIds: string[];
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
   isDuplicated?: boolean;
-  traceContext?: ITraceParentContext;
+  traceContext?: SpanContext;
 }
 
 export interface ICallbackExportData {
@@ -116,13 +117,13 @@ export interface IJobExportParameters {
   fileNamesTemplates: ILinkDefinition;
   gpkgEstimatedSize?: number;
   cleanupData?: ICleanupData;
-  traceContext?: ITraceParentContext;
+  traceContext?: SpanContext;
 }
 
 export interface ITaskFinalizeParameters {
   reason?: string;
   exporterTaskStatus: OperationStatus;
-  traceParentContext?: ITraceParentContext;
+  traceParentContext?: SpanContext;
 }
 
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
@@ -143,7 +144,7 @@ export interface ITaskParameters {
   outputFormatStrategy?: TileFormatStrategy;
   batches: ITileRange[];
   sources: IMapSource[];
-  traceParentContext?: ITraceParentContext;
+  traceParentContext?: SpanContext;
 }
 
 export interface IExportJobStatusResponse {
@@ -222,9 +223,4 @@ export interface IExternalClientsConfig {
   };
   httpRetry: IHttpRetryConfig;
   disableHttpClientLogs: boolean;
-}
-
-export interface ITraceParentContext {
-  traceId: string;
-  spanId: string;
 }

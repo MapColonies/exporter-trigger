@@ -45,6 +45,7 @@ import {
   parseFeatureCollection,
   generateGeoIdentifier,
   getFilesha256Hash,
+  FLAG_SAMPLED,
 } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
@@ -183,8 +184,7 @@ export class CreatePackageManager {
       );
       if (!record.sanitizedBox) {
         throw new BadRequestError(
-          `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${
-            layer.metadata.id as string
+          `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${layer.metadata.id as string
           }`
         );
       }
@@ -291,7 +291,10 @@ export class CreatePackageManager {
       gpkgEstimatedSize: estimatesGpkgSize,
       description,
       targetFormat: layerMetadata.tileOutputFormat,
-      traceContext: mainTraceIds,
+      traceContext: {
+        ...mainTraceIds,
+        traceFlags: FLAG_SAMPLED
+      },
       outputFormatStrategy: TileFormatStrategy.MIXED,
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);

@@ -89,7 +89,6 @@ export function createSpanMetadata(
   spanKind?: SpanKind,
   context?: { traceId: string; spanId: string }
 ): { traceContext: SpanContext | undefined; spanOptions: SpanOptions | undefined } {
-  const FLAG_SAMPLED = 1;
   if (!context) {
     return { spanOptions: undefined, traceContext: undefined };
   }
@@ -134,3 +133,5 @@ export const parseFeatureCollection = (featuresCollection: FeatureCollection): I
   });
   return parsedGeoRecord;
 };
+
+export const FLAG_SAMPLED = 1; // 00000001

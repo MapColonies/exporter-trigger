@@ -3,6 +3,7 @@ import { LayerMetadata, ProductType, RecordType, TileOutputFormat } from '@map-c
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { FeatureCollection } from '@turf/helpers';
 import { ICreatePackageRoi, IJobExportParameters, ITaskParameters, IWorkerExportInput } from '../../src/common/interfaces';
+import { FLAG_SAMPLED } from '../../src/common/utils'
 import { TileFormatStrategy } from '../../src/common/enums';
 
 const layerMetadata: LayerMetadata = {
@@ -484,6 +485,7 @@ const workerExportInput: IWorkerExportInput = {
   traceContext: {
     spanId: '123',
     traceId: '456',
+    traceFlags: FLAG_SAMPLED
   },
 };
 

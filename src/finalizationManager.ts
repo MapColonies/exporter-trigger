@@ -115,7 +115,7 @@ export class FinalizationManager {
 
       if (attempts <= this.finalizeAttempts) {
         const isSuccess = finalizeTask.parameters.exporterTaskStatus === OperationStatus.COMPLETED ? true : false;
-        let errReason = finalizeTask.parameters.reason;כ
+        let errReason = finalizeTask.parameters.reason;
 
         // finalizing job-task by exporting state [gpkg created or not]
         if (isSuccess) {
