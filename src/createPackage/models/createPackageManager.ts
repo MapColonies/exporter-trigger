@@ -46,6 +46,7 @@ import {
   generateGeoIdentifier,
   getFilesha256Hash,
   FLAG_SAMPLED,
+  createSpanMetadata,
 } from '../../common/utils';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
@@ -130,9 +131,7 @@ export class CreatePackageManager {
     const layer = await this.rasterCatalogManager.findLayer(userInput.dbId);
     const layerMetadata = layer.metadata;
 
-    const spanOptions: SpanOptions = {
-      kind: SpanKind.PRODUCER,
-    };
+    const { spanOptions } = createSpanMetadata('createPackageRoi', SpanKind.PRODUCER);
     const mainSpan = this.tracer.startSpan('jobManager.job create', spanOptions);
     trace.setSpan(context.active(), mainSpan);
     const mainTraceIds = {
@@ -184,7 +183,8 @@ export class CreatePackageManager {
       );
       if (!record.sanitizedBox) {
         throw new BadRequestError(
-          `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${layer.metadata.id as string
+          `Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer ${
+            layer.metadata.id as string
           }`
         );
       }
@@ -293,7 +293,7 @@ export class CreatePackageManager {
       targetFormat: layerMetadata.tileOutputFormat,
       traceContext: {
         ...mainTraceIds,
-        traceFlags: FLAG_SAMPLED
+        traceFlags: FLAG_SAMPLED,
       },
       outputFormatStrategy: TileFormatStrategy.MIXED,
     };
