@@ -73,6 +73,9 @@ tracing:
 metrics:
   enabled: false
   url: ""
+  prometheus:
+    scrape: true
+    port: 8080
 
 env:
   port: 8080

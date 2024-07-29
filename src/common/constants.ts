@@ -22,5 +22,4 @@ export const SERVICES: Record<string, symbol> = {
 
 export const DEFAULT_PRIORITY = 1000;
 export const DEFAULT_CRS = 'EPSG:4326';
-export const METADA_JSON_FILE_EXTENSION = '.metadata.json';
 export const ZOOM_ZERO_RESOLUTION = 0.703125;

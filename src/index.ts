@@ -39,7 +39,7 @@ const mainPollLoop = async (): Promise<void> => {
     let finalizePolledData = false;
 
     //tail sampling is needed here! https://opentelemetry.io/docs/concepts/sampling/
-    await tracer.startActiveSpan('jobManager.job receive loop', async (span: Span) => {
+    await tracer.startActiveSpan('jobManager.job get_job', async (span: Span) => {
       try {
         polledData = await finalizationManager.jobStatusPoll();
         finalizePolledData = await finalizationManager.jobFinalizePoll();

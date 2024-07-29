@@ -85,7 +85,7 @@ export const generateGeoIdentifier = (geo: FeatureCollection): string => {
 };
 
 export function createSpanMetadata(
-  functioName?: string,
+  functionName?: string,
   spanKind?: SpanKind,
   context?: { traceId: string; spanId: string }
 ): { traceContext: SpanContext | undefined; spanOptions: SpanOptions | undefined } {
@@ -106,7 +106,7 @@ export function createSpanMetadata(
     ],
     attributes: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      'code.function': functioName,
+      'code.function': functionName,
     },
   };
   return { traceContext, spanOptions };

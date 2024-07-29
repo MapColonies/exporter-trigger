@@ -44,10 +44,7 @@ export class JobManagerWrapper extends JobManagerClient {
   public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
-    const exportJobs = jobs?.filter((job) => {
-      return job;
-    });
-    return exportJobs;
+    return jobs;
   }
 
   public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {

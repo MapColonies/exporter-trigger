@@ -111,11 +111,11 @@ export class FinalizationManager {
 
       const { traceContext, spanOptions } = createSpanMetadata('runFinalize', SpanKind.CONSUMER, job.parameters.traceContext);
       const activeContext: Context = propagation.extract(context.active(), traceContext);
-      finalizeSpan = this.tracer.startSpan('jobManager.job process', spanOptions, activeContext);
+      finalizeSpan = this.tracer.startSpan('jobManager.finalizeJob process', spanOptions, activeContext);
 
       if (attempts <= this.finalizeAttempts) {
         const isSuccess = finalizeTask.parameters.exporterTaskStatus === OperationStatus.COMPLETED ? true : false;
-        let errReason = finalizeTask.parameters.reason;
+        let errReason = finalizeTask.parameters.reason;כ
 
         // finalizing job-task by exporting state [gpkg created or not]
         if (isSuccess) {

@@ -17,7 +17,7 @@
     "metrics": {
       "enabled": false,
       "url": "http://localhost:4318/v1/metrics",
-      "interval": 5
+      "interval": 15000
     }
   },
   "server": {
