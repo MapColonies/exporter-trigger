@@ -78,6 +78,7 @@ describe('FinalizationManager', () => {
 
       await finalizationManager.jobStatusPoll();
 
+      expect(getExportJobsByTaskStatusMock).toHaveBeenCalledTimes(1);
       expect(createFinalizeTaskMock).toHaveBeenCalledTimes(3);
     });
   });

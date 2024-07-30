@@ -1,7 +1,7 @@
 import { promises as fsPromise } from 'node:fs';
 import { sep } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
-import { SpanKind, SpanOptions, Tracer, context, trace } from '@opentelemetry/api';
+import { SpanContext, SpanKind, Tracer, context, trace } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import type {
   Polygon,
@@ -80,6 +80,13 @@ export class CreatePackageManager {
   }
 
   @withSpanAsyncV4
+  private async validateFreeSpace(estimatesGpkgSize: number): Promise<boolean> {
+    const diskFreeSpace = await this.getFreeStorage(); // calculate free space including other running jobs
+    this.logger.debug(`Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`);
+    return diskFreeSpace - estimatesGpkgSize >= 0;
+  }
+
+  @withSpanAsyncV4
   private async getFreeStorage(): Promise<number> {
     const storageStatus: IStorageStatusResponse = await getStorageStatus(this.gpkgsLocation);
     let otherRunningJobsSize = 0;
@@ -134,9 +141,10 @@ export class CreatePackageManager {
     const { spanOptions } = createSpanMetadata('createPackageRoi', SpanKind.PRODUCER);
     const mainSpan = this.tracer.startSpan('jobManager.job create', spanOptions);
     trace.setSpan(context.active(), mainSpan);
-    const mainTraceIds = {
+    const mainTraceIds: SpanContext = {
       traceId: mainSpan.spanContext().traceId,
       spanId: mainSpan.spanContext().spanId,
+      traceFlags: FLAG_SAMPLED,
     };
 
     if (!roi) {
@@ -291,10 +299,7 @@ export class CreatePackageManager {
       gpkgEstimatedSize: estimatesGpkgSize,
       description,
       targetFormat: layerMetadata.tileOutputFormat,
-      traceContext: {
-        ...mainTraceIds,
-        traceFlags: FLAG_SAMPLED,
-      },
+      traceContext: mainTraceIds,
       outputFormatStrategy: TileFormatStrategy.MIXED,
     };
     const jobCreated = await this.jobManagerClient.createExport(workerInput);
@@ -364,12 +369,6 @@ export class CreatePackageManager {
       }
     });
     return intersectedFeatures;
-  }
-
-  private async validateFreeSpace(estimatesGpkgSize: number): Promise<boolean> {
-    const diskFreeSpace = await this.getFreeStorage(); // calculate free space including other running jobs
-    this.logger.debug(`Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`);
-    return diskFreeSpace - estimatesGpkgSize >= 0;
   }
 
   private getSeparator(): string {

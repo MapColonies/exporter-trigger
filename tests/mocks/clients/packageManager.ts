@@ -7,8 +7,6 @@ const getSeparatorMock = jest.fn();
 const sanitizeBboxMock = jest.fn();
 const checkForDuplicateMock = jest.fn();
 const checkForCompletedMock = jest.fn();
-const checkForProcessingMock = jest.fn();
-const updateCallbackURLsMock = jest.fn();
 
 const packageManagerMock = {
   createPackage: createPackageMock,
@@ -18,8 +16,6 @@ const packageManagerMock = {
   sanitizeBbox: sanitizeBboxMock,
   checkForDuplicate: checkForDuplicateMock,
   checkForCompleted: checkForCompletedMock,
-  checkForProcessing: checkForProcessingMock,
-  updateCallbackURLs: updateCallbackURLsMock,
 } as unknown as CreatePackageManager;
 
 export {
@@ -30,7 +26,5 @@ export {
   sanitizeBboxMock,
   checkForDuplicateMock,
   checkForCompletedMock,
-  checkForProcessingMock,
-  updateCallbackURLsMock,
   createExportJsonMetadataMock,
 };

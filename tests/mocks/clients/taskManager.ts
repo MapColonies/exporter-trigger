@@ -1,6 +1,5 @@
 import { TasksManager } from '../../../src/tasks/models/tasksManager';
 
-const getJobsByTaskStatusMock = jest.fn();
 const getFinalizeJobByIdMock = jest.fn();
 const getExportJobsByTaskStatusMock = jest.fn();
 const getTaskStatusByJobIdMock = jest.fn();
@@ -13,7 +12,6 @@ const createFinalizeTaskMock = jest.fn();
 const deleteTaskByIdMock = jest.fn();
 
 const taskManagerMock = {
-  getJobsByTaskStatus: getJobsByTaskStatusMock,
   getFinalizeJobById: getFinalizeJobByIdMock,
   getExportJobsByTaskStatus: getExportJobsByTaskStatusMock,
   getTaskStatusByJobId: getTaskStatusByJobIdMock,
@@ -28,7 +26,6 @@ const taskManagerMock = {
 
 export {
   taskManagerMock,
-  getJobsByTaskStatusMock,
   getFinalizeJobByIdMock,
   getExportJobsByTaskStatusMock,
   getTaskStatusByJobIdMock,

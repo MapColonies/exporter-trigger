@@ -329,7 +329,7 @@ describe('TasksManager', () => {
         const results = await tasksManager.finalizeGPKGSuccess(mockCompletedJob, expirationTime);
         expect(createExportJsonMetadataMock).toHaveBeenCalledTimes(1);
         expect(results).toStrictEqual(expectedUpdateRequest);
-      }, 40000000);
+      });
 
       it('should generate finalize a job data with status failed - and invoke relative callbacks', async () => {
         const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');

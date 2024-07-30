@@ -33,8 +33,6 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
 
   const tracer = trace.getTracer(SERVICE_NAME);
 
-  tracing.start();
-
   const dependencies: InjectionObject<unknown>[] = [
     { token: SERVICES.CONFIG, provider: { useValue: config } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
