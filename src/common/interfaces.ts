@@ -88,9 +88,7 @@ export interface IArtifactDefinition {
   type: ArtifactType;
 }
 
-/**
- * ROI INTERNAL API - will be deprecated on future by shared exporter
- */
+//ROI INTERNAL API - will be deprecated on future by shared exporter
 export interface ILinkDefinition {
   dataURI: string;
   metadataURI: string;

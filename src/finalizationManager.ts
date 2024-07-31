@@ -1,10 +1,9 @@
 import config from 'config';
 import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { Context, context, propagation, Span, SpanKind, Tracer } from '@opentelemetry/api';
+import { Context, context, propagation, Span, SpanKind, trace, Tracer } from '@opentelemetry/api';
 import { ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
-// import { getInitialSpanOption } from './common/utils';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from './common/constants';
 import { TasksManager } from './tasks/models/tasksManager';
@@ -72,6 +71,9 @@ export class FinalizationManager {
     if (!finalizeTask) {
       return false;
     }
+
+    const span = trace.getActiveSpan();
+    span?.addEvent('export.start.finalize', { finalizeJobFound: true });
 
     return this.runFinalize(finalizeTask);
   }

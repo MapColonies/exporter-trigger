@@ -87,13 +87,13 @@ export const generateGeoIdentifier = (geo: FeatureCollection): string => {
 export function createSpanMetadata(
   functionName?: string,
   spanKind?: SpanKind,
-  context?: { traceId: string; spanId: string }
+  parentContext?: { traceId: string; spanId: string }
 ): { traceContext: SpanContext | undefined; spanOptions: SpanOptions | undefined } {
-  if (!context) {
+  if (!parentContext) {
     return { spanOptions: undefined, traceContext: undefined };
   }
   const traceContext: SpanContext = {
-    ...context,
+    ...parentContext,
     traceFlags: FLAG_SAMPLED,
   };
   const spanOptions: SpanOptions = {

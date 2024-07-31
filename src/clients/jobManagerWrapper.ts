@@ -39,7 +39,6 @@ export class JobManagerWrapper extends JobManagerClient {
     this.jobDomain = config.get<string>('externalClientsConfig.clientsUrls.jobManager.jobDomain');
   }
 
-  //TODO: once will be only one kind of exported jobs, no need to filter by ROI's
   @withSpanAsyncV4
   public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);

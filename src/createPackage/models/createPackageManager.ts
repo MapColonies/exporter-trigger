@@ -3,17 +3,7 @@ import { sep } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
 import { SpanContext, SpanKind, Tracer, context, trace } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import type {
-  Polygon,
-  MultiPolygon,
-  BBox,
-  // bbox as PolygonBbox,
-  // intersect,
-  // combine as featureCombine,
-  FeatureCollection,
-  Feature,
-  Geometry,
-} from '@turf/helpers';
+import type { Polygon, MultiPolygon, BBox, FeatureCollection, Feature, Geometry } from '@turf/helpers';
 import intersect from '@turf/intersect';
 import PolygonBbox from '@turf/bbox';
 import featureCombine from '@turf/combine';
@@ -139,7 +129,7 @@ export class CreatePackageManager {
     const layerMetadata = layer.metadata;
 
     const { spanOptions } = createSpanMetadata('createPackageRoi', SpanKind.PRODUCER);
-    const mainSpan = this.tracer.startSpan('jobManager.job create', spanOptions);
+    const mainSpan = this.tracer.startSpan('exportPackage create', spanOptions);
     trace.setSpan(context.active(), mainSpan);
     const mainTraceIds: SpanContext = {
       traceId: mainSpan.spanContext().traceId,
@@ -381,7 +371,7 @@ export class CreatePackageManager {
       if (intersaction === null) {
         return null;
       }
-      const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction) as BBox2d, zoom) as BBox2d;
+      const sanitized = snapBBoxToTileGrid(PolygonBbox(intersaction), zoom) as BBox2d;
       return sanitized;
     } catch (error) {
       throw new Error(`Error occurred while trying to sanitized bbox: ${JSON.stringify(error)}`);
