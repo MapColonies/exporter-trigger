@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.19.1](https://github.com/MapColonies/exporter-trigger/compare/v2.19.0...v2.19.1) (2024-08-01)
+
+
+### Bug Fixes
+
+* fix configmap env name ([#95](https://github.com/MapColonies/exporter-trigger/issues/95)) ([76f25de](https://github.com/MapColonies/exporter-trigger/commit/76f25de09b6ea0b1e7e75ad6946d4af5954f8676))
+
 ## [2.19.0](https://github.com/MapColonies/exporter-trigger/compare/v2.18.1...v2.19.0) (2024-08-01)
 
 
