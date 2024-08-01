@@ -72,7 +72,7 @@ export class CreatePackageManager {
   @withSpanAsyncV4
   private async validateFreeSpace(estimatesGpkgSize: number): Promise<boolean> {
     const diskFreeSpace = await this.getFreeStorage(); // calculate free space including other running jobs
-    this.logger.debug(`Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`);
+    this.logger.debug({msg: `Estimated requested gpkg size: ${estimatesGpkgSize}, Estimated free space: ${diskFreeSpace}`});
     return diskFreeSpace - estimatesGpkgSize >= 0;
   }
 
