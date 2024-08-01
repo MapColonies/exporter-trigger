@@ -1,7 +1,8 @@
-import { MultiPolygon, Polygon, BBox, FeatureCollection, Geometry } from '@turf/turf';
+import { BBox, FeatureCollection, Geometry } from '@turf/helpers';
 import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IHttpRetryConfig, ITileRange } from '@map-colonies/mc-utils';
 import { TileOutputFormat } from '@map-colonies/mc-model-types';
+import { SpanContext } from '@opentelemetry/api';
 import { ArtifactType, TileFormatStrategy } from './enums';
 
 export interface IConfig {
@@ -16,51 +17,28 @@ export interface OpenApiConfig {
   uiPath: string;
 }
 
-export interface IBaseCreatePackage {
-  dbId: string;
-  crs?: string;
-  priority?: number;
-}
-
 export interface ICleanupData {
   directoryPath?: string;
   cleanupExpirationTimeUTC?: Date;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICreatePackage extends IBaseCreatePackage {
-  targetResolution?: number;
-  bbox?: BBox | Polygon | MultiPolygon;
-  callbackURLs: string[];
-}
-
-export interface ICreatePackageRoi extends IBaseCreatePackage {
+export interface ICreatePackageRoi {
+  dbId: string;
+  crs?: string;
+  priority?: number;
   roi?: FeatureCollection;
   callbackURLs?: string[];
   description?: string;
 }
 
-export interface ICallbackBase {
+export interface ICallbackTargetExport {
   url: string;
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICallbackTarget extends ICallbackBase {
-  bbox: BBox | Polygon;
-}
-
-export interface ICallbackTargetExport extends ICallbackBase {
   roi: FeatureCollection;
 }
 
-export interface IWorkerInputBase {
+export interface IWorkerExportInput {
   dbId: string;
   relativeDirectoryPath: string;
-  exportVersion: ExportVersion;
   priority?: number;
   crs: string;
   version: string;
@@ -71,37 +49,15 @@ export interface IWorkerInputBase {
   gpkgEstimatedSize?: number;
   targetFormat?: TileOutputFormat;
   outputFormatStrategy?: TileFormatStrategy;
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface IWorkerInput extends IWorkerInputBase {
-  targetResolution: number;
-  fileName: string;
-  callbacks: ICallbackTarget[];
-  sanitizedBbox: BBox;
-  zoomLevel: number;
-}
-
-export interface IWorkerExportInput extends IWorkerInputBase {
   callbacks?: ICallbackTargetExport[];
   roi: FeatureCollection;
   fileNamesTemplates: ILinkDefinition;
   description?: string;
+  traceContext: SpanContext;
 }
 
 export interface IBasicResponse {
   message: string;
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICreateJobResponse {
-  id: string;
-  taskIds: string[];
-  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
 export interface ICreateExportJobResponse {
@@ -109,24 +65,10 @@ export interface ICreateExportJobResponse {
   taskIds: string[];
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
   isDuplicated?: boolean;
+  traceContext?: SpanContext;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICallbackDataBase {
-  fileUri: string;
-  expirationTime: Date;
-  fileSize: number;
-  dbId: string;
-  packageName: string;
-  targetResolution: number;
-  requestId: string;
-  success: boolean;
-  errorReason?: string;
-}
-
-export interface ICallbackDataExportBase {
+export interface ICallbackExportData {
   links?: ILinkDefinition;
   expirationTime?: Date;
   fileSize?: number;
@@ -135,24 +77,7 @@ export interface ICallbackDataExportBase {
   errorReason?: string;
   description?: string;
   artifacts?: IArtifactDefinition[];
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICallbackData extends ICallbackDataBase {
-  bbox: BBox | Polygon | MultiPolygon;
-}
-
-export interface ICallbackExportData extends ICallbackDataExportBase {
   roi: FeatureCollection;
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface ICallbackResposne extends ICallbackData {
-  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
 }
 
 //todo - should be replaced and imported from exporter SDK
@@ -163,9 +88,7 @@ export interface IArtifactDefinition {
   type: ArtifactType;
 }
 
-/**
- * @deprecated ROI INTERNAL API - will be deprecated on future by shared exporter
- */
+//ROI INTERNAL API - will be deprecated on future by shared exporter
 export interface ILinkDefinition {
   dataURI: string;
   metadataURI: string;
@@ -173,18 +96,6 @@ export interface ILinkDefinition {
 
 export interface ICallbackExportResponse extends ICallbackExportData {
   status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED | OperationStatus.FAILED;
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface JobDuplicationParams {
-  resourceId: string;
-  version: string;
-  dbId: string;
-  zoomLevel: number;
-  crs: string;
-  sanitizedBbox: BBox;
 }
 
 export interface JobExportDuplicationParams {
@@ -195,38 +106,22 @@ export interface JobExportDuplicationParams {
   roi: FeatureCollection;
 }
 
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface IJobParameters {
-  targetResolution: number;
-  relativeDirectoryPath: string;
-  crs: string;
-  exportVersion: ExportVersion;
-  callbacks: ICallbackTarget[];
-  sanitizedBbox: BBox;
-  zoomLevel: number;
-  callbackParams?: ICallbackDataBase;
-  fileName: string;
-  gpkgEstimatedSize?: number;
-  cleanupData?: ICleanupData;
-}
-
 export interface IJobExportParameters {
   relativeDirectoryPath: string;
   crs: string;
-  exportVersion: ExportVersion;
   roi: FeatureCollection;
   callbacks?: ICallbackTargetExport[];
   callbackParams?: ICallbackExportResponse;
   fileNamesTemplates: ILinkDefinition;
   gpkgEstimatedSize?: number;
   cleanupData?: ICleanupData;
+  traceContext?: SpanContext;
 }
 
 export interface ITaskFinalizeParameters {
   reason?: string;
   exporterTaskStatus: OperationStatus;
+  traceParentContext?: SpanContext;
 }
 
 export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
@@ -247,27 +142,7 @@ export interface ITaskParameters {
   outputFormatStrategy?: TileFormatStrategy;
   batches: ITileRange[];
   sources: IMapSource[];
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface IInput {
-  jobId: string;
-  footprint?: Polygon | MultiPolygon;
-  bbox: BBox | true;
-  zoomLevel: number;
-  packageName: string;
-  callbackURLs: string[];
-  dbId: string;
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export interface IJobStatusResponse {
-  completedJobs: JobResponse[] | undefined;
-  failedJobs: JobResponse[] | undefined;
+  traceParentContext?: SpanContext;
 }
 
 export interface IExportJobStatusResponse {
@@ -300,21 +175,7 @@ export interface IGeometryRecord extends IGeometryRecordBase {
   minZoomLevel: number;
 }
 
-// todo - Temporary enum to define old\new api - will be removed after deleting getMap API
-export enum ExportVersion {
-  GETMAP = 'GETMAP',
-  ROI = 'ROI',
-}
-
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export type JobResponse = IJobResponse<IJobParameters, ITaskParameters>;
 export type TaskResponse = ITaskResponse<ITaskParameters>;
-/**
- * @deprecated GetMap API - will be deprecated on future
- */
-export type CreateJobBody = ICreateJobBody<IJobParameters, ITaskParameters>;
 
 // new API based on multi resolution
 export type JobExportResponse = IJobResponse<IJobExportParameters, ITaskParameters>;

@@ -1,30 +1,23 @@
-import { sep } from 'path';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
+import { trace } from '@opentelemetry/api';
 import { ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
 import {
   CreateFinalizeTaskBody,
-  ICallbackDataBase,
-  ICallbackDataExportBase,
+  ICallbackExportData,
   ICallbackExportResponse,
   ICallbackTargetExport,
   ITaskParameters,
   JobExportResponse,
   JobFinalizeResponse,
-  JobResponse,
   TaskResponse,
 } from '../../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
 import { callbackClientMock, sendMock } from '../../../mocks/clients/callbackClient';
-import { createExportJsonMetadataMock, createJsonMetadataMock, packageManagerMock } from '../../../mocks/clients/packageManager';
-import {
-  jobManagerWrapperMock,
-  getInProgressJobsMock as getInProgressJobsMock,
-  updateJobMock,
-  getExportJobsMock,
-} from '../../../mocks/clients/jobManagerWrapper';
-import { mockCompletedJob, mockJob } from '../../../mocks/data/mockJob';
+import { createExportJsonMetadataMock, packageManagerMock } from '../../../mocks/clients/packageManager';
+import { jobManagerWrapperMock, getExportJobsMock } from '../../../mocks/clients/jobManagerWrapper';
+import { mockCompletedJob } from '../../../mocks/data/mockJob';
 import * as utils from '../../../../src/common/utils';
 import { ArtifactType } from '../../../../src/common/enums';
 
@@ -35,210 +28,14 @@ describe('TasksManager', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    tasksManager = new TasksManager(logger, jobManagerWrapperMock, callbackClientMock, packageManagerMock);
+    tasksManager = new TasksManager(logger, jobManagerWrapperMock, callbackClientMock, packageManagerMock, trace.getTracer('testTracer'));
   });
 
   afterEach(() => {
     jest.resetAllMocks();
     jest.restoreAllMocks();
   });
-  describe('GetMap', () => {
-    /**
-     * @deprecated GetMap API - will be deprecated on future
-     */
-    describe('#getJobsByTaskStatus', () => {
-      it('should return completed job with no failed jobs', async () => {
-        const jobs: JobResponse[] = [];
-        const completedMockJob = { ...mockJob, completedTasks: 1 };
-        jobs.push(completedMockJob);
-        getInProgressJobsMock.mockResolvedValue(jobs);
 
-        const jobsStatus = await tasksManager.getJobsByTaskStatus();
-
-        expect(jobsStatus.completedJobs?.length).toBe(1);
-        expect(jobsStatus.failedJobs?.length).toBe(0);
-        expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should return failed job with no completed jobs', async () => {
-        const jobs: JobResponse[] = [];
-        const failedMockJob = { ...mockJob, failedTasks: 1 };
-        jobs.push(failedMockJob);
-        getInProgressJobsMock.mockResolvedValue(jobs);
-
-        const jobsStatus = await tasksManager.getJobsByTaskStatus();
-
-        expect(jobsStatus.completedJobs?.length).toBe(0);
-        expect(jobsStatus.failedJobs?.length).toBe(1);
-        expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should return completed job and failed job', async () => {
-        const jobs: JobResponse[] = [];
-        const completedMockJob = { ...mockJob, completedTasks: 1 };
-        const failedMockJob = { ...mockJob, failedTasks: 1 };
-        jobs.push(completedMockJob, failedMockJob);
-        getInProgressJobsMock.mockResolvedValue(jobs);
-
-        const jobsStatus = await tasksManager.getJobsByTaskStatus();
-
-        expect(jobsStatus.completedJobs?.length).toBe(1);
-        expect(jobsStatus.failedJobs?.length).toBe(1);
-        expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should return an empty jobs response if task is in progress', async () => {
-        const jobs: JobResponse[] = [];
-
-        const inProgressMockJob = { ...mockJob, inProgressTasks: 1 };
-        jobs.push(inProgressMockJob);
-        getInProgressJobsMock.mockResolvedValue(jobs);
-
-        const jobsStatus = await tasksManager.getJobsByTaskStatus();
-
-        expect(jobsStatus.completedJobs?.length).toBe(0);
-        expect(jobsStatus.failedJobs?.length).toBe(0);
-        expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should return an empty jobs response if task is in pending', async () => {
-        const jobs: JobResponse[] = [];
-        const pendingMockJob = { ...mockJob, pendingTasks: 1 };
-        jobs.push(pendingMockJob);
-        getInProgressJobsMock.mockResolvedValue(jobs);
-
-        const jobsStatus = await tasksManager.getJobsByTaskStatus();
-
-        expect(jobsStatus.completedJobs?.length).toBe(0);
-        expect(jobsStatus.failedJobs?.length).toBe(0);
-        expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should return an empty jobs response if task is in expired', async () => {
-        const jobs: JobResponse[] = [];
-        const expiredMockJob = { ...mockJob, expiredTasks: 1 };
-        jobs.push(expiredMockJob);
-        getInProgressJobsMock.mockResolvedValue(jobs);
-
-        const jobsStatus = await tasksManager.getJobsByTaskStatus();
-
-        expect(jobsStatus.completedJobs?.length).toBe(0);
-        expect(jobsStatus.failedJobs?.length).toBe(0);
-        expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should return an empty jobs response if task is in aborted', async () => {
-        const jobs: JobResponse[] = [];
-        const abortedMockJob = { ...mockJob, abortedTasks: 1 };
-        jobs.push(abortedMockJob);
-        getInProgressJobsMock.mockResolvedValue(jobs);
-
-        const jobsStatus = await tasksManager.getJobsByTaskStatus();
-
-        expect(jobsStatus.completedJobs?.length).toBe(0);
-        expect(jobsStatus.failedJobs?.length).toBe(0);
-        expect(getInProgressJobsMock).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    /**
-     * @deprecated GetMap API - will be deprecated on future
-     */
-    describe('#sendCallbacks', () => {
-      it('should return callback data with the expected params for success jobs', async () => {
-        sendMock.mockResolvedValue(200);
-        const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
-        getFileSizeSpy.mockResolvedValue(2000);
-        const expirationTime = new Date();
-        const expectedCallbackData: ICallbackDataBase = {
-          fileUri: `http://download-service/downloads/test${sep}test.gpkg`,
-          expirationTime: expirationTime,
-          fileSize: 2000,
-          dbId: '880a9316-0f10-4874-92e2-a62d587a1169',
-          packageName: 'test.gpkg',
-          requestId: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
-          targetResolution: 0.072,
-          success: true,
-          errorReason: undefined,
-        };
-
-        const callbackData = await tasksManager.sendCallbacks(mockJob, expirationTime);
-        expect(callbackData).toEqual(expectedCallbackData);
-      });
-
-      it('should return callback data with the expected params for failed jobs', async () => {
-        sendMock.mockResolvedValue(200);
-        const getFileSizeSpy = jest.spyOn(utils, 'getFileSize');
-        getFileSizeSpy.mockResolvedValue(2000);
-        const expirationTime = new Date();
-        const errMessage = 'gpkg failed to create';
-        const expectedCallbackData: ICallbackDataBase = {
-          fileUri: '',
-          expirationTime: expirationTime,
-          fileSize: 0,
-          dbId: '880a9316-0f10-4874-92e2-a62d587a1169',
-          packageName: 'test.gpkg',
-          requestId: 'b729f0e0-af64-4c2c-ba4e-e799e2f3df0f',
-          targetResolution: 0.072,
-          success: false,
-          errorReason: errMessage,
-        };
-        const callbackData = await tasksManager.sendCallbacks(mockJob, expirationTime, errMessage);
-        expect(callbackData).toEqual(expectedCallbackData);
-      });
-
-      it('should return callback data even if callback response got rejected', async () => {
-        sendMock.mockRejectedValue({});
-        const expirationTime = new Date();
-
-        const action = async () => tasksManager.sendCallbacks(mockJob, expirationTime);
-        await expect(action()).resolves.not.toThrow();
-      });
-    });
-
-    describe('#finalizeJob', () => {
-      let sendCallbacksSpy: jest.SpyInstance;
-
-      it('should successfully finalize a job with status completed', async () => {
-        const expirationTime = new Date();
-        createJsonMetadataMock.mockResolvedValue({});
-        updateJobMock.mockResolvedValue({});
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendCallbacks');
-
-        const action = async () => tasksManager.finalizeJob(mockJob, expirationTime);
-        await expect(action()).resolves.not.toThrow();
-        expect(createJsonMetadataMock).toHaveBeenCalledTimes(1);
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should successfully finalize a job with status failed due to error while create json metadata file', async () => {
-        const expirationTime = new Date();
-        createJsonMetadataMock.mockRejectedValue({});
-        updateJobMock.mockResolvedValue({});
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendCallbacks');
-
-        const action = async () => tasksManager.finalizeJob(mockJob, expirationTime);
-        await expect(action()).resolves.not.toThrow();
-        expect(createJsonMetadataMock).toHaveBeenCalledTimes(1);
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should successfully finalize a job with job status failed without create json metadata file due to failed in task', async () => {
-        const expirationTime = new Date();
-        updateJobMock.mockResolvedValue({});
-        sendCallbacksSpy = jest.spyOn(tasksManager, 'sendCallbacks');
-
-        const errMessage = 'gpkg failed to create';
-        const action = async () => tasksManager.finalizeJob(mockJob, expirationTime, false, errMessage);
-        await expect(action()).resolves.not.toThrow();
-        expect(createJsonMetadataMock).toHaveBeenCalledTimes(0);
-        expect(sendCallbacksSpy).toHaveBeenCalledTimes(1);
-        expect(updateJobMock).toHaveBeenCalledTimes(1);
-      });
-    });
-  });
   describe('ROI', () => {
     describe('#getTaskStatusByJobId', () => {
       it('should throw NotFoundError when jobId is not exists', async () => {
@@ -384,7 +181,7 @@ describe('TasksManager', () => {
       it('should send callback data with the expected params for success jobs to all clients', async () => {
         sendMock.mockResolvedValue(200);
         const expirationTime = new Date();
-        const callbackData: ICallbackDataExportBase = {
+        const callbackData: ICallbackExportData = {
           links: {
             dataURI: 'http://download-service/downloads/test${sep}test.gpkg',
             metadataURI: 'http://download-service/downloads/test${sep}test.json',
@@ -394,6 +191,10 @@ describe('TasksManager', () => {
           expirationTime: expirationTime,
           fileSize: 2000,
           errorReason: undefined,
+          roi: {
+            type: 'FeatureCollection',
+            features: [],
+          },
         };
 
         const expectedCallbacksData = mockCompletedJob.parameters.callbacks as unknown as ICallbackTargetExport[];
@@ -411,7 +212,7 @@ describe('TasksManager', () => {
       it('should return callback data even if callback response got rejected', async () => {
         sendMock.mockRejectedValue({});
         const expirationTime = new Date();
-        const callbackData: ICallbackDataExportBase = {
+        const callbackData: ICallbackExportData = {
           links: {
             dataURI: 'http://download-service/downloads/test${sep}test.gpkg',
             metadataURI: 'http://download-service/downloads/test${sep}test.json',
@@ -421,6 +222,10 @@ describe('TasksManager', () => {
           expirationTime: expirationTime,
           fileSize: 2000,
           errorReason: undefined,
+          roi: {
+            type: 'FeatureCollection',
+            features: [],
+          },
         };
         const action = async () => tasksManager.sendExportCallbacks(mockCompletedJob, callbackData);
         await expect(action()).resolves.not.toThrow();
@@ -456,7 +261,7 @@ describe('TasksManager', () => {
         expect(enqueueTask).toHaveBeenCalledWith(mockCompletedJob.id, expectedCreateTaskRequest);
       });
 
-      it('should create new not success finalize task', async () => {
+      it('should create new failed finalize task', async () => {
         const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,

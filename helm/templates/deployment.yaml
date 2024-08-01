@@ -1,5 +1,6 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "exporter-trigger.name" . -}}
+{{- $metrics := (include "common.metrics.merged" .) | fromYaml }}
 {{- $cloudProviderFlavor := include "exporter-trigger.cloudProviderFlavor" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "exporter-trigger.cloudProviderDockerRegistryUrl" . -}}
 {{- $cloudProviderImagePullSecretName := include "exporter-trigger.cloudProviderImagePullSecretName" . -}}
@@ -42,6 +43,10 @@ spec:
         {{- end }}
         {{- if .Values.podAnnotations }}
         {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{ if $metrics.enabled }}
+        prometheus.io/port: {{ $metrics.prometheus.port | quote }}
+        prometheus.io/scrape: {{ $metrics.prometheus.scrape | quote }}
         {{- end }}
     spec:
       {{- if $cloudProviderImagePullSecretName }}

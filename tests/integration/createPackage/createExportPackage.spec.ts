@@ -1,6 +1,6 @@
 import httpStatusCodes from 'http-status-codes';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { feature, featureCollection, Geometry } from '@turf/turf';
+import { feature, featureCollection, Geometry } from '@turf/helpers';
 import { getApp } from '../../../src/app';
 import { RasterCatalogManagerClient } from '../../../src/clients/rasterCatalogManagerClient';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
@@ -18,7 +18,6 @@ describe('Export by ROI', function () {
   let validateFreeSpaceSpy: jest.SpyInstance;
   let checkForExportCompletedSpy: jest.SpyInstance;
   let checkForExportProcessingSpy: jest.SpyInstance;
-  let generateTileGroupsSpy: jest.SpyInstance;
 
   beforeEach(function () {
     const app = getApp({
@@ -39,7 +38,6 @@ describe('Export by ROI', function () {
       'checkForExportProcessing'
     );
     validateFreeSpaceSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { validateFreeSpace: jest.Mock }, 'validateFreeSpace');
-    generateTileGroupsSpy = jest.spyOn(CreatePackageManager.prototype as unknown as { generateTileGroups: jest.Mock }, 'generateTileGroups');
     findLayerSpy = jest.spyOn(RasterCatalogManagerClient.prototype, 'findLayer');
     createJobSpy = jest.spyOn(JobManagerWrapper.prototype, 'createJob');
   });
@@ -335,7 +333,6 @@ describe('Export by ROI', function () {
         crs: 'EPSG:4326',
         priority: 0,
       };
-      generateTileGroupsSpy.mockReturnValue([]);
       findLayerSpy.mockResolvedValue(layerFromCatalog);
       checkForExportDuplicateSpy.mockResolvedValue(undefined);
       validateFreeSpaceSpy.mockResolvedValue(false);

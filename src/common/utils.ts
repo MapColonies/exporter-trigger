@@ -5,6 +5,7 @@ import checkDiskSpace from 'check-disk-space';
 import { degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
 import { FeatureCollection, Geometry } from '@turf/helpers';
 import md5 from 'md5';
+import { SpanContext, SpanKind, SpanOptions } from '@opentelemetry/api';
 import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
 import { ZOOM_ZERO_RESOLUTION } from './constants';
 
@@ -83,6 +84,33 @@ export const generateGeoIdentifier = (geo: FeatureCollection): string => {
   return additionalIdentifiers;
 };
 
+export function createSpanMetadata(
+  functionName?: string,
+  spanKind?: SpanKind,
+  parentContext?: { traceId: string; spanId: string }
+): { traceContext: SpanContext | undefined; spanOptions: SpanOptions | undefined } {
+  if (!parentContext) {
+    return { spanOptions: undefined, traceContext: undefined };
+  }
+  const traceContext: SpanContext = {
+    ...parentContext,
+    traceFlags: FLAG_SAMPLED,
+  };
+  const spanOptions: SpanOptions = {
+    kind: spanKind,
+    links: [
+      {
+        context: traceContext,
+      },
+    ],
+    attributes: {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'code.function': functionName,
+    },
+  };
+  return { traceContext, spanOptions };
+}
+
 export const parseFeatureCollection = (featuresCollection: FeatureCollection): IGeometryRecord[] => {
   const parsedGeoRecord: IGeometryRecord[] = [];
   featuresCollection.features.forEach((feature) => {
@@ -105,3 +133,5 @@ export const parseFeatureCollection = (featuresCollection: FeatureCollection): I
   });
   return parsedGeoRecord;
 };
+
+export const FLAG_SAMPLED = 1; // 00000001

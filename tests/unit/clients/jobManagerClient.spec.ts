@@ -1,27 +1,23 @@
 import jsLogger from '@map-colonies/js-logger';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
+import { trace } from '@opentelemetry/api';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
-import { JobResponse, JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
+import { JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import {
   completedExportJob,
-  completedJob,
   fc1,
   inProgressExportJob,
-  inProgressJob,
   jobPayloadWithMixedForFixedStrategyCheck,
-  jobs,
   layerFromCatalog,
   workerExportInput,
-  workerInput,
 } from '../../mocks/data';
 import { TileFormatStrategy } from '../../../src/common/enums';
 
 let jobManagerClient: JobManagerWrapper;
 let postFun: jest.Mock;
 let putFun: jest.Mock;
-let getGetMapJobs: jest.Mock;
 let get: jest.Mock;
 let getExportJobs: jest.Mock;
 let deleteFun: jest.Mock;
@@ -32,7 +28,7 @@ describe('JobManagerClient', () => {
     beforeEach(() => {
       registerDefaultConfig();
       const logger = jsLogger({ enabled: false });
-      jobManagerClient = new JobManagerWrapper(logger);
+      jobManagerClient = new JobManagerWrapper(logger, trace.getTracer('testTracer'));
     });
 
     afterEach(() => {
@@ -41,142 +37,12 @@ describe('JobManagerClient', () => {
     });
 
     describe('getMap', () => {
-      /**
-       * @deprecated GetMap API - will be deprecated on future
-       */
-      it('should create job successfully', async () => {
-        postFun = jest.fn();
-        (jobManagerClient as unknown as { post: unknown }).post = postFun.mockResolvedValue({ id: '123', taskIds: ['123'] });
-        await jobManagerClient.create(workerInput);
-
-        expect(postFun).toHaveBeenCalledTimes(1);
-      });
-
       it('should update job successfully', async () => {
         putFun = jest.fn();
         (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
         await jobManagerClient.updateJob('123213', { status: OperationStatus.COMPLETED });
 
         expect(putFun).toHaveBeenCalledTimes(1);
-      });
-
-      /**
-       * @deprecated GetMap API - will be deprecated on future
-       */
-      it('should findCompletedJobs successfully', async () => {
-        getGetMapJobs = jest.fn();
-
-        const jobManager = jobManagerClient as unknown as { getGetMapJobs: unknown };
-        jobManager.getGetMapJobs = getGetMapJobs.mockResolvedValue(jobs);
-        const completedJobs = await jobManagerClient.findCompletedJob({
-          resourceId: jobs[0].resourceId,
-          version: jobs[0].version,
-          dbId: jobs[0].internalId as string,
-          zoomLevel: jobs[0].parameters.zoomLevel,
-          crs: 'EPSG:4326',
-          sanitizedBbox: jobs[0].parameters.sanitizedBbox,
-        });
-        expect(getGetMapJobs).toHaveBeenCalledTimes(1);
-        expect(completedJobs).toBeDefined();
-      });
-
-      /**
-       * @deprecated GetMap API - will be deprecated on future
-       */
-      it('should findInProgressJob successfully', async () => {
-        getGetMapJobs = jest.fn();
-
-        const jobManager = jobManagerClient as unknown as { getGetMapJobs: unknown };
-        jobManager.getGetMapJobs = getGetMapJobs.mockResolvedValue(jobs);
-
-        const completedJobs = await jobManagerClient.findInProgressJob({
-          resourceId: jobs[0].resourceId,
-          version: jobs[0].version,
-          dbId: jobs[0].internalId as string,
-          zoomLevel: jobs[0].parameters.zoomLevel,
-          crs: 'EPSG:4326',
-          sanitizedBbox: jobs[0].parameters.sanitizedBbox,
-        });
-
-        expect(getGetMapJobs).toHaveBeenCalledTimes(1);
-        expect(completedJobs).toBeDefined();
-      });
-
-      /**
-       * @deprecated GetMap API - will be deprecated on future
-       */
-      it('should get In-Progress jobs status successfully', async () => {
-        getGetMapJobs = jest.fn();
-        const jobs: JobResponse[] = [];
-        jobs.push(inProgressJob);
-        const jobManager = jobManagerClient as unknown as { getGetMapJobs: unknown };
-        jobManager.getGetMapJobs = getGetMapJobs.mockResolvedValue(jobs);
-
-        const result = await jobManagerClient.getInProgressJobs();
-
-        expect(getGetMapJobs).toHaveBeenCalledTimes(1);
-        expect(result).toBeDefined();
-        expect(result).toEqual(jobs);
-      });
-
-      /**
-       * @deprecated GetMap API - will be deprecated on future
-       */
-      it('should successfully update job expirationDate (old expirationDate lower)', async () => {
-        const expirationDays: number = configMock.get('cleanupExpirationDays');
-        const testExpirationDate = getUTCDate();
-        const expectedNewExpirationDate = getUTCDate();
-        testExpirationDate.setDate(testExpirationDate.getDate() - expirationDays);
-        expectedNewExpirationDate.setDate(expectedNewExpirationDate.getDate() + expirationDays);
-        expectedNewExpirationDate.setSeconds(0, 0);
-
-        get = jest.fn();
-        putFun = jest.fn();
-        (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
-        const jobManager = jobManagerClient as unknown as { get: unknown };
-        jobManager.get = get.mockResolvedValue({
-          ...completedJob,
-          parameters: {
-            ...completedJob.parameters,
-            cleanupData: { ...completedJob.parameters.cleanupData, cleanupExpirationTimeUTC: testExpirationDate },
-            callbackParams: { ...completedJob.parameters.callbackParams, expirationTime: testExpirationDate },
-          },
-        });
-
-        await jobManagerClient.validateAndUpdateExpiration(completedJob.id);
-
-        expect(get).toHaveBeenCalledTimes(1);
-        expect(putFun).toHaveBeenCalledTimes(1);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const expirationParamCall: Date = putFun.mock.calls[0][1].parameters.cleanupData.cleanupExpirationTimeUTC;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const expirationCallbackParams: Date = putFun.mock.calls[0][1].parameters.callbackParams.expirationTime;
-        expirationParamCall.setSeconds(0, 0);
-        expect(JSON.stringify(expirationParamCall)).toBe(JSON.stringify(expectedNewExpirationDate));
-        expect(JSON.stringify(expirationCallbackParams)).toBe(JSON.stringify(expectedNewExpirationDate));
-      });
-
-      /**
-       * @deprecated GetMap API - will be deprecated on future
-       */
-      it('should not update job expirationDate (old expirationDate higher)', async () => {
-        const expirationDays: number = configMock.get('cleanupExpirationDays');
-        const testExpirationDate = getUTCDate();
-        const expectedNewExpirationDate = getUTCDate();
-        testExpirationDate.setDate(testExpirationDate.getDate() + 2 * expirationDays);
-        expectedNewExpirationDate.setDate(expectedNewExpirationDate.getDate() + expirationDays);
-        expectedNewExpirationDate.setSeconds(0, 0);
-
-        get = jest.fn();
-        putFun = jest.fn();
-        (jobManagerClient as unknown as { put: unknown }).put = putFun.mockResolvedValue(undefined);
-        const jobManager = jobManagerClient as unknown as { get: unknown };
-        jobManager.get = get.mockResolvedValue({ ...inProgressJob, expirationDate: testExpirationDate });
-
-        await jobManagerClient.validateAndUpdateExpiration(inProgressJob.id);
-
-        expect(get).toHaveBeenCalledTimes(1);
-        expect(putFun).toHaveBeenCalledTimes(0);
       });
     });
 

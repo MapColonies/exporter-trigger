@@ -1,4 +1,5 @@
 import jsLogger from '@map-colonies/js-logger';
+import { trace } from '@opentelemetry/api';
 import { StorageManager } from '../../../../src/storage/models/storageManager';
 import { IStorageStatusResponse } from '../../../../src/common/interfaces';
 import { registerDefaultConfig } from '../../../mocks/config';
@@ -10,7 +11,7 @@ describe('Storage', () => {
   beforeEach(() => {
     const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
-    storageManager = new StorageManager(logger);
+    storageManager = new StorageManager(logger, trace.getTracer('testTracer'));
   });
 
   afterEach(() => {
