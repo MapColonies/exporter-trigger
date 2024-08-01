@@ -17,11 +17,11 @@ data:
   LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
   TELEMETRY_TRACING_ENABLED: {{ $tracing.enabled | quote }}
   {{ if $tracing.enabled }}
-  TELEMETRY_TRACING_URL: {{ $tracing.tracingUrl }}
+  TELEMETRY_TRACING_URL: {{ $tracing.url }}
   {{ end }}
   TELEMETRY_METRICS_ENABLED: {{ $metrics.enabled | quote }}
   {{ if $metrics.enabled}}
-  TELEMETRY_METRICS_URL: {{ $metrics.metricsUrl }}
+  TELEMETRY_METRICS_URL: {{ $metrics.url }}
   {{ end }}
   JOB_MANAGER_URL: {{ $serviceUrls.jobManager | quote }}
   CLEANUP_EXPIRATION_DAYS: {{ .Values.env.cleanupExpirationDays | quote }}
