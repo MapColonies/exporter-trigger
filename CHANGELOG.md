@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.19.0](https://github.com/MapColonies/exporter-trigger/compare/v2.18.1...v2.19.0) (2024-08-01)
+
+
+### Features
+
+* Add tracing (MAPCO-3942) ([#89](https://github.com/MapColonies/exporter-trigger/issues/89)) ([54eebfc](https://github.com/MapColonies/exporter-trigger/commit/54eebfcd5331b5a871c829bc96dc7b867e4a10f1)), closes [#90](https://github.com/MapColonies/exporter-trigger/issues/90)
+
 ### [2.18.1](https://github.com/MapColonies/exporter-trigger/compare/v2.18.0...v2.18.1) (2024-07-18)
 
 ## [2.18.0](https://github.com/MapColonies/exporter-trigger/compare/v2.17.9...v2.18.0) (2024-07-18)
