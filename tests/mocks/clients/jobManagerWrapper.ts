@@ -9,7 +9,6 @@ const deleteTaskByIdMock = jest.fn();
 
 const jobManagerWrapperMock = {
   findExportJob: findExportJobMock,
-  validateAndUpdateExpirationMock,
   createExport: createExportMock,
   updateJob: updateJobMock,
   getExportJobs: getExportJobsMock,
