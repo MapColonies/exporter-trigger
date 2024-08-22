@@ -87,27 +87,19 @@ export const generateGeoIdentifier = (geo: FeatureCollection): string => {
 export function createSpanMetadata(
   functionName?: string,
   spanKind?: SpanKind,
-  parentContext?: { traceId: string; spanId: string }
+  context?: { traceId: string; spanId: string }
 ): { traceContext: SpanContext | undefined; spanOptions: SpanOptions | undefined } {
-  if (!parentContext) {
-    return { spanOptions: undefined, traceContext: undefined };
-  }
-  const traceContext: SpanContext = {
-    ...parentContext,
-    traceFlags: FLAG_SAMPLED,
-  };
+  const traceContext = context ? { ...context, traceFlags: FLAG_SAMPLED } : undefined;
+
   const spanOptions: SpanOptions = {
     kind: spanKind,
-    links: [
-      {
-        context: traceContext,
-      },
-    ],
+    ...(traceContext && { links: [{ context: traceContext }] }),
     attributes: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       'code.function': functionName,
     },
   };
+
   return { traceContext, spanOptions };
 }
 
