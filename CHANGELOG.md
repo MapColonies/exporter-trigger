@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.19.2](https://github.com/MapColonies/exporter-trigger/compare/v2.19.1...v2.19.2) (2024-08-25)
+
+
+### Bug Fixes
+
+* createSpanMetadata function ([#96](https://github.com/MapColonies/exporter-trigger/issues/96)) ([8e5d345](https://github.com/MapColonies/exporter-trigger/commit/8e5d3451976cd5ce83ec7251a25dee184504feff))
+
 ### [2.19.1](https://github.com/MapColonies/exporter-trigger/compare/v2.19.0...v2.19.1) (2024-08-01)
 
 
