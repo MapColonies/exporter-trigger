@@ -33,6 +33,21 @@
         "limit": "REQUEST_PAYLOAD_LIMIT"
       }
     },
+    "jobDefinitions": {
+      "tasks": {
+        "export": {
+          "type": "EXPORT_JOB_TYPE"
+        }
+      },
+      "jobs": {
+        "export": {
+          "type": "TILES_TASK_TYPE"
+        },
+        "finalize": {
+          "type": "FINALIZE_TASK_TYPE"
+        }
+      }
+    },
     "response": {
       "compression": {
         "enabled": {
@@ -95,11 +110,6 @@
           "__format": "number"
         }
       }
-    },
-    "exportJobAndTaskTypes": {
-      "jobType": "EXPORT_JOB_TYPE",
-      "taskTilesType": "TILES_TASK_TYPE",
-      "taskFinalizeType": "FINALIZE_TASK_TYPE"
     },
     "httpRetry": {
       "attempts": {
