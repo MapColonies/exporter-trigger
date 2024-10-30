@@ -20,6 +20,7 @@ const setConfigValues = (values: Record<string, unknown>): void => {
 
 const registerDefaultConfig = (): void => {
   const config = {
+    domain: "RASTER",
     openapiConfig: {
       filePath: './openapi3.yaml',
       basePath: '/docs',
@@ -65,7 +66,6 @@ const registerDefaultConfig = (): void => {
       clientsUrls: {
         jobManager: {
           url: 'http://raster-catalog-manager',
-          jobDomain: 'RASTER',
           dequeueFinalizeIntervalMs: 1000,
           finalizeTasksAttempts: 5,
         },
@@ -77,11 +77,6 @@ const registerDefaultConfig = (): void => {
           heartbeatIntervalMs: 300,
         },
       },
-      exportJobAndTaskTypes: {
-        jobType: 'rasterTilesExporter',
-        taskTilesType: 'rasterTilesExporter',
-        taskFinalizeType: 'rasterTilesExporter',
-      },
       httpRetry: {
         attempts: 5,
         delay: 'exponential',
@@ -89,6 +84,21 @@ const registerDefaultConfig = (): void => {
       },
       disableHttpClientLogs: false,
     },
+    jobDefinitions: {
+      tasks: {
+        export: {
+          type: 'export'
+        },
+        finalize: {
+          type: 'finalize'
+        }
+      },
+      jobs: {
+        export: {
+          type: 'Export'
+        }
+      }
+    }
   };
   setConfigValues(config);
 };

@@ -36,7 +36,7 @@ describe('tasks', function () {
         {
           id: '0a5552f7-01eb-40af-a912-eed8fa9e1561',
           jobId: '0a5552f7-01eb-40af-a912-eed8fa9e1568',
-          type: 'rasterTilesExporterd',
+          type: 'export',
           description: '',
           parameters: {} as unknown as ITaskParameters,
           status: OperationStatus.IN_PROGRESS,

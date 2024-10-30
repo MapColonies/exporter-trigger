@@ -493,7 +493,7 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
   id: 'afbdd5e6-25db-4567-a81f-71e0e7d30761',
   resourceId: 'string_completed',
   version: '1.0',
-  type: 'rasterTilesExporter',
+  type: 'Export',
   domain: 'testDomain',
   description: '',
   parameters: {
@@ -549,7 +549,7 @@ const completedExportJob: IJobResponse<IJobExportParameters, ITaskParameters> = 
     {
       id: '542ebbfd-f4d1-4c77-bd4d-97ca121f0de7',
       jobId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
-      type: 'rasterTilesExporter',
+      type: 'export',
       description: '',
       parameters: {
         isNewTarget: true,
@@ -575,7 +575,7 @@ const inProgressExportJob: IJobResponse<IJobExportParameters, ITaskParameters> =
   domain: 'testDomain',
   resourceId: 'string_inprogress',
   version: '1.0',
-  type: 'rasterTilesExporter',
+  type: 'Export',
   percentage: 0,
   description: '',
   parameters: {
@@ -608,7 +608,7 @@ const inProgressExportJob: IJobResponse<IJobExportParameters, ITaskParameters> =
     {
       id: '1f765695-338b-4752-b182-a8cbae3c610e',
       jobId: 'b0b19b88-aecb-4e74-b694-dfa7eada8bf7',
-      type: 'rasterTilesExporter',
+      type: 'export',
       description: '',
       parameters: {
         isNewTarget: true,
@@ -908,10 +908,10 @@ const jobPayloadWithMixedForFixedStrategyCheck = {
         ],
         targetFormat: undefined,
       },
-      type: 'rasterTilesExporter',
+      type: 'export',
     },
   ],
-  type: 'rasterTilesExporter',
+  type: 'Export',
   version: '1.0',
 };
 

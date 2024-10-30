@@ -1,4 +1,5 @@
 {
+  "domain": "RASTER",
   "openapiConfig": {
     "filePath": "./openapi3.yaml",
     "basePath": "/docs",
@@ -45,7 +46,6 @@
     "clientsUrls": {
       "jobManager": {
         "url": "http://job-manager-job-manager",
-        "jobDomain": "RASTER",
         "dequeueFinalizeIntervalMs": 1000,
         "finalizeTasksAttempts": 5
       },
@@ -57,11 +57,6 @@
         "heartbeatIntervalMs": 300
       }
     },
-    "exportJobAndTaskTypes": {
-      "jobType": "rasterTilesExporter",
-      "taskTilesType": "rasterTilesExporter",
-      "taskFinalizeType": "rasterFinalizeExporter"
-    },
     "httpRetry": {
       "attempts": 5,
       "delay": "exponential",
@@ -72,5 +67,20 @@
   "tilesProvider": "S3",
   "gpkgsLocation": "/app/tiles_outputs/gpkgs",
   "downloadServerUrl": "http://download-service",
-  "finalizePollingTimeMS": 2000
+  "finalizePollingTimeMS": 2000,
+  "jobDefinitions": {
+    "tasks": {
+      "export": {
+        "type": "export"
+      },
+      "finalize": {
+        "type": "finalize"
+      }
+    },
+    "jobs": {
+      "export": {
+        "type": "Export"
+      }
+    }
+  }
 }

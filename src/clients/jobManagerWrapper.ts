@@ -27,16 +27,16 @@ export class JobManagerWrapper extends JobManagerClient {
   public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger, @inject(SERVICES.TRACER) public readonly tracer: Tracer) {
     super(
       logger,
-      config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType'),
+      config.get<string>('jobDefinitions.jobs.export.type'),
       config.get<string>('externalClientsConfig.clientsUrls.jobManager.url'),
       config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
       'jobManagerClient',
       config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
     );
     this.expirationDays = config.get<number>('cleanupExpirationDays');
-    this.tilesJobType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.jobType');
-    this.tilesTaskType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskTilesType');
-    this.jobDomain = config.get<string>('externalClientsConfig.clientsUrls.jobManager.jobDomain');
+    this.tilesJobType = config.get<string>('jobDefinitions.jobs.export.type');
+    this.tilesTaskType = config.get<string>('jobDefinitions.tasks.export.type');
+    this.jobDomain = config.get<string>('domain');
   }
 
   @withSpanAsyncV4

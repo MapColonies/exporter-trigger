@@ -9,7 +9,7 @@ import { createPackageRouterFactory, CREATE_PACKAGE_ROUTER_SYMBOL } from './crea
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { tasksRouterFactory, TASKS_ROUTER_SYMBOL } from './tasks/routes/tasksRouter';
 import { FinalizationManager, FINALIZATION_MANGER_SYMBOL } from './finalizationManager';
-import { IQueueConfig, IExternalClientsConfig } from './common/interfaces';
+import { IQueueConfig, IExternalClientsConfig, IJobDefinitions } from './common/interfaces';
 import { storageRouterFactory, STORAGE_ROUTER_SYMBOL } from './storage/routes/storageRouter';
 
 export interface RegisterOptions {
@@ -20,13 +20,14 @@ export interface RegisterOptions {
 export const registerExternalValues = (options?: RegisterOptions): DependencyContainer => {
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   const externalClientsConfig = config.get<IExternalClientsConfig>('externalClientsConfig');
+  const jobDefinitionsConfig = config.get<IJobDefinitions>('jobDefinitions');
   const queueConfig: IQueueConfig = {
     jobManagerBaseUrl: externalClientsConfig.clientsUrls.jobManager.url,
     heartbeatManagerBaseUrl: externalClientsConfig.clientsUrls.heartbeatManager.url,
     dequeueFinalizeIntervalMs: externalClientsConfig.clientsUrls.jobManager.dequeueFinalizeIntervalMs,
     heartbeatIntervalMs: externalClientsConfig.clientsUrls.heartbeatManager.heartbeatIntervalMs,
-    jobType: externalClientsConfig.exportJobAndTaskTypes.jobType,
-    tilesTaskType: externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType,
+    jobType: jobDefinitionsConfig.jobs.export.type,
+    tilesTaskType: jobDefinitionsConfig.tasks.export.type,
   };
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
