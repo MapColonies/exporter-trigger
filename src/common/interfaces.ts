@@ -201,7 +201,7 @@ export interface IJobManager extends IClientBase {
   dequeueFinalizeIntervalMs: number;
 }
 
-export interface IRasterCatalogManager extends IClientBase { }
+export interface IRasterCatalogManager extends IClientBase {}
 
 export interface IHeartbeatManager extends IClientBase {
   heartbeatIntervalMs: number;
@@ -220,9 +220,9 @@ export interface IExternalClientsConfig {
 
 export interface IJobDefinitions {
   jobs: {
-    export: { type: string }
+    export: { type: string };
   };
   tasks: {
-    export: { type: string }
+    export: { type: string };
   };
 }

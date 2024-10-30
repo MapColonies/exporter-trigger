@@ -20,7 +20,7 @@ const setConfigValues = (values: Record<string, unknown>): void => {
 
 const registerDefaultConfig = (): void => {
   const config = {
-    domain: "RASTER",
+    domain: 'RASTER',
     openapiConfig: {
       filePath: './openapi3.yaml',
       basePath: '/docs',
@@ -87,18 +87,18 @@ const registerDefaultConfig = (): void => {
     jobDefinitions: {
       tasks: {
         export: {
-          type: 'export'
+          type: 'export',
         },
         finalize: {
-          type: 'finalize'
-        }
+          type: 'finalize',
+        },
       },
       jobs: {
         export: {
-          type: 'Export'
-        }
-      }
-    }
+          type: 'Export',
+        },
+      },
+    },
   };
   setConfigValues(config);
 };
