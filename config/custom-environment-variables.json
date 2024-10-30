@@ -116,5 +116,13 @@
       "__name": "DISABLE_HTTP_CLIENT_LOGS",
       "__format": "boolean"
     }
+  },
+  "roiBufferMeter": {
+    "__name": "ROI_BUFFER_METER",
+    "__format": "number"
+  },
+  "minContainedPercentage": {
+    "__name": "MIN_CONTAINED_PERCENTAGE",
+    "__format": "number"
   }
 }

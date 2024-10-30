@@ -72,5 +72,7 @@
   "tilesProvider": "S3",
   "gpkgsLocation": "/app/tiles_outputs/gpkgs",
   "downloadServerUrl": "http://download-service",
-  "finalizePollingTimeMS": 2000
+  "finalizePollingTimeMS": 2000,
+  "roiBufferMeter": 5,
+  "minContainedPercentage": 80
 }

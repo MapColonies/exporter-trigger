@@ -2,6 +2,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
 import { trace } from '@opentelemetry/api';
+import { container } from 'tsyringe';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 import { JobExportDuplicationParams, ICreateExportJobResponse } from '../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
@@ -14,6 +15,7 @@ import {
   workerExportInput,
 } from '../../mocks/data';
 import { TileFormatStrategy } from '../../../src/common/enums';
+import { SERVICES } from '../../../src/common/constants';
 
 let jobManagerClient: JobManagerWrapper;
 let postFun: jest.Mock;
@@ -26,12 +28,14 @@ let createJob: jest.Mock;
 describe('JobManagerClient', () => {
   describe('#createJob', () => {
     beforeEach(() => {
-      registerDefaultConfig();
       const logger = jsLogger({ enabled: false });
+      registerDefaultConfig();
       jobManagerClient = new JobManagerWrapper(logger, trace.getTracer('testTracer'));
+      container.register(SERVICES.LOGGER, { useValue: logger });
     });
 
     afterEach(() => {
+      container.clearInstances();
       jest.resetAllMocks();
       jest.restoreAllMocks();
     });
