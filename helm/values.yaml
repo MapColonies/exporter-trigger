@@ -101,6 +101,8 @@ env:
     dequeueFinalizeIntervalMs: 2000
     heartbeatIntervalMs: 300
     finalizeTasksAttempts: 3
+  roiBuffer: 5
+  minContainedPercentage: 80  
 
 resources:
   enabled: true

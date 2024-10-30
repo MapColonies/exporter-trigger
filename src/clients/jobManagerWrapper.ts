@@ -2,10 +2,9 @@ import { inject, injectable } from 'tsyringe';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { featureCollectionBooleanEqual, getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
+import { getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { SERVICES } from '../common/constants';
 import {
   CreateExportJobBody,
   ICreateExportJobResponse,
@@ -16,6 +15,8 @@ import {
   JobExportResponse,
   TaskResponse,
 } from '../common/interfaces';
+import { SERVICES } from '../common/constants';
+import { checkFeatures } from '../utils/geometry';
 
 @injectable()
 export class JobManagerWrapper extends JobManagerClient {
@@ -183,7 +184,7 @@ export class JobManagerWrapper extends JobManagerClient {
         job.internalId === jobParams.dbId &&
         job.version === jobParams.version &&
         job.parameters.crs === jobParams.crs &&
-        featureCollectionBooleanEqual(job.parameters.roi, jobParams.roi)
+        checkFeatures(job.parameters.roi, jobParams.roi)
     );
     return matchingJob;
   }
