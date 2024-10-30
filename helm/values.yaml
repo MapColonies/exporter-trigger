@@ -16,7 +16,9 @@ global:
         name: ""
         gpkgSubPath: ""
   ingress:
-    domain: 'apps.aroapp.io'          
+    domain: 'apps.aroapp.io'  
+  jobDefinitions: {}
+  domain: ''        
 
 jobDefinitions:
   jobs:
