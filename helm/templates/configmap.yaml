@@ -46,6 +46,6 @@ data:
   QUEUE_HEART_BEAT_INTERVAL_MS: {{ .Values.env.queue.heartbeatIntervalMs | quote }}
   FINALIZE_TASK_TYPE: {{ $jobManagement.exporter.taskFinalizeType | quote }}
   FINALIZE_TASKS_ATTEMPTS: {{ .Values.env.queue.finalizeTasksAttempts | quote }}
-  ROI_BUFFER: {{ .Values.env.roiBuffer | quote }}
+  ROI_BUFFER_METER: {{ .Values.env.roiBufferMeter | quote }}
   MIN_CONTAINED_PERCENTAGE: {{ .Values.env.minContainedPercentage | quote }}
 {{- end }}

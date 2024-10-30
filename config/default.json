@@ -73,6 +73,6 @@
   "gpkgsLocation": "/app/tiles_outputs/gpkgs",
   "downloadServerUrl": "http://download-service",
   "finalizePollingTimeMS": 2000,
-  "roiBuffer": 5,
+  "roiBufferMeter": 5,
   "minContainedPercentage": 80
 }

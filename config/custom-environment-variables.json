@@ -117,8 +117,8 @@
       "__format": "boolean"
     }
   },
-  "roiBuffer": {
-    "__name": "ROI_BUFFER",
+  "roiBufferMeter": {
+    "__name": "ROI_BUFFER_METER",
     "__format": "number"
   },
   "minContainedPercentage": {

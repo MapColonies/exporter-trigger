@@ -88,7 +88,7 @@ const registerDefaultConfig = (): void => {
         shouldResetTimeout: true,
       },
       disableHttpClientLogs: false,
-      roiBuffer: 5,
+      roiBufferMeter: 5,
       minContainedPercentage: 75,
     },
   };

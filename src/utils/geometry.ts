@@ -9,7 +9,7 @@ import booleanContains from '@turf/boolean-contains';
 import { featureCollectionBooleanEqual } from '@map-colonies/mc-utils';
 import { SERVICES } from '../common/constants';
 
-const roiBuffer = config.get<number>('roiBuffer');
+const roiBufferMeter = config.get<number>('roiBufferMeter');
 const minContainedPercentage = config.get<number>('minContainedPercentage');
 
 const isSinglePolygonFeature = (fc: FeatureCollection): fc is FeatureCollection<Polygon> => {
@@ -27,7 +27,7 @@ export const checkFeatures = (jobRoi: FeatureCollection, exportRoi: FeatureColle
   logger.debug({ msg: 'Both job featureCollection and exportRequest featureCollection are single polygon features' });
 
   // Create a buffered feature around jobRoi's single polygon
-  const bufferedFeature = buffer(jobRoi.features[0], roiBuffer, { units: 'meters' });
+  const bufferedFeature = buffer(jobRoi.features[0], roiBufferMeter, { units: 'meters' });
   const isContained = booleanContains(bufferedFeature as unknown as Geometry, exportRoi.features[0]);
 
   // If exportRoi is not contained, return false immediately
