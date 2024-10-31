@@ -55,7 +55,7 @@ describe('TasksManager', () => {
           {
             id: '0a5552f7-01eb-40af-a912-eed8fa9e1561',
             jobId: '0a5552f7-01eb-40af-a912-eed8fa9e1568',
-            type: 'rasterTilesExporterd',
+            type: 'export',
             description: '',
             parameters: {} as unknown as ITaskParameters,
             status: OperationStatus.IN_PROGRESS,
@@ -245,7 +245,7 @@ describe('TasksManager', () => {
 
     describe('#createFinalizeTask', () => {
       it('should create new success finalize task', async () => {
-        const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
+        const finalizeTaskType = configMock.get<string>('jobDefinitions.tasks.finalize.type');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
           parameters: { exporterTaskStatus: OperationStatus.COMPLETED },
@@ -262,7 +262,7 @@ describe('TasksManager', () => {
       });
 
       it('should create new failed finalize task', async () => {
-        const finalizeTaskType = configMock.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
+        const finalizeTaskType = configMock.get<string>('jobDefinitions.tasks.finalize.type');
         const expectedCreateTaskRequest: CreateFinalizeTaskBody = {
           type: finalizeTaskType,
           parameters: { reason: 'GPKG corrupted', exporterTaskStatus: OperationStatus.FAILED },

@@ -8,7 +8,7 @@ export const mockCompletedJob: JobFinalizeResponse = {
   resourceId: 'testCompleted',
   domain: 'testDomain',
   version: '1.0',
-  type: 'rasterTilesExporter',
+  type: 'Export',
   description: 'test job',
   parameters: {
     crs: 'EPSG:4326',

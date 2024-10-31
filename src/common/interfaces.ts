@@ -214,11 +214,16 @@ export interface IExternalClientsConfig {
     heartbeatManager: IHeartbeatManager;
     finalizeTasksAttempts: number;
   };
-  exportJobAndTaskTypes: {
-    jobType: string;
-    taskTilesType: string;
-    taskFinalizeType: string;
-  };
   httpRetry: IHttpRetryConfig;
   disableHttpClientLogs: boolean;
+}
+
+//consider changing from nested interface
+export interface IJobDefinitions {
+  jobs: {
+    export: { type: string };
+  };
+  tasks: {
+    export: { type: string };
+  };
 }

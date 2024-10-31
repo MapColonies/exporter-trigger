@@ -1,4 +1,5 @@
 {
+  "domain": "JOB_DOMAIN",
   "openapiConfig": {
     "filePath": "OPENAPI_FILE_PATH"
   },
@@ -42,6 +43,21 @@
       }
     }
   },
+  "jobDefinitions": {
+    "tasks": {
+      "export": {
+        "type": "EXPORT_JOB_TYPE"
+      }
+    },
+    "jobs": {
+      "export": {
+        "type": "TILES_TASK_TYPE"
+      },
+      "finalize": {
+        "type": "FINALIZE_TASK_TYPE"
+      }
+    }
+  },
   "storageEstimation": {
     "jpegTileEstimatedSizeInBytes": {
       "__name": "JPEG_TILE_ESTIMATED_SIZE_IN_BYTES",
@@ -75,7 +91,6 @@
     "clientsUrls": {
       "jobManager": {
         "url": "JOB_MANAGER_URL",
-        "jobDomain": "JOB_DOMAIN",
         "dequeueFinalizeIntervalMs": {
           "__name": "QUEUE_DEQUEUE_FINALIZE_INTERVAL_MS",
           "__format": "number"
@@ -95,11 +110,6 @@
           "__format": "number"
         }
       }
-    },
-    "exportJobAndTaskTypes": {
-      "jobType": "EXPORT_JOB_TYPE",
-      "taskTilesType": "TILES_TASK_TYPE",
-      "taskFinalizeType": "FINALIZE_TASK_TYPE"
     },
     "httpRetry": {
       "attempts": {

@@ -8,12 +8,6 @@ global:
     heartbeatManager: ""
     jobManager: ""
     downloadServerPublicDNS: ""
-  jobManagement:
-    jobDomain: ""
-    exporter:
-      jobType: ""
-      taskTilesType: ""
-      taskFinalizeType: ""
   storage:
     tilesStorageProvider: ""
     fs:
@@ -22,19 +16,25 @@ global:
         name: ""
         gpkgSubPath: ""
   ingress:
-    domain: 'apps.aroapp.io'          
+    domain: 'apps.aroapp.io'  
+  jobDefinitions: {}
+  domain: ''        
+
+jobDefinitions:
+  jobs:
+    export:
+      type: ""
+  tasks:
+    export:
+      type: ""
+    finalize:
+      type: ""
 
 serviceUrls:
   catalogManager: ""
   heartbeatManager: ""
   jobManager: ""
   downloadServerPublicDNS: ""
-jobManagement:
-  jobDomain: RASTER
-  exporter:
-    jobType: ""
-    taskTilesType: ""
-    taskFinalizeType: ""
 storage:
   tilesStorageProvider: ''
   fs:

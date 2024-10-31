@@ -29,7 +29,7 @@ export class FinalizationManager {
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper
   ) {
     this.expirationDays = config.get<number>('cleanupExpirationDays');
-    this.finalizeTaskType = config.get<string>('externalClientsConfig.exportJobAndTaskTypes.taskFinalizeType');
+    this.finalizeTaskType = config.get<string>('jobDefinitions.tasks.finalize.type');
     this.finalizeAttempts = config.get<number>('externalClientsConfig.clientsUrls.jobManager.finalizeTasksAttempts');
   }
 
