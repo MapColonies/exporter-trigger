@@ -218,6 +218,7 @@ export interface IExternalClientsConfig {
   disableHttpClientLogs: boolean;
 }
 
+//consider changing from nested interface
 export interface IJobDefinitions {
   jobs: {
     export: { type: string };
