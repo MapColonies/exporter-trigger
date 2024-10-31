@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.20.0](https://github.com/MapColonies/exporter-trigger/compare/v2.19.2...v2.20.0) (2024-10-30)
+
+
+### Features
+
+* add roi duplications checks(MAPCO-5064) ([#97](https://github.com/MapColonies/exporter-trigger/issues/97)) ([4460780](https://github.com/MapColonies/exporter-trigger/commit/446078091c6c4e9ad031fc6d713893150eed9d88))
+
 ### [2.19.2](https://github.com/MapColonies/exporter-trigger/compare/v2.19.1...v2.19.2) (2024-08-25)
 
 

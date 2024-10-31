@@ -12,6 +12,7 @@ module.exports = {
     '!*/common/**',
     '!**/models/**',
     '!<rootDir>/src/*',
+    '!<rootDir>/src/utils/geometry.ts',
   ],
   coverageDirectory: '<rootDir>/coverage',
   rootDir: '../../../.',

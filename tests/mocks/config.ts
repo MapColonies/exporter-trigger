@@ -83,6 +83,8 @@ const registerDefaultConfig = (): void => {
         shouldResetTimeout: true,
       },
       disableHttpClientLogs: false,
+      roiBufferMeter: 5,
+      minContainedPercentage: 75,
     },
     jobDefinitions: {
       tasks: {
