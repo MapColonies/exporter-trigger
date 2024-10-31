@@ -82,7 +82,7 @@
         "type": "Export"
       }
     }
-  }
+  },
   "roiBufferMeter": 5,
   "minContainedPercentage": 80
 }
