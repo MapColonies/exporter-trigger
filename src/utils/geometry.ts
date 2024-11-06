@@ -39,8 +39,8 @@ export const checkFeatures = (jobRoi: FeatureCollection, exportRoi: FeatureColle
 
   // Calculate areas and check containment percentage
   const exportArea = area(exportRoi.features[0]);
-  const bufferedArea = area(bufferedFeature as unknown as Geometry);
-  const containedPercentage = (exportArea / bufferedArea) * 100;
+  const jobArea = area(jobRoi.features[0]);
+  const containedPercentage = (exportArea / jobArea) * 100;
 
   const isSufficientlyContained = containedPercentage >= minContainedPercentage;
   logger.info({
