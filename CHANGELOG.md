@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.20.1](https://github.com/MapColonies/exporter-trigger/compare/v2.20.0...v2.20.1) (2024-11-06)
+
+
+### Bug Fixes
+
+* add check on boolean contains on both the original and buffered job footprint(MAPCO-5210) ([#99](https://github.com/MapColonies/exporter-trigger/issues/99)) ([55575b7](https://github.com/MapColonies/exporter-trigger/commit/55575b7b6b852e6fb01662ea9580192427dd295a))
+
 ## [2.20.0](https://github.com/MapColonies/exporter-trigger/compare/v2.19.2...v2.20.0) (2024-10-30)
 
 
