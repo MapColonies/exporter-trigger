@@ -28,7 +28,8 @@ export const checkFeatures = (jobRoi: FeatureCollection, exportRoi: FeatureColle
 
   // Create a buffered feature around jobRoi's single polygon
   const bufferedFeature = buffer(jobRoi.features[0], roiBufferMeter, { units: 'meters' });
-  const isContained = booleanContains(bufferedFeature as unknown as Geometry, exportRoi.features[0]);
+  const isContained =
+    booleanContains(bufferedFeature as unknown as Geometry, exportRoi.features[0]) || booleanContains(jobRoi.features[0], exportRoi.features[0]);
 
   // If exportRoi is not contained, return false immediately
   if (!isContained) {
@@ -38,8 +39,8 @@ export const checkFeatures = (jobRoi: FeatureCollection, exportRoi: FeatureColle
 
   // Calculate areas and check containment percentage
   const exportArea = area(exportRoi.features[0]);
-  const bufferedArea = area(bufferedFeature as unknown as Geometry);
-  const containedPercentage = (exportArea / bufferedArea) * 100;
+  const jobArea = area(jobRoi.features[0]);
+  const containedPercentage = (exportArea / jobArea) * 100;
 
   const isSufficientlyContained = containedPercentage >= minContainedPercentage;
   logger.info({
