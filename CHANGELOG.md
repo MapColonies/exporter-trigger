@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.20.2](https://github.com/MapColonies/exporter-trigger/compare/v2.20.1...v2.20.2) (2024-11-18)
+
+
+### Bug Fixes
+
+* remove layerPolygonParts from response ([#100](https://github.com/MapColonies/exporter-trigger/issues/100)) ([3f325d1](https://github.com/MapColonies/exporter-trigger/commit/3f325d1d0368635e5f7a0e3d81627cda0b81f727))
+
 ### [2.20.1](https://github.com/MapColonies/exporter-trigger/compare/v2.20.0...v2.20.1) (2024-11-06)
 
 
