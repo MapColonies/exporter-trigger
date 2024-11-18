@@ -306,6 +306,7 @@ export class CreatePackageManager {
     });
     try {
       const record = await this.rasterCatalogManager.findLayer(job.internalId as string);
+      delete record.metadata.layerPolygonParts;
       const featuresRecords = parseFeatureCollection(job.parameters.roi);
 
       const metadataFileName = job.parameters.fileNamesTemplates.metadataURI;
