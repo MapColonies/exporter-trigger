@@ -2,7 +2,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { trace } from '@opentelemetry/api';
-import { ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
+import { IJobStatusResponse, ITaskStatusResponse, TasksManager } from '../../../../src/tasks/models/tasksManager';
 import {
   CreateFinalizeTaskBody,
   ICallbackExportData,
@@ -12,6 +12,7 @@ import {
   JobExportResponse,
   JobFinalizeResponse,
   TaskResponse,
+  GetJobResponse,
 } from '../../../../src/common/interfaces';
 import { configMock, registerDefaultConfig } from '../../../mocks/config';
 import { callbackClientMock, sendMock } from '../../../mocks/clients/callbackClient';
@@ -23,6 +24,7 @@ import { ArtifactType } from '../../../../src/common/enums';
 
 let tasksManager: TasksManager;
 let getTasksByJobIdStub: jest.Mock;
+let getJobByJobIdStub: jest.Mock;
 
 describe('TasksManager', () => {
   beforeEach(() => {
@@ -37,6 +39,7 @@ describe('TasksManager', () => {
   });
 
   describe('ROI', () => {
+    // getTasksByJobId is currently not in use but left it and its tests to allow future functionality
     describe('#getTaskStatusByJobId', () => {
       it('should throw NotFoundError when jobId is not exists', async () => {
         const emptyTasksResponse: TaskResponse[] = [];
@@ -79,6 +82,36 @@ describe('TasksManager', () => {
         await expect(result).resolves.not.toThrow();
         await expect(result).resolves.toEqual(expectedResult);
         expect(getTasksByJobIdStub).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('#getJobStatusByJobId', () => {
+      it('should throw NotFoundError when jobId doesnt exist', async () => {
+        //const emptyTasksResponse: TaskResponse[] = [];
+
+        getJobByJobIdStub = jest.fn();
+        jobManagerWrapperMock.getJobByJobId = getJobByJobIdStub.mockRejectedValue(new NotFoundError('Job not found'));
+
+        const action = async () => tasksManager.getJobStatusByJobId('09e29fa8-7283-4334-b3a4-99f75922de59');
+
+        await expect(action).rejects.toThrow(NotFoundError);
+        expect(getJobByJobIdStub).toHaveBeenCalledTimes(1);
+      });
+
+      it('should successfully return job status by jobId', async () => {
+        const jobResponse = JSON.parse(JSON.stringify(mockCompletedJob)) as GetJobResponse;
+
+        getJobByJobIdStub = jest.fn();
+        jobManagerWrapperMock.getJobByJobId = getJobByJobIdStub.mockResolvedValue(jobResponse);
+
+        const result = tasksManager.getJobStatusByJobId(mockCompletedJob.id);
+        const expectedResult: IJobStatusResponse = {
+          percentage: jobResponse.percentage,
+          status: jobResponse.status,
+        };
+        await expect(result).resolves.not.toThrow();
+        await expect(result).resolves.toEqual(expectedResult);
+        expect(getJobByJobIdStub).toHaveBeenCalledTimes(1);
       });
     });
 

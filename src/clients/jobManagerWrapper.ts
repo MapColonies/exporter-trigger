@@ -7,6 +7,7 @@ import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import {
   CreateExportJobBody,
+  GetJobResponse,
   ICreateExportJobResponse,
   IJobExportParameters,
   ITaskParameters,
@@ -101,6 +102,11 @@ export class JobManagerWrapper extends JobManagerClient {
   public async getTasksByJobId(jobId: string): Promise<TaskResponse[]> {
     const tasks = await this.get<TaskResponse[]>(`/jobs/${jobId}/tasks`);
     return tasks;
+  }
+
+  public async getJobByJobId(jobId: string): Promise<GetJobResponse> {
+    const job = await this.get<GetJobResponse>(`/jobs/${jobId}`);
+    return job;
   }
 
   public async findExportJob(

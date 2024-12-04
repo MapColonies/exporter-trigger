@@ -178,6 +178,7 @@ export interface IGeometryRecord extends IGeometryRecordBase {
 export type TaskResponse = ITaskResponse<ITaskParameters>;
 
 // new API based on multi resolution
+export type GetJobResponse = IJobResponse<IJobExportParameters, ITaskParameters>;
 export type JobExportResponse = IJobResponse<IJobExportParameters, ITaskParameters>;
 export type CreateExportJobBody = ICreateJobBody<IJobExportParameters, ITaskParameters>;
 export type CreateFinalizeTaskBody = ICreateTaskBody<ITaskFinalizeParameters>;
