@@ -116,4 +116,4 @@ reports
 local.yaml
 
 # Config
-local.json
+local*.json
