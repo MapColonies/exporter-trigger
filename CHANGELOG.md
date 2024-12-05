@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.20.3](https://github.com/MapColonies/exporter-trigger/compare/v2.20.2...v2.20.3) (2024-12-05)
+
+
+### Bug Fixes
+
+* return jobStatus and not taskStatus(MAPCO-5662) ([#101](https://github.com/MapColonies/exporter-trigger/issues/101)) ([224d9d4](https://github.com/MapColonies/exporter-trigger/commit/224d9d4e9e6064ee33cce5d070dbba18b5b14545))
+
 ### [2.20.2](https://github.com/MapColonies/exporter-trigger/compare/v2.20.1...v2.20.2) (2024-11-18)
 
 
