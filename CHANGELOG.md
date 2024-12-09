@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.20.4](https://github.com/MapColonies/exporter-trigger/compare/v2.20.3...v2.20.4) (2024-12-09)
+
+
+### Bug Fixes
+
+* set percentage to 0 on new job creation ([#102](https://github.com/MapColonies/exporter-trigger/issues/102)) ([40f771a](https://github.com/MapColonies/exporter-trigger/commit/40f771a98cf83c8d594f57f245f7ecc40d119a06))
+
 ### [2.20.3](https://github.com/MapColonies/exporter-trigger/compare/v2.20.2...v2.20.3) (2024-12-05)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "exporter-trigger",
-  "version": "2.20.3",
+  "version": "2.20.4",
   "description": "Exporter Trigger Service",
   "main": "./src/index.ts",
   "scripts": {
