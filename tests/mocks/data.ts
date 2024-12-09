@@ -884,6 +884,7 @@ const jobPayloadWithMixedForFixedStrategyCheck = {
   productType: 'OrthophotoHistory',
   resourceId: 'string',
   status: 'In-Progress',
+  percentage: 0,
   tasks: [
     {
       parameters: {
