@@ -75,6 +75,7 @@ export class JobManagerWrapper extends JobManagerClient {
       priority: data.priority,
       description: data.description,
       status: OperationStatus.IN_PROGRESS,
+      percentage: 0,
       additionalIdentifiers: data.relativeDirectoryPath,
       tasks: [
         {
