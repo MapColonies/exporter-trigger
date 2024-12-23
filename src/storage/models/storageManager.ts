@@ -11,7 +11,10 @@ import { getStorageStatus } from '../../common/utils';
 export class StorageManager {
   private readonly gpkgsLocation: string;
 
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.TRACER) public readonly tracer: Tracer) {
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
+  ) {
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
   }
 

@@ -15,7 +15,7 @@ describe('tasks', function () {
   let getJobByJobIdSpy: jest.SpyInstance;
 
   beforeEach(function () {
-    const app = getApp({
+    const [app] = getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
         { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
