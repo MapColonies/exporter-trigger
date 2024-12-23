@@ -17,7 +17,6 @@ export class QueueClient {
   ) {
     this.queueHandlerForFinalizeTasks = new QueueHandler(
       logger,
-      this.queueConfig.jobType,
       this.queueConfig.jobManagerBaseUrl,
       this.queueConfig.heartbeatManagerBaseUrl,
       this.queueConfig.dequeueFinalizeIntervalMs,
@@ -25,12 +24,10 @@ export class QueueClient {
       config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
       undefined,
       undefined,
-      config.get<boolean>('externalClientsConfig.disableHttpClientLogs'),
       config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
     );
     this.jobsClient = new JobManagerClient(
       logger,
-      this.queueConfig.jobType,
       this.queueConfig.jobManagerBaseUrl,
       config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
       'jobManagerClient',

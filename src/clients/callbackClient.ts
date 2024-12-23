@@ -6,7 +6,10 @@ import { ICallbackExportData, IConfig } from '../common/interfaces';
 
 @singleton()
 export class CallbackClient extends HttpClient {
-  public constructor(@inject(SERVICES.LOGGER) logger: Logger, @inject(SERVICES.CONFIG) private readonly config: IConfig) {
+  public constructor(
+    @inject(SERVICES.LOGGER) logger: Logger,
+    @inject(SERVICES.CONFIG) private readonly config: IConfig
+  ) {
     super(
       logger,
       '',

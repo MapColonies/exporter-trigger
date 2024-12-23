@@ -20,7 +20,7 @@ describe('Export by ROI', function () {
   let checkForExportProcessingSpy: jest.SpyInstance;
 
   beforeEach(function () {
-    const app = getApp({
+    const [app] = getApp({
       override: [...getContainerConfig()],
       useChild: true,
     });

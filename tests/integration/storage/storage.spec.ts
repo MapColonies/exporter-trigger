@@ -11,7 +11,7 @@ describe('storage', function () {
   let getStorageSpy: jest.SpyInstance;
 
   beforeEach(function () {
-    const app = getApp({
+    const [app] = getApp({
       override: [...getContainerConfig()],
       useChild: true,
     });

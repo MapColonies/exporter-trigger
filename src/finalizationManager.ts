@@ -19,6 +19,7 @@ export const FINALIZATION_MANGER_SYMBOL = Symbol('tasksFactory');
 export class FinalizationManager {
   private readonly expirationDays: number;
   private readonly finalizeTaskType: string;
+  private readonly jobType: string;
   private readonly finalizeAttempts: number;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -30,6 +31,7 @@ export class FinalizationManager {
   ) {
     this.expirationDays = config.get<number>('cleanupExpirationDays');
     this.finalizeTaskType = config.get<string>('jobDefinitions.tasks.finalize.type');
+    this.jobType = config.get<string>('jobDefinitions.jobs.export.type');
     this.finalizeAttempts = config.get<number>('externalClientsConfig.clientsUrls.jobManager.finalizeTasksAttempts');
   }
 
@@ -67,7 +69,7 @@ export class FinalizationManager {
 
   @withSpanAsyncV4
   public async jobFinalizePoll(): Promise<boolean> {
-    const finalizeTask = await this.queueClient.queueHandlerForFinalizeTasks.dequeue<ITaskFinalizeParameters>(this.finalizeTaskType);
+    const finalizeTask = await this.queueClient.queueHandlerForFinalizeTasks.dequeue<ITaskFinalizeParameters>(this.jobType, this.finalizeTaskType);
     if (!finalizeTask) {
       return false;
     }

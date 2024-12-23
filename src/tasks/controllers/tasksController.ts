@@ -9,7 +9,10 @@ type GetTaskByJobIdHandler = RequestHandler<{ jobId: string }, IJobStatusRespons
 
 @injectable()
 export class TasksController {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(TasksManager) private readonly taskManager: TasksManager) {}
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(TasksManager) private readonly taskManager: TasksManager
+  ) {}
 
   public getTaskStatusByJobId: GetTaskByJobIdHandler = async (req, res, next) => {
     const jobId: string = req.params.jobId;

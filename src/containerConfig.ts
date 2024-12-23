@@ -1,5 +1,5 @@
 import config from 'config';
-import { logMethod } from '@map-colonies/telemetry';
+import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
@@ -30,7 +30,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     tilesTaskType: jobDefinitionsConfig.tasks.export.type,
   };
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
+  const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
 
   const tracer = trace.getTracer(SERVICE_NAME);
 

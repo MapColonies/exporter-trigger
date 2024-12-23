@@ -26,10 +26,12 @@ export class JobManagerWrapper extends JobManagerClient {
   private readonly expirationDays: number;
   private readonly jobDomain: string;
 
-  public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger, @inject(SERVICES.TRACER) public readonly tracer: Tracer) {
+  public constructor(
+    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
+  ) {
     super(
       logger,
-      config.get<string>('jobDefinitions.jobs.export.type'),
       config.get<string>('externalClientsConfig.clientsUrls.jobManager.url'),
       config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
       'jobManagerClient',

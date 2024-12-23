@@ -4,7 +4,6 @@ import 'reflect-metadata';
 import { createServer } from 'http';
 import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
-import { container } from 'tsyringe';
 import config from 'config';
 import { Span, Tracer } from '@opentelemetry/api';
 import { DEFAULT_SERVER_PORT, SERVICES } from './common/constants';
@@ -18,7 +17,7 @@ interface IServerConfig {
 const serverConfig = config.get<IServerConfig>('server');
 const port: number = parseInt(serverConfig.port) || DEFAULT_SERVER_PORT;
 
-const app = getApp();
+const [app, container] = getApp();
 
 const logger = container.resolve<Logger>(SERVICES.LOGGER);
 const tracer = container.resolve<Tracer>(SERVICES.TRACER);
