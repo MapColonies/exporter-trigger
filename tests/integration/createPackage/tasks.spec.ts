@@ -2,17 +2,16 @@ import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import httpStatusCodes from 'http-status-codes';
 import { container } from 'tsyringe';
-import { NotFoundError } from '@map-colonies/error-types';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
-import { JobExportResponse, TaskResponse } from '../../../src/common/interfaces';
+import { ITaskParameters, TaskResponse } from '../../../src/common/interfaces';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
-import { mockCompletedJob } from '../../mocks/data/mockJob';
 import { TasksSender } from './helpers/tasksSender';
 
 describe('tasks', function () {
   let requestSender: TasksSender;
-  let getJobByJobIdSpy: jest.SpyInstance;
+  let getTasksByJobIdSpy: jest.SpyInstance;
 
   beforeEach(function () {
     const app = getApp({
@@ -23,7 +22,7 @@ describe('tasks', function () {
       useChild: true,
     });
     requestSender = new TasksSender(app);
-    getJobByJobIdSpy = jest.spyOn(JobManagerWrapper.prototype, 'getJobByJobId');
+    getTasksByJobIdSpy = jest.spyOn(JobManagerWrapper.prototype, 'getTasksByJobId');
   });
 
   afterEach(function () {
@@ -33,26 +32,43 @@ describe('tasks', function () {
 
   describe('Happy Path', function () {
     it('should return 200 status code and the tasks matched the jobId', async function () {
-      const jobResponse = JSON.parse(JSON.stringify(mockCompletedJob)) as JobExportResponse;
-      getJobByJobIdSpy.mockResolvedValue(jobResponse);
+      const tasksResponse: TaskResponse[] = [
+        {
+          id: '0a5552f7-01eb-40af-a912-eed8fa9e1561',
+          jobId: '0a5552f7-01eb-40af-a912-eed8fa9e1568',
+          type: 'export',
+          description: '',
+          parameters: {} as unknown as ITaskParameters,
+          status: OperationStatus.IN_PROGRESS,
+          percentage: 23,
+          reason: '',
+          attempts: 0,
+          resettable: true,
+          created: '2022-08-02T13:02:18.475Z',
+          updated: '2022-08-02T15:01:56.658Z',
+        },
+      ];
+      const jobId = '09e29fa8-7283-4334-b3a4-99f75922de59';
+      getTasksByJobIdSpy.mockResolvedValue(tasksResponse);
 
-      const resposne = await requestSender.getTasksByJobId(mockCompletedJob.id);
+      const resposne = await requestSender.getTasksByJobId(jobId);
 
       expect(resposne).toSatisfyApiSpec();
-      expect(getJobByJobIdSpy).toHaveBeenCalledTimes(1);
+      expect(getTasksByJobIdSpy).toHaveBeenCalledTimes(1);
       expect(resposne.status).toBe(httpStatusCodes.OK);
     });
   });
 
   describe('Sad Path', function () {
-    it('should return 404 status code when no job was found', async function () {
+    it('should return 404 status code due to invalid string format (uuid)', async function () {
+      const tasksResponse: TaskResponse[] = [];
       const jobId = '09e29fa8-7283-4334-b3a4-99f75922de59';
-      getJobByJobIdSpy.mockRejectedValue(new NotFoundError('job not found'));
+      getTasksByJobIdSpy.mockResolvedValue(tasksResponse);
 
       const resposne = await requestSender.getTasksByJobId(jobId);
 
       expect(resposne).toSatisfyApiSpec();
-      expect(getJobByJobIdSpy).toHaveBeenCalledTimes(1);
+      expect(getTasksByJobIdSpy).toHaveBeenCalledTimes(1);
       expect(resposne.status).toBe(httpStatusCodes.NOT_FOUND);
     });
   });
@@ -61,12 +77,12 @@ describe('tasks', function () {
     it('should return 400 status code when jobId is not exists', async function () {
       const tasksResponse: TaskResponse[] = [];
       const jobId = 'string';
-      getJobByJobIdSpy.mockResolvedValue(tasksResponse);
+      getTasksByJobIdSpy.mockResolvedValue(tasksResponse);
 
       const resposne = await requestSender.getTasksByJobId(jobId);
 
       expect(resposne).toSatisfyApiSpec();
-      expect(getJobByJobIdSpy).toHaveBeenCalledTimes(0);
+      expect(getTasksByJobIdSpy).toHaveBeenCalledTimes(0);
       expect(resposne.status).toBe(httpStatusCodes.BAD_REQUEST);
     });
   });

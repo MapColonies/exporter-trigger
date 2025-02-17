@@ -31,11 +31,6 @@ export interface ITaskStatusResponse {
   status: OperationStatus;
 }
 
-export interface IJobStatusResponse {
-  percentage: number | undefined;
-  status: OperationStatus;
-}
-
 @injectable()
 export class TasksManager {
   private readonly gpkgsLocation: string;
@@ -59,7 +54,6 @@ export class TasksManager {
     return job;
   }
 
-  //This function is currently not in use and was switched to getJobStatusByJobId. wasn't deleted to enable future functionality if needed
   @withSpanAsyncV4
   public async getTaskStatusByJobId(jobId: string): Promise<ITaskStatusResponse> {
     const tasks = await this.jobManagerClient.getTasksByJobId(jobId);
@@ -71,17 +65,6 @@ export class TasksManager {
     const statusResponse: ITaskStatusResponse = {
       percentage: task.percentage,
       status: task.status,
-    };
-    return statusResponse;
-  }
-
-  @withSpanAsyncV4
-  public async getJobStatusByJobId(jobId: string): Promise<IJobStatusResponse> {
-    const job = await this.jobManagerClient.getJobByJobId(jobId);
-
-    const statusResponse: IJobStatusResponse = {
-      percentage: job.percentage,
-      status: job.status,
     };
     return statusResponse;
   }
