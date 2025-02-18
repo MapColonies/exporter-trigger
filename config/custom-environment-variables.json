@@ -44,12 +44,12 @@
     }
   },
   "jobDefinitions": {
-    "tasks": {
+    "jobs": {
       "export": {
         "type": "EXPORT_JOB_TYPE"
       }
     },
-    "jobs": {
+    "tasks": {
       "export": {
         "type": "TILES_TASK_TYPE"
       },
