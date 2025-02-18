@@ -44,7 +44,19 @@ export class JobManagerWrapper extends JobManagerClient {
   public async getExportJobs(queryParams: IFindJobsRequest): Promise<JobExportResponse[] | undefined> {
     this.logger.debug({ ...queryParams }, `Getting jobs that match these parameters`);
     const jobs = await this.get<JobExportResponse[] | undefined>('/jobs', queryParams as unknown as Record<string, unknown>);
+
+    if (jobs) {
+      const jobsWithParams = await Promise.all(jobs.map(async (job) => this.getExportJobById(job.id)));
+      return jobsWithParams;
+    }
+
     return jobs;
+  }
+
+  public async getExportJobById(jobId: string): Promise<JobExportResponse> {
+    this.logger.debug({ msg: `Getting export job by id`, jobId });
+    const job = await this.get<JobExportResponse>(`/jobs/${jobId}`);
+    return job;
   }
 
   public async createExport(data: IWorkerExportInput): Promise<ICreateExportJobResponse> {

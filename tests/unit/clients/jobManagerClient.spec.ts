@@ -109,7 +109,7 @@ describe('JobManagerClient', () => {
           get = jest.fn();
           (jobManagerClient as unknown as { get: unknown }).get = get.mockResolvedValue([inProgressExportJob]);
           const response = await jobManagerClient.getExportJobs(findJobRequest);
-          expect(get).toHaveBeenCalledTimes(1);
+          expect(get).toHaveBeenCalled();
           expect(response).toBeDefined();
         });
       });
