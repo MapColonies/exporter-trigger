@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.20.5](https://github.com/MapColonies/exporter-trigger/compare/v2.20.4...v2.20.5) (2025-02-18)
+
+
+### Bug Fixes
+
+* jobs missing parmas ([#105](https://github.com/MapColonies/exporter-trigger/issues/105)) ([de03d61](https://github.com/MapColonies/exporter-trigger/commit/de03d61a6732625b8a0a82e183aefc9f935b8dd6))
+
 ### [2.20.4](https://github.com/MapColonies/exporter-trigger/compare/v2.20.3...v2.20.4) (2024-12-09)
 
 
