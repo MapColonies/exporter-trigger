@@ -1,0 +1,77 @@
+{
+  "domain": "RASTER",
+  "openapiConfig": {
+    "filePath": "./openapi3.yaml",
+    "basePath": "/docs",
+    "rawPath": "/api",
+    "uiPath": "/api"
+  },
+  "telemetry": {
+    "tracing": {
+      "enabled": false,
+      "url": "http://localhost:4318/v1/traces"
+    },
+    "shared": {},
+    "logger": {
+      "level": "info",
+      "prettyPrint": false
+    },
+    "metrics": {
+      "enabled": false,
+      "url": "http://localhost:4318/v1/metrics",
+      "interval": 15000
+    }
+  },
+  "server": {
+    "port": 8081,
+    "request": {
+      "payload": {
+        "limit": "1mb"
+      }
+    },
+    "response": {
+      "compression": {
+        "enabled": true,
+        "options": null
+      }
+    }
+  },
+  "storageEstimation": {
+    "jpegTileEstimatedSizeInBytes": 12500,
+    "pngTileEstimatedSizeInBytes": 12500,
+    "storageFactorBuffer": 1.25
+  },
+  "cleanupExpirationDays": 30,
+  "externalClientsConfig": {
+    "clientsUrls": {
+      "jobManager": {
+        "url": "http://common-job-manager-service"
+      },
+      "rasterCatalogManager": {
+        "url": "http://raster-core-dev-raster-catalog-manager-service"
+      }
+    },
+    "httpRetry": {
+      "attempts": 5,
+      "delay": "exponential",
+      "shouldResetTimeout": true
+    },
+    "disableHttpClientLogs": false
+  },
+  "tilesProvider": "S3",
+  "gpkgsLocation": "/app/tiles_outputs/gpkgs",
+  "jobDefinitions": {
+    "tasks": {
+      "init": {
+        "type": "init"
+      }
+    },
+    "jobs": {
+      "export": {
+        "type": "Export"
+      }
+    }
+  },
+  "roiBufferMeter": 5,
+  "minContainedPercentage": 80
+}

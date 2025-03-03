@@ -1,59 +1,50 @@
-import config from 'config';
-import { logMethod } from '@map-colonies/telemetry';
-import { trace } from '@opentelemetry/api';
+import { getOtelMixin } from '@map-colonies/telemetry';
+import { trace, metrics as OtelMetrics } from '@opentelemetry/api';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
-import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
-import { SERVICES, SERVICE_NAME } from './common/constants';
-import { tracing } from './common/tracing';
-import { createPackageRouterFactory, CREATE_PACKAGE_ROUTER_SYMBOL } from './createPackage/routes/createPackageRouter';
-import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
-import { tasksRouterFactory, TASKS_ROUTER_SYMBOL } from './tasks/routes/tasksRouter';
-import { FinalizationManager, FINALIZATION_MANGER_SYMBOL } from './finalizationManager';
-import { IQueueConfig, IExternalClientsConfig, IJobDefinitions } from './common/interfaces';
-import { storageRouterFactory, STORAGE_ROUTER_SYMBOL } from './storage/routes/storageRouter';
+import jsLogger from '@map-colonies/js-logger';
+import { Metrics } from '@map-colonies/telemetry';
+import { InjectionObject, registerDependencies } from '@common/dependencyRegistration';
+import { SERVICES, SERVICE_NAME } from '@common/constants';
+import { getTracing } from '@common/tracing';
+import { getConfig } from './common/config';
+import { STORAGE_ROUTER_SYMBOL, storageRouterFactory } from './storage/routes/storageRouter';
+import { EXPORT_ROUTER_SYMBOL, exportRouterFactory } from './export/routes/exportRouter';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
   useChild?: boolean;
 }
 
-export const registerExternalValues = (options?: RegisterOptions): DependencyContainer => {
-  const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
-  const externalClientsConfig = config.get<IExternalClientsConfig>('externalClientsConfig');
-  const jobDefinitionsConfig = config.get<IJobDefinitions>('jobDefinitions');
-  const queueConfig: IQueueConfig = {
-    jobManagerBaseUrl: externalClientsConfig.clientsUrls.jobManager.url,
-    heartbeatManagerBaseUrl: externalClientsConfig.clientsUrls.heartbeatManager.url,
-    dequeueFinalizeIntervalMs: externalClientsConfig.clientsUrls.jobManager.dequeueFinalizeIntervalMs,
-    heartbeatIntervalMs: externalClientsConfig.clientsUrls.heartbeatManager.heartbeatIntervalMs,
-    jobType: jobDefinitionsConfig.jobs.export.type,
-    tilesTaskType: jobDefinitionsConfig.tasks.export.type,
-  };
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
+export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
+  const configInstance = getConfig();
+
+  const loggerConfig = configInstance.get('telemetry.logger');
+
+  const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
+
+  const metrics = new Metrics();
+  metrics.start();
 
   const tracer = trace.getTracer(SERVICE_NAME);
 
   const dependencies: InjectionObject<unknown>[] = [
-    { token: SERVICES.CONFIG, provider: { useValue: config } },
+    { token: SERVICES.CONFIG, provider: { useValue: configInstance } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
-    { token: SERVICES.QUEUE_CONFIG, provider: { useValue: queueConfig } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
+    { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
     { token: STORAGE_ROUTER_SYMBOL, provider: { useFactory: storageRouterFactory } },
-    { token: CREATE_PACKAGE_ROUTER_SYMBOL, provider: { useFactory: createPackageRouterFactory } },
-    { token: TASKS_ROUTER_SYMBOL, provider: { useFactory: tasksRouterFactory } },
-    { token: FINALIZATION_MANGER_SYMBOL, provider: { useClass: FinalizationManager } },
+    { token: EXPORT_ROUTER_SYMBOL, provider: { useFactory: exportRouterFactory } },
     {
       token: 'onSignal',
       provider: {
         useValue: {
           useValue: async (): Promise<void> => {
-            await Promise.all([tracing.stop()]);
+            await Promise.all([metrics.stop(), getTracing().stop()]);
           },
         },
       },
     },
   ];
 
-  return registerDependencies(dependencies, options?.override, options?.useChild);
+  return Promise.resolve(registerDependencies(dependencies, options?.override, options?.useChild));
 };

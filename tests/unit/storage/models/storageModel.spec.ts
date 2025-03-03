@@ -5,6 +5,10 @@ import { IStorageStatusResponse } from '../../../../src/common/interfaces';
 import { registerDefaultConfig } from '../../../mocks/config';
 import * as utils from '../../../../src/common/utils';
 
+jest.mock('../../../../src/common/utils', () => ({
+  getStorageStatus: jest.fn(),
+}));
+
 let storageManager: StorageManager;
 
 describe('Storage', () => {

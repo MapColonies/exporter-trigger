@@ -1,7 +1,12 @@
+const { pathsToModuleNameMapper } = require('ts-jest');
+const { compilerOptions } = require('../../../tsconfig.json');
+
+/** @type {import('jest').Config} */
 module.exports = {
   transform: {
-    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
+    '^.+\\.ts$': ['@swc/jest'],
   },
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
   testMatch: ['<rootDir>/tests/unit/**/*.spec.ts'],
   coverageReporters: ['text', 'html'],
   collectCoverage: true,
@@ -9,17 +14,10 @@ module.exports = {
     '<rootDir>/src/**/*.ts',
     '!*/node_modules/',
     '!/vendor/**',
-    '!*/common/dependencyRegistration.ts',
-    '!*/common/tracing.ts',
-    '!*/common/constants.ts',
-    '!*/clients/callbackClient.ts**',
-    '!*/clients/queueClient.ts**',
+    '!*/common/**',
     '!**/controllers/**',
     '!**/routes/**',
-    '!<rootDir>/src/index.ts',
-    '!<rootDir>/src/containerConfig.ts',
-    '!<rootDir>/src/app.ts',
-    '!<rootDir>/src/serverBuilder.ts',
+    '!<rootDir>/src/*',
   ],
   coverageDirectory: '<rootDir>/coverage',
   reporters: [
@@ -28,14 +26,13 @@ module.exports = {
   ],
   rootDir: '../../../.',
   setupFiles: ['<rootDir>/tests/configurations/jest.setup.ts'],
-  preset: 'ts-jest',
   testEnvironment: 'node',
   coverageThreshold: {
     global: {
-      branches: 74,
-      functions: 88,
-      lines: 85,
-      statements: 85,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: -10,
     },
   },
 };

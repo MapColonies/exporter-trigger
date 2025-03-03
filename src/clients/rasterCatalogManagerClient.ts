@@ -3,18 +3,16 @@ import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import config from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { NotFoundError } from '@map-colonies/error-types';
-import { LayerMetadata, Link } from '@map-colonies/mc-model-types';
+import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
-
-interface PycswRecord {
-  metadata: LayerMetadata;
-  links: Link[];
-}
-type PycswFindRecordResponse = PycswRecord[] | [undefined];
+import { LayerInfo } from '../common/interfaces';
 
 @injectable()
 export class RasterCatalogManagerClient extends HttpClient {
-  public constructor(@inject(SERVICES.LOGGER) protected readonly logger: Logger) {
+  public constructor(
+    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
+  ) {
     super(
       logger,
       config.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url'),
@@ -24,16 +22,17 @@ export class RasterCatalogManagerClient extends HttpClient {
     );
   }
 
-  public async findLayer(id: string): Promise<PycswRecord> {
+  public async findLayer(id: string): Promise<LayerInfo> {
     const findLayerUrl = `/records/find`;
-    this.logger.info(`Retrieving catalog record with id ${id}`);
-    const layer = (await this.post<PycswFindRecordResponse>(findLayerUrl, { id }))[0];
+    this.logger.info({ msg: `Retrieving catalog record with id ${id}` }, id);
 
-    if (!layer) {
+    const layers = await this.post<LayerInfo[]>(findLayerUrl, { id });
+
+    if (layers.length === 0) {
       throw new NotFoundError(`Could not find catalog layer with id: ${id}`);
     }
 
-    this.logger.debug(layer, `Retrieved layer with id ${id}`);
-    return layer;
+    this.logger.debug({ msg: `Retrieved layer with id ${id}` });
+    return layers[0];
   }
 }

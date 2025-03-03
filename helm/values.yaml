@@ -3,18 +3,8 @@ global:
   tracing: {}
   metrics: {}
   environment: ""
-  serviceUrls:
-    catalogManager: ""
-    heartbeatManager: ""
-    jobManager: ""
-    downloadServerPublicDNS: ""
-  storage:
-    tilesStorageProvider: ""
-    fs:
-      internalPvc:
-        enabled: false
-        name: ""
-        gpkgSubPath: ""
+  serviceUrls: {}
+  storage: {}
   ingress:
     domain: 'apps.aroapp.io'  
   jobDefinitions: {}
@@ -25,16 +15,12 @@ jobDefinitions:
     export:
       type: ""
   tasks:
-    export:
-      type: ""
-    finalize:
+    init:
       type: ""
 
 serviceUrls:
   catalogManager: ""
-  heartbeatManager: ""
   jobManager: ""
-  downloadServerPublicDNS: ""
 storage:
   tilesStorageProvider: ''
   fs:
@@ -42,6 +28,7 @@ storage:
       enabled: false
       name: ""
       gpkgSubPath: ""
+      exportPath: ""
 
 enabled: true
 environment: development
@@ -85,7 +72,6 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  finalizePollingTimeMS: 2000
   disableHttpClientLogs: false
   cleanupExpirationDays: 30
   httpRetry:
@@ -96,11 +82,6 @@ env:
     jpegTileEstimatedSizeInBytes: 27000
     pngTileEstimatedSizeInBytes: 263000
     storageFactorBuffer: 1.25
-    validateStorageSize: true
-  queue:
-    dequeueFinalizeIntervalMs: 2000
-    heartbeatIntervalMs: 300
-    finalizeTasksAttempts: 3
   roiBufferMeter: 5
   minContainedPercentage: 80  
 

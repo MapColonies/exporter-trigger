@@ -15,10 +15,7 @@
       }
     },
     "tracing": {
-      "enabled": {
-        "__name": "TELEMETRY_TRACING_ENABLED",
-        "__format": "boolean"
-      },
+      "enabled": "TELEMETRY_TRACING_ENABLED",
       "url": "TELEMETRY_TRACING_URL"
     },
     "metrics": {
@@ -28,7 +25,7 @@
     }
   },
   "server": {
-    "port": "SERVER_PORT",
+    "port": { "__name": "SERVER_PORT", "__format": "number" },
     "request": {
       "payload": {
         "limit": "REQUEST_PAYLOAD_LIMIT"
@@ -44,17 +41,14 @@
     }
   },
   "jobDefinitions": {
-    "tasks": {
+    "jobs": {
       "export": {
         "type": "EXPORT_JOB_TYPE"
       }
     },
-    "jobs": {
-      "export": {
-        "type": "TILES_TASK_TYPE"
-      },
-      "finalize": {
-        "type": "FINALIZE_TASK_TYPE"
+    "tasks": {
+      "init": {
+        "type": "INIT_TASK_TYPE"
       }
     }
   },
@@ -70,10 +64,6 @@
     "storageFactorBuffer": {
       "__name": "STORAGE_FACTOR_BUFFER",
       "__format": "number"
-    },
-    "validateStorageSize": {
-      "__name": "VALIDATE_STORAGE_SIZE",
-      "__format": "boolean"
     }
   },
   "cleanupExpirationDays": {
@@ -82,33 +72,13 @@
   },
   "tilesProvider": "TILES_PROVIDER",
   "gpkgsLocation": "GPKGS_LOCATION",
-  "downloadServerUrl": "DOWNLOAD_SERVER_PUBLIC_DNS",
-  "finalizePollingTimeMS": {
-    "__name": "FINALIZE_POLLING_TIMEOUT_MS",
-    "__format": "number"
-  },
   "externalClientsConfig": {
     "clientsUrls": {
       "jobManager": {
-        "url": "JOB_MANAGER_URL",
-        "dequeueFinalizeIntervalMs": {
-          "__name": "QUEUE_DEQUEUE_FINALIZE_INTERVAL_MS",
-          "__format": "number"
-        },
-        "finalizeTasksAttempts": {
-          "__name": "FINALIZE_TASKS_ATTEMPTS",
-          "__format": "number"
-        }
+        "url": "JOB_MANAGER_URL"
       },
       "rasterCatalogManager": {
         "url": "RASTER_CATALOG_MANAGER_URL"
-      },
-      "heartbeatManager": {
-        "url": "QUEUE_HEART_BEAT_MANAGER_BASE_URL",
-        "heartbeatIntervalMs": {
-          "__name": "QUEUE_HEART_BEAT_INTERVAL_MS",
-          "__format": "number"
-        }
       }
     },
     "httpRetry": {

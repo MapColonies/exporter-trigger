@@ -10,7 +10,7 @@
 {{- $fs := (include "common.fs.merged" .) | fromYaml }}
 {{- $configmapName := include "configmap.fullname" . }}
 {{- $deploymentName := include "deployment.fullname" . }}
-{{ $gpkgPath := (printf "%s%s" "/app/tiles_outputs/" $fs.internalPvc.gpkgSubPath) }}
+{{ $gpkgLocation := (printf "%s%s" $fs.internalPvc.exportPath $fs.internalPvc.gpkgSubPath) }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -62,7 +62,7 @@ spec:
             - name: SERVER_PORT
               value: {{ .Values.env.targetPort | quote }}
             - name: GPKGS_LOCATION
-              value: {{ $gpkgPath }}
+              value: {{ $gpkgLocation }}
           envFrom:
             - configMapRef:
                 name: {{ $configmapName }}

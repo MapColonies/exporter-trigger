@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { FeatureCollection } from '@turf/helpers';
+import { RoiFeatureCollection } from '@map-colonies/raster-shared';
+import { BBox, Polygon } from 'geojson';
 
-export const multiplePolygonsFeatureCollection: FeatureCollection = {
+export const multiplePolygonsFeatureCollection: RoiFeatureCollection = {
   type: 'FeatureCollection',
   features: [
     {
       type: 'Feature',
-      properties: {},
+      properties: { maxResolutionDeg: 0.000000335276126861572, minResolutionDeg: 0.703125 },
       geometry: {
         coordinates: [
           [
@@ -21,7 +22,7 @@ export const multiplePolygonsFeatureCollection: FeatureCollection = {
     },
     {
       type: 'Feature',
-      properties: {},
+      properties: { maxResolutionDeg: 0.000000335276126861572, minResolutionDeg: 0.703125 },
       geometry: {
         coordinates: [
           [
@@ -38,12 +39,12 @@ export const multiplePolygonsFeatureCollection: FeatureCollection = {
   ],
 };
 
-export const jobRoiFeature: FeatureCollection = {
+export const jobRoiFeature: RoiFeatureCollection = {
   type: 'FeatureCollection',
   features: [
     {
       type: 'Feature',
-      properties: {},
+      properties: { maxResolutionDeg: 0.000000335276126861572, minResolutionDeg: 0.703125 },
       geometry: {
         coordinates: [
           [
@@ -60,12 +61,12 @@ export const jobRoiFeature: FeatureCollection = {
   ],
 };
 
-export const containedExportRoi: FeatureCollection = {
+export const containedExportRoi: RoiFeatureCollection = {
   type: 'FeatureCollection',
   features: [
     {
       type: 'Feature',
-      properties: {},
+      properties: { maxResolutionDeg: 0.000000335276126861572, minResolutionDeg: 0.703125 },
       geometry: {
         coordinates: [
           [
@@ -83,12 +84,12 @@ export const containedExportRoi: FeatureCollection = {
   ],
 };
 
-export const notContainedExportRoi: FeatureCollection = {
+export const notContainedExportRoi: RoiFeatureCollection = {
   type: 'FeatureCollection',
   features: [
     {
       type: 'Feature',
-      properties: {},
+      properties: { maxResolutionDeg: 0.000000335276126861572, minResolutionDeg: 0.703125 },
       geometry: {
         coordinates: [
           [
@@ -104,3 +105,52 @@ export const notContainedExportRoi: FeatureCollection = {
     },
   ],
 };
+export const sanitizeBboxRequestMock = {
+  polygon: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [34.86025969360023, 32.297819227383755],
+        [34.86025969360023, 32.29696357462812],
+        [34.86612643893457, 32.29696357462812],
+        [34.86612643893457, 32.297819227383755],
+        [34.86025969360023, 32.297819227383755],
+      ],
+    ],
+  } as Polygon,
+  footprint: {
+    type: 'Polygon',
+    bbox: [34.85149443279957, 32.29430955805424, 34.86824157112912, 32.30543192283443],
+    coordinates: [
+      [
+        [34.85149445922802, 32.29430958448269],
+        [34.85149443279957, 32.2943098528153],
+        [34.85149443279957, 32.305431628073364],
+        [34.85149445922802, 32.30543189640598],
+        [34.851494727560635, 32.30543192283443],
+        [34.86824127636805, 32.30543192283443],
+        [34.868241544700666, 32.30543189640598],
+        [34.86824157112912, 32.305431628073364],
+        [34.86824157112912, 32.2943098528153],
+        [34.868241544700666, 32.29430958448269],
+        [34.86824127636805, 32.29430955805424],
+        [34.851494727560635, 32.29430955805424],
+        [34.85149445922802, 32.29430958448269],
+      ],
+    ],
+  } as Polygon,
+  zoom: 0,
+};
+
+export const notIntersectedPolygon: Polygon = {
+  type: 'Polygon',
+  coordinates: [
+    [
+      [34.88947511126764, 32.32874115927288],
+      [34.90334965519068, 32.328129635917946],
+      [34.90664229896407, 32.33629836392919],
+      [34.88947511126764, 32.32874115927288],
+    ],
+  ],
+};
+export const sanitizeBboxMock: BBox = [0, -90, 180, 90];

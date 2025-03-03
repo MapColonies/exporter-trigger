@@ -1,33 +1,23 @@
-import { trace } from '@opentelemetry/api';
 import jsLogger from '@map-colonies/js-logger';
 import { container } from 'tsyringe';
-import { SERVICES } from '../../src/common/constants';
-import { configMock, registerDefaultConfig, getMock, hasMock } from '../mocks/config';
-import { InjectionObject } from '../../src/common/dependencyRegistration';
-import { IExternalClientsConfig, IJobDefinitions, IQueueConfig } from '../../src/common/interfaces';
+import { trace } from '@opentelemetry/api';
+import { SERVICES } from '@common/constants';
+import { InjectionObject } from '@common/dependencyRegistration';
+import { STORAGE_ROUTER_SYMBOL, storageRouterFactory } from '@src/storage/routes/storageRouter';
+import { EXPORT_ROUTER_SYMBOL, exportRouterFactory } from '@src/export/routes/exportRouter';
+import { configMock, getMock, hasMock, registerDefaultConfig } from '../mocks/config';
 
-function getContainerConfig(): InjectionObject<unknown>[] {
+function getTestContainerConfig(): InjectionObject<unknown>[] {
   registerDefaultConfig();
-  const externalClientsConfig = configMock.get<IExternalClientsConfig>('externalClientsConfig');
-  const jobDefinitionsConfig = configMock.get<IJobDefinitions>('jobDefinitions');
-  const queueConfig: IQueueConfig = {
-    jobManagerBaseUrl: externalClientsConfig.clientsUrls.jobManager.url,
-    heartbeatManagerBaseUrl: externalClientsConfig.clientsUrls.heartbeatManager.url,
-    dequeueFinalizeIntervalMs: externalClientsConfig.clientsUrls.jobManager.dequeueFinalizeIntervalMs,
-    heartbeatIntervalMs: externalClientsConfig.clientsUrls.heartbeatManager.heartbeatIntervalMs,
-    jobType: jobDefinitionsConfig.jobs.export.type,
-    tilesTaskType: jobDefinitionsConfig.tasks.export.type,
-  };
-
-  const testTracer = trace.getTracer('testTracer');
-
   return [
     { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
     { token: SERVICES.CONFIG, provider: { useValue: configMock } },
-    { token: SERVICES.QUEUE_CONFIG, provider: { useValue: queueConfig } },
-    { token: SERVICES.TRACER, provider: { useValue: testTracer } },
+    { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+    { token: STORAGE_ROUTER_SYMBOL, provider: { useFactory: storageRouterFactory } },
+    { token: EXPORT_ROUTER_SYMBOL, provider: { useFactory: exportRouterFactory } },
   ];
 }
+
 const resetContainer = (clearInstances = true): void => {
   if (clearInstances) {
     container.clearInstances();
@@ -37,4 +27,4 @@ const resetContainer = (clearInstances = true): void => {
   hasMock.mockReset();
 };
 
-export { getContainerConfig, resetContainer };
+export { getTestContainerConfig, resetContainer };
