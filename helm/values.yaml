@@ -8,7 +8,7 @@ global:
   ingress:
     domain: 'apps.aroapp.io'
   jobDefinitions: {}
-  domain: ''  
+  domain: ''
 
 jobDefinitions:
   jobs:
