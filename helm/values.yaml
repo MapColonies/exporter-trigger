@@ -28,7 +28,7 @@ storage:
       enabled: false
       name: ""
       gpkgSubPath: ""
-      exportPath: ""
+      outputPath: ""
 
 enabled: true
 environment: development
