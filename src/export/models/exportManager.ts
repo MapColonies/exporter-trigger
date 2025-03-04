@@ -31,6 +31,7 @@ import { ValidationManager } from './validationManager';
 export class ExportManager {
   private readonly tilesProvider: SourceType;
   private readonly gpkgsLocation: string;
+  private readonly jobTrackerUrl: string;
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
@@ -42,6 +43,7 @@ export class ExportManager {
     this.tilesProvider = config.get<SourceType>('tilesProvider');
     this.gpkgsLocation = config.get<string>('gpkgsLocation');
     this.tilesProvider = this.tilesProvider.toUpperCase() as SourceType;
+    this.jobTrackerUrl = config.get<string>('externalClientsConfig.clientsUrls.jobTracker.url');
   }
 
   @withSpanAsyncV4
@@ -96,6 +98,7 @@ export class ExportManager {
       targetFormat: layerMetadata.tileOutputFormat,
       outputFormatStrategy: TileFormatStrategy.MIXED,
       gpkgEstimatedSize: estimatesGpkgSize,
+      jobTrackerUrl: this.jobTrackerUrl,
     };
     const jobCreated = await this.jobManagerClient.createExportJob(exportInitRequest);
     return jobCreated;

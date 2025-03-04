@@ -144,6 +144,7 @@ export const createExportData: IExportInitRequest = {
   targetFormat: TileOutputFormat.PNG,
   outputFormatStrategy: 'mixed',
   gpkgEstimatedSize: 1111,
+  jobTrackerUrl: 'http://job-tracker',
 };
 
 export function generateCreateJobRequest(createExportData: IExportInitRequest): CreateExportJobBody {
@@ -165,6 +166,7 @@ export function generateCreateJobRequest(createExportData: IExportInitRequest): 
         outputFormatStrategy: createExportData.outputFormatStrategy,
         targetFormat: createExportData.targetFormat,
         gpkgEstimatedSize: createExportData.gpkgEstimatedSize,
+        jobTrackerServiceURL: createExportData.jobTrackerUrl,
       },
       cleanupDataParams: {
         directoryPath: createExportData.relativeDirectoryPath,
@@ -236,6 +238,7 @@ export const initExportRequestBody = {
       outputFormatStrategy: TileFormatStrategy.MIXED,
       targetFormat: TileOutputFormat.PNG,
       gpkgEstimatedSize: 12500,
+      jobTrackerServiceURL: 'http://job-tracker',
     },
     cleanupDataParams: {
       directoryPath: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7',
@@ -319,6 +322,7 @@ export const initExportRequestBodyNoRoiWithCallback = {
       outputFormatStrategy: TileFormatStrategy.MIXED,
       targetFormat: TileOutputFormat.PNG,
       gpkgEstimatedSize: 12500,
+      jobTrackerServiceURL: 'http://job-tracker',
     },
     cleanupDataParams: {
       directoryPath: 'b30e5a99b78a6c10e65164fd54b14ad0',

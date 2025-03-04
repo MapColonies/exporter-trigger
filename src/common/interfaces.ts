@@ -83,6 +83,7 @@ export interface IExportInitRequest {
   targetFormat: TileOutputFormat;
   outputFormatStrategy: TileFormatStrategy;
   description?: string;
+  jobTrackerUrl: string;
 }
 
 export type CreateExportJobBody = ICreateJobBody<ExportJobParameters, ITaskParameters>;

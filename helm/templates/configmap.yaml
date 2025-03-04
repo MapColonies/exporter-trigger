@@ -26,6 +26,7 @@ data:
   TELEMETRY_METRICS_URL: {{ $metrics.url | quote }}
   {{ end }}
   JOB_MANAGER_URL: {{ $serviceUrls.jobManager | quote }}
+  JOB_TRACKER_URL: {{ $serviceUrls.jobTracker | quote }}
   CLEANUP_EXPIRATION_DAYS: {{ .Values.env.cleanupExpirationDays | quote }}
   RASTER_CATALOG_MANAGER_URL: {{ $serviceUrls.catalogManager | quote }}
   JOB_DOMAIN: {{ .Values.global.domain | quote }}

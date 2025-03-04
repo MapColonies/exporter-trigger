@@ -107,6 +107,7 @@ export class JobManagerWrapper extends JobManagerClient {
         gpkgEstimatedSize: data.gpkgEstimatedSize,
         targetFormat: data.targetFormat,
         outputFormatStrategy: data.outputFormatStrategy,
+        jobTrackerServiceURL: data.jobTrackerUrl,
       },
       cleanupDataParams: {
         directoryPath: data.relativeDirectoryPath,

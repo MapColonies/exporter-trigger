@@ -86,6 +86,9 @@ const registerDefaultConfig = (): void => {
         rasterCatalogManager: {
           url: 'http://raster-catalog-manager',
         },
+        jobTracker: {
+          url: 'http://job-tracker',
+        },
       },
       httpRetry: {
         attempts: 5,

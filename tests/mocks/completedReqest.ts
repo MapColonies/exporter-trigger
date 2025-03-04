@@ -83,6 +83,7 @@ export const completedExportJobsResponse = [
         outputFormatStrategy: TileFormatStrategy.MIXED,
         targetFormat: TileOutputFormat.PNG,
         gpkgEstimatedSize: 11111,
+        jobTrackerServiceURL: 'http://job-tracker',
       },
       exportInputParams: {
         crs: 'EPSG:4326',
@@ -209,6 +210,7 @@ export const completedExportJobsResponse = [
         outputFormatStrategy: TileFormatStrategy.MIXED,
         targetFormat: TileOutputFormat.PNG,
         gpkgEstimatedSize: 11111,
+        jobTrackerServiceURL: 'http://job-tracker',
       },
       exportInputParams: {
         crs: 'EPSG:4326',

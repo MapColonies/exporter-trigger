@@ -79,6 +79,9 @@
       },
       "rasterCatalogManager": {
         "url": "RASTER_CATALOG_MANAGER_URL"
+      },
+      "jobTracker": {
+        "url": "JOB_TRACKER_URL"
       }
     },
     "httpRetry": {
