@@ -13,7 +13,8 @@ import {
   pendingExportParams,
   processingResponse,
 } from '@tests/mocks/processingRequest';
-import { ExportJobParameters } from '@map-colonies/raster-shared';
+import { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
+import { JobExportResponse } from '@src/common/interfaces';
 import { RasterCatalogManagerClient } from '../../../../src/clients/rasterCatalogManagerClient';
 import { JobManagerWrapper } from '../../../../src/clients/jobManagerWrapper';
 import { dupParams, layerInfo, validateFeatureCollection } from '../../../mocks/data';
@@ -316,10 +317,17 @@ describe('ValidationManager', () => {
         .put(`/jobs/${duplicateJob[0].id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
         .reply(200, []);
 
-      //const updateCallbackSpy = jest.spyOn(validationManager as unknown as ValidationManager, 'updateExportCallbackURLs');
+      const updateCallbackSpy = jest.spyOn(
+        validationManager as unknown as {
+          updateExportCallbackURLs: (processingJob: JobExportResponse, newCallbacks?: CallbackUrlsTargetArray) => Promise<void>;
+        },
+        'updateExportCallbackURLs'
+      );
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, addedCallbackUrl);
 
       expect(result).toEqual(processingResponse);
+
+      expect(updateCallbackSpy).toHaveBeenNthCalledWith(1, duplicateJob[0], addedCallbackUrl);
       //expect(updateCallbackSpy).toHaveBeenCalledTimes(1);
     });
 

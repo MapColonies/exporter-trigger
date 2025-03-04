@@ -184,11 +184,12 @@ export class ValidationManager {
     if (!newCallbacks) {
       return;
     }
+    const updatedParameters = structuredClone(processingJob.parameters);
 
-    if (!processingJob.parameters.exportInputParams.callbackUrls) {
-      processingJob.parameters.exportInputParams.callbackUrls = newCallbacks;
+    if (!updatedParameters.exportInputParams.callbackUrls) {
+      updatedParameters.exportInputParams.callbackUrls = newCallbacks;
     } else {
-      const callbacks = processingJob.parameters.exportInputParams.callbackUrls;
+      const callbacks = updatedParameters.exportInputParams.callbackUrls;
       for (const newCallback of newCallbacks) {
         const hasCallback = callbacks.some((callbackUrls) => callbackUrls.url === newCallback.url);
         if (!hasCallback) {
@@ -196,8 +197,9 @@ export class ValidationManager {
         }
       }
     }
+
     await this.jobManagerClient.updateJob<ExportJobParameters>(processingJob.id, {
-      parameters: processingJob.parameters,
+      parameters: updatedParameters,
     });
   }
 
