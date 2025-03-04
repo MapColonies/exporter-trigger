@@ -19,6 +19,7 @@ import {
   RasterProductTypes,
   RoiFeatureCollection,
   RasterLayerMetadata,
+  CORE_VALIDATIONS,
 } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateExportRequest } from '@src/utils/zod/schemas';
@@ -142,7 +143,7 @@ export class ExportManager {
   private setRoi(layerMetadata: RasterLayerMetadata): RoiFeatureCollection {
     // convert and wrap layer's footprint to featureCollection
     const layerMaxResolutionDeg = layerMetadata.maxResolutionDeg;
-    const layerMinResolutionDeg = layerMetadata.minResolutionDeg;
+    const layerMinResolutionDeg = CORE_VALIDATIONS.resolutionDeg.max;
     const layerFeature = feature<Polygon | MultiPolygon, RoiProperties>(layerMetadata.footprint as Polygon | MultiPolygon, {
       maxResolutionDeg: layerMaxResolutionDeg,
       minResolutionDeg: layerMinResolutionDeg,
