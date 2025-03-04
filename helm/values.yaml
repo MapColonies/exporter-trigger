@@ -6,9 +6,9 @@ global:
   serviceUrls: {}
   storage: {}
   ingress:
-    domain: 'apps.aroapp.io'  
+    domain: 'apps.aroapp.io'
   jobDefinitions: {}
-  domain: ''        
+  domain: ''  
 
 jobDefinitions:
   jobs:
@@ -34,7 +34,7 @@ enabled: true
 environment: development
 replicaCount: 1
 initialDelaySeconds: 60
-nodePort: 30030 #for minikube deployment only
+nodePort: 30030     # for minikube deployment only
 resetOnConfigChange: true
 imagePullPolicy: Always
 
@@ -83,7 +83,7 @@ env:
     pngTileEstimatedSizeInBytes: 263000
     storageFactorBuffer: 1.25
   roiBufferMeter: 5
-  minContainedPercentage: 80  
+  minContainedPercentage: 80
 
 resources:
   enabled: true
@@ -102,12 +102,12 @@ route:
   https: true
   useCert: false
   timeout:
-    enabled: false # defaults to 30s by openshift
-    duration: 60s # supported units (us, ms, s, m, h, d)
+    enabled: false    # defaults to 30s by openshift
+    duration: 60s     # supported units (us, ms, s, m, h, d)
 
 ingress:
   enabled: false
-  type: 'nginx-org' # supported values: 'nginx-org' | 'nginx-kubernetes
+  type: 'nginx-org'     # supported values: 'nginx-org' | 'nginx-kubernetes
   path: /
   host: 'localhost'
   cors:
