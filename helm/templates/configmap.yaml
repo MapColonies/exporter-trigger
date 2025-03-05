@@ -42,4 +42,5 @@ data:
   INIT_TASK_TYPE: {{ $jobDefinitions.tasks.init.type | quote }}
   ROI_BUFFER_METER: {{ .Values.env.roiBufferMeter | quote }}
   MIN_CONTAINED_PERCENTAGE: {{ .Values.env.minContainedPercentage | quote }}
+  CONFIG_OFFLINE_MODE: {{ .Values.global.configOfflineMode | quote }}
 {{- end }}

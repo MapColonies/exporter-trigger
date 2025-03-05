@@ -9,6 +9,7 @@ global:
     domain: 'apps.aroapp.io'
   jobDefinitions: {}
   domain: ''
+  configOfflineMode: false
 
 jobDefinitions:
   jobs:
