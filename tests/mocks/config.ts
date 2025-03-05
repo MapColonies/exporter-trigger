@@ -52,7 +52,7 @@ const registerDefaultConfig = (): void => {
         prettyPrint: false,
       },
       tracing: {
-        enabled: false,
+        isEnabled: false,
         url: 'http://mock_trace_url/collector',
       },
     },
