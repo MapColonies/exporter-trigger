@@ -25,11 +25,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internalError'
-  /create/roi:
+                $ref: '#/components/schemas/ErrorMessage'
+  /export:
     post:
       tags:
-        - createGpkg
+        - export
       summary: >-
         Trigger export geopackages based on providing Regions of interest
         (multi-resolution)
@@ -43,40 +43,50 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/createRoiGpkgJobResponse'
-                  - $ref: '#/components/schemas/exportNaiveCacheJobResponse'
+                  - $ref: '#/components/schemas/ExportNaiveCacheJobResponse'
+                  - $ref: '#/components/schemas/CreateExportJobResponse'
                 discriminator:
-                  propertyName: response
+                  propertyName: status
+                  mapping:
+                    Completed: '#/components/schemas/ExportNaiveCacheJobResponse'
+                    In-Progress: '#/components/schemas/CreateExportJobResponse'
+                    Pending: '#/components/schemas/CreateExportJobResponse'
         '400':
           description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/ErrorMessage'
         '404':
           description: Could not find layer with matched dbId
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: Duplicate Export Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
         '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internalError'
+                $ref: '#/components/schemas/ErrorMessage'
         '507':
           description: Insufficient Storage on disk for exporting
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
-  /taskStatus/{jobId}:
+                $ref: '#/components/schemas/ErrorMessage'
+  /export/{jobId}/status:
     get:
       tags:
-        - tasks
-      summary: Get task status by job id
-      operationId: getTaskStatusByJobId
+        - export
+      summary: Get export status by job id
+      operationId: getJobStatusById
       parameters:
         - name: jobId
           in: path
@@ -90,25 +100,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/getTaskStatusResponse'
+                $ref: '#/components/schemas/GetJobStatusResponse'
         '400':
           description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/ErrorMessage'
         '404':
           description: Could not find task with matched jobId
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/ErrorMessage'
         '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internalError'
+                $ref: '#/components/schemas/ErrorMessage'
+
 components:
   requestBodies:
     ExportByRoiBody:
@@ -117,7 +128,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/exportFromFeatures'
+            $ref: '#/components/schemas/ExportFromFeatures'
   schemas:
     StorageResponse:
       type: object
@@ -130,19 +141,7 @@ components:
           type: number
         size:
           type: number
-    CommonResponse:
-      type: object
-      required:
-        - status
-      properties:
-        status:
-          type: string
-          enum:
-            - In-Progress
-            - Completed
-      discriminator:
-        propertyName: response
-    exportFromFeatures:
+    ExportFromFeatures:
       type: object
       properties:
         dbId:
@@ -196,93 +195,36 @@ components:
         crs: EPSG:4326
         priority: 0
         description: This is roi exporting example
-    createGpkgJobResponse:
-      allOf:
-        - $ref: '#/components/schemas/CommonResponse'
+    CreateExportJobResponse:
       type: object
       properties:
-        id:
+        status:
           type: string
-          format: uuid
-        taskIds:
-          type: array
-          items:
-            type: string
-            format: uuid
-      required:
-        - id
-        - taskIds
-    createRoiGpkgJobResponse:
-      allOf:
-        - $ref: '#/components/schemas/CommonResponse'
-      type: object
-      properties:
+          enum:
+            - In-Progress
+            - Pending
         jobId:
           type: string
           format: uuid
-        taskIds:
-          type: array
-          items:
-            type: string
-            format: uuid
         isDuplicated:
           type: boolean
+        percentage:
+          type: number
       required:
         - jobId
-        - taskIds
-    naiveCacheJobResponse:
-      allOf:
-        - $ref: '#/components/schemas/CommonResponse'
+        - status
+    ExportNaiveCacheJobResponse:
       type: object
       properties:
         status:
           type: string
           enum:
             - Completed
-        fileUri:
-          type: string
-        expirationTime:
-          type: string
-          format: date
-        fileSize:
-          type: number
-        dbId:
-          type: string
-          format: uuid
-        packageName:
-          type: string
-        bbox:
-          oneOf:
-            - $ref: '#/components/schemas/BBox'
-            - $ref: '#/components/schemas/Geometry'
-        targetResolution:
-          type: number
-        requestId:
-          type: string
-        success:
-          type: boolean
-        errorReason:
-          type: string
-      required:
-        - fileUri
-        - expirationTime
-        - fileSize
-        - dbId
-        - packageName
-        - bbox
-        - targetResolution
-        - requestId
-        - success
-    exportNaiveCacheJobResponse:
-      allOf:
-        - $ref: '#/components/schemas/CommonResponse'
-      type: object
-      properties:
         links:
-          $ref: '#/components/schemas/callbackLinks'
+          $ref: '#/components/schemas/CallbackLinks'
         expirationTime:
           type: string
-          format: date
+          format: date-time
         fileSize:
           type: number
         recordCatalogId:
@@ -297,26 +239,37 @@ components:
           format: uuid
         errorReason:
           type: string
+        artifacts:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+              name:
+                type: string
+              size:
+                type: number
+              type:
+                type: string
+            required:
+              - url
+              - name
+              - type
+              - size
       required:
         - links
         - expirationTime
         - fileSize
         - recordCatalogId
-        - roi
         - jobId
+        - artifacts
+        - roi
         - status
-    error:
+    ErrorMessage:
       type: object
       required:
         - message
-      properties:
-        message:
-          type: string
-    internalError:
-      type: object
-      required:
-        - message
-        - stacktrace
       properties:
         message:
           type: string
@@ -388,7 +341,7 @@ components:
       description: >-
         Bounding box corners (lower left, upper right)=[minx,miny,maxx,maxy] in
         crs units as array. If empty - original layer's bbox is taken.
-    getTaskStatusResponse:
+    GetJobStatusResponse:
       type: object
       properties:
         percentage:
@@ -405,6 +358,7 @@ components:
             - Failed
             - Expired
             - Aborted
+            - Suspended
     GeometryCollection:
       type: object
       description: GeoJSon geometry collection
@@ -473,19 +427,15 @@ components:
             - Polygon
             - MultiPolygon
           description: the geometry type
-    callbackLinks:
+    CallbackLinks:
       type: object
       description: gpkg links - the geoPackage + metadata.json
       required:
         - dataURI
-        - metadataURI
       properties:
         dataURI:
           type: string
           description: Url to download the gpkg
-        metadataURI:
-          type: string
-          description: Url to download the gpkg's metadata.json
     Point2D:
       type: array
       maxItems: 2

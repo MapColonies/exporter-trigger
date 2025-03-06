@@ -12,8 +12,10 @@ Build an image with the provided `Dockerfile`, then run it.
 * JOB_MANAGER_URL
 * JOB_MANAGER_EXPIRATION_TIME - amount of days from creation till this job is expired
 * RASTER_CATALOG_MANAGER_URL
-* WORKER_TYPES_TILES_JOB_TYPE - configuration for exporter job type
-* WORKER_TYPES_TILES_TASK_TYPE - configuration for exporter task type
+* EXPORT_JOB_TYPE - configuration for exporter job type
+* INIT_TASK_TYPE - configuration for exporter init task type
+* ROI_BUFFER_METER - geometry buffer in meters
+* MIN_CONTAINED_PERCENTAGE - minimum containment requirement for duplication validation
 
 **HTTP Requests**
 * HTTP_RETRY_ATTEMPTS

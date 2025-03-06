@@ -3,38 +3,26 @@ global:
   tracing: {}
   metrics: {}
   environment: ""
-  serviceUrls:
-    catalogManager: ""
-    heartbeatManager: ""
-    jobManager: ""
-    downloadServerPublicDNS: ""
-  storage:
-    tilesStorageProvider: ""
-    fs:
-      internalPvc:
-        enabled: false
-        name: ""
-        gpkgSubPath: ""
+  serviceUrls: {}
+  storage: {}
   ingress:
-    domain: 'apps.aroapp.io'  
+    domain: 'apps.aroapp.io'
   jobDefinitions: {}
-  domain: ''        
+  domain: ''
+  configOfflineMode: false
 
 jobDefinitions:
   jobs:
     export:
       type: ""
   tasks:
-    export:
-      type: ""
-    finalize:
+    init:
       type: ""
 
 serviceUrls:
   catalogManager: ""
-  heartbeatManager: ""
   jobManager: ""
-  downloadServerPublicDNS: ""
+  jobTracker: ""
 storage:
   tilesStorageProvider: ''
   fs:
@@ -42,12 +30,13 @@ storage:
       enabled: false
       name: ""
       gpkgSubPath: ""
+      outputPath: ""
 
 enabled: true
 environment: development
 replicaCount: 1
 initialDelaySeconds: 60
-nodePort: 30030 #for minikube deployment only
+nodePort: 30030     # for minikube deployment only
 resetOnConfigChange: true
 imagePullPolicy: Always
 
@@ -85,7 +74,6 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  finalizePollingTimeMS: 2000
   disableHttpClientLogs: false
   cleanupExpirationDays: 30
   httpRetry:
@@ -96,13 +84,8 @@ env:
     jpegTileEstimatedSizeInBytes: 27000
     pngTileEstimatedSizeInBytes: 263000
     storageFactorBuffer: 1.25
-    validateStorageSize: true
-  queue:
-    dequeueFinalizeIntervalMs: 2000
-    heartbeatIntervalMs: 300
-    finalizeTasksAttempts: 3
   roiBufferMeter: 5
-  minContainedPercentage: 80  
+  minContainedPercentage: 80
 
 resources:
   enabled: true
@@ -121,12 +104,12 @@ route:
   https: true
   useCert: false
   timeout:
-    enabled: false # defaults to 30s by openshift
-    duration: 60s # supported units (us, ms, s, m, h, d)
+    enabled: false    # defaults to 30s by openshift
+    duration: 60s     # supported units (us, ms, s, m, h, d)
 
 ingress:
   enabled: false
-  type: 'nginx-org' # supported values: 'nginx-org' | 'nginx-kubernetes
+  type: 'nginx-org'     # supported values: 'nginx-org' | 'nginx-kubernetes
   path: /
   host: 'localhost'
   cors:

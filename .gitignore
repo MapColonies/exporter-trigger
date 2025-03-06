@@ -75,7 +75,6 @@ typings/
 .env
 .env.test
 config.json
-local.json
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -112,8 +111,4 @@ dist
 jest_html_reporters.html
 reports
 
-# Helm
-local.yaml
-
-# Config
-local.json
+local*.json

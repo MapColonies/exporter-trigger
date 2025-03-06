@@ -1,18 +1,27 @@
 import httpStatusCodes from 'http-status-codes';
 import { InvalidPathError, NoMatchError } from 'check-disk-space';
+import { initConfig } from '@src/common/config';
 import { getApp } from '../../../src/app';
-import { getContainerConfig, resetContainer } from '../testContainerConfig';
+import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { IStorageStatusResponse } from '../../../src/common/interfaces';
 import * as utils from '../../../src/common/utils';
 import { StorageSender } from './helpers/storageSender';
+
+jest.mock('../../../src/common/utils', () => ({
+  getStorageStatus: jest.fn(),
+}));
 
 describe('storage', function () {
   let requestSender: StorageSender;
   let getStorageSpy: jest.SpyInstance;
 
-  beforeEach(function () {
-    const app = getApp({
-      override: [...getContainerConfig()],
+  beforeAll(async function () {
+    await initConfig(true);
+  });
+
+  beforeEach(async function () {
+    const [app] = await getApp({
+      override: [...getTestContainerConfig()],
       useChild: true,
     });
     requestSender = new StorageSender(app);
@@ -41,7 +50,7 @@ describe('storage', function () {
     });
   });
 
-  describe('Bad Path', function () {
+  describe('Sad Path', function () {
     it('should return 500 status code because of invalid path', async function () {
       getStorageSpy.mockImplementation(() => {
         throw new InvalidPathError();

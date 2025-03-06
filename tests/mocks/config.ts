@@ -2,20 +2,39 @@ import config from 'config';
 import { get, has } from 'lodash';
 import { IConfig } from '../../src/common/interfaces';
 
+let mockConfig: Record<string, unknown> = {};
 const getMock = jest.fn();
 const hasMock = jest.fn();
 
-const configMock = {
+const configMock: IConfig = {
   get: getMock,
   has: hasMock,
-} as unknown as IConfig;
+};
+
+const init = (): void => {
+  getMock.mockImplementation((key: string): unknown => {
+    return mockConfig[key] ?? config.get(key);
+  });
+};
+
+const setValue = (key: string | Record<string, unknown>, value?: unknown): void => {
+  if (typeof key === 'string') {
+    mockConfig[key] = value;
+  } else {
+    mockConfig = { ...mockConfig, ...key };
+  }
+};
+
+const clear = (): void => {
+  mockConfig = {};
+};
 
 const setConfigValues = (values: Record<string, unknown>): void => {
   getMock.mockImplementation((key: string) => {
-    const value = get(values, key) ?? config.get(key);
+    const value: unknown = (get as (object: Record<string, unknown>, path: string) => unknown)(values, key) ?? config.get(key);
     return value;
   });
-  hasMock.mockImplementation((key: string) => has(values, key) || config.has(key));
+  hasMock.mockImplementation((key: string) => (has as (object: Record<string, unknown>, path: string) => boolean)(values, key) || config.has(key));
 };
 
 const registerDefaultConfig = (): void => {
@@ -33,7 +52,7 @@ const registerDefaultConfig = (): void => {
         prettyPrint: false,
       },
       tracing: {
-        enabled: false,
+        isEnabled: false,
         url: 'http://mock_trace_url/collector',
       },
     },
@@ -53,28 +72,22 @@ const registerDefaultConfig = (): void => {
     },
     tilesProvider: 'S3',
     gpkgsLocation: '/app/tiles_outputs/gpkgs',
-    downloadServerUrl: 'http://download-service',
-    finalizePollingTimeMS: 2000,
     cleanupExpirationDays: 30,
     storageEstimation: {
       jpegTileEstimatedSizeInBytes: 12500,
       pngTileEstimatedSizeInBytes: 12500,
       storageFactorBuffer: 1.25,
-      validateStorageSize: true,
     },
     externalClientsConfig: {
       clientsUrls: {
         jobManager: {
-          url: 'http://raster-catalog-manager',
-          dequeueFinalizeIntervalMs: 1000,
-          finalizeTasksAttempts: 5,
+          url: 'http://job-manager',
         },
         rasterCatalogManager: {
-          url: 'http://job-manager-job-manager',
+          url: 'http://raster-catalog-manager',
         },
-        heartbeatManager: {
-          url: 'http://heartbeat-manager-heartbeat-manager',
-          heartbeatIntervalMs: 300,
+        jobTracker: {
+          url: 'http://job-tracker',
         },
       },
       httpRetry: {
@@ -88,11 +101,8 @@ const registerDefaultConfig = (): void => {
     },
     jobDefinitions: {
       tasks: {
-        export: {
-          type: 'export',
-        },
-        finalize: {
-          type: 'finalize',
+        init: {
+          type: 'init',
         },
       },
       jobs: {
@@ -105,4 +115,4 @@ const registerDefaultConfig = (): void => {
   setConfigValues(config);
 };
 
-export { getMock, hasMock, configMock, setConfigValues, registerDefaultConfig };
+export { getMock, hasMock, configMock, setValue, clear, init, setConfigValues, registerDefaultConfig };

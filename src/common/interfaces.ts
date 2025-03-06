@@ -1,9 +1,15 @@
-import { BBox, FeatureCollection, Geometry } from '@turf/helpers';
-import { ICreateJobBody, ICreateTaskBody, IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { IHttpRetryConfig, ITileRange } from '@map-colonies/mc-utils';
-import { TileOutputFormat } from '@map-colonies/mc-model-types';
-import { SpanContext } from '@opentelemetry/api';
-import { ArtifactType, TileFormatStrategy } from './enums';
+import { IRasterCatalogUpsertRequestBody } from '@map-colonies/mc-model-types';
+import { ICreateJobBody, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
+import {
+  CallbackUrlsTargetArray,
+  ExportJobParameters,
+  LinksDefinition,
+  RasterProductTypes,
+  RoiFeatureCollection,
+  TileFormatStrategy,
+  TileOutputFormat,
+} from '@map-colonies/raster-shared';
+import { BBox, Geometry } from 'geojson';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -17,137 +23,11 @@ export interface OpenApiConfig {
   uiPath: string;
 }
 
-export interface ICleanupData {
-  directoryPath?: string;
-  cleanupExpirationTimeUTC?: Date;
-}
-
-export interface ICreatePackageRoi {
-  dbId: string;
-  crs?: string;
-  priority?: number;
-  roi?: FeatureCollection;
-  callbackURLs?: string[];
-  description?: string;
-}
-
-export interface ICallbackTargetExport {
-  url: string;
-  roi: FeatureCollection;
-}
-
-export interface IWorkerExportInput {
-  dbId: string;
-  relativeDirectoryPath: string;
-  priority?: number;
-  crs: string;
-  version: string;
-  cswProductId: string;
-  productType: string;
-  batches: ITileRange[];
-  sources: IMapSource[];
-  gpkgEstimatedSize?: number;
-  targetFormat?: TileOutputFormat;
-  outputFormatStrategy?: TileFormatStrategy;
-  callbacks?: ICallbackTargetExport[];
-  roi: FeatureCollection;
-  fileNamesTemplates: ILinkDefinition;
-  description?: string;
-  traceContext: SpanContext;
-}
-
-export interface IBasicResponse {
-  message: string;
-}
-
 export interface ICreateExportJobResponse {
   jobId: string;
-  taskIds: string[];
-  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED;
+  status: OperationStatus.PENDING | OperationStatus.COMPLETED | OperationStatus.IN_PROGRESS;
   isDuplicated?: boolean;
-  traceContext?: SpanContext;
-}
-
-export interface ICallbackExportData {
-  links?: ILinkDefinition;
-  expirationTime?: Date;
-  fileSize?: number;
-  recordCatalogId: string;
-  jobId: string;
-  errorReason?: string;
-  description?: string;
-  artifacts?: IArtifactDefinition[];
-  roi: FeatureCollection;
-}
-
-//todo - should be replaced and imported from exporter SDK
-export interface IArtifactDefinition {
-  name: string;
-  url?: string;
-  size?: number;
-  type: ArtifactType;
-}
-
-//ROI INTERNAL API - will be deprecated on future by shared exporter
-export interface ILinkDefinition {
-  dataURI: string;
-  metadataURI: string;
-}
-
-export interface ICallbackExportResponse extends ICallbackExportData {
-  status: OperationStatus.IN_PROGRESS | OperationStatus.COMPLETED | OperationStatus.FAILED;
-}
-
-export interface JobExportDuplicationParams {
-  resourceId: string;
-  version: string;
-  dbId: string;
-  crs: string;
-  roi: FeatureCollection;
-}
-
-export interface IJobExportParameters {
-  relativeDirectoryPath: string;
-  crs: string;
-  roi: FeatureCollection;
-  callbacks?: ICallbackTargetExport[];
-  callbackParams?: ICallbackExportResponse;
-  fileNamesTemplates: ILinkDefinition;
-  gpkgEstimatedSize?: number;
-  cleanupData?: ICleanupData;
-  traceContext?: SpanContext;
-}
-
-export interface ITaskFinalizeParameters {
-  reason?: string;
-  exporterTaskStatus: OperationStatus;
-  traceParentContext?: SpanContext;
-}
-
-export declare type MergerSourceType = 'S3' | 'GPKG' | 'FS';
-
-export interface IMapSource {
-  path: string;
-  type: MergerSourceType;
-  extent?: {
-    minX: number;
-    minY: number;
-    maxX: number;
-    maxY: number;
-  };
-}
-export interface ITaskParameters {
-  isNewTarget: boolean;
-  targetFormat?: TileOutputFormat;
-  outputFormatStrategy?: TileFormatStrategy;
-  batches: ITileRange[];
-  sources: IMapSource[];
-  traceParentContext?: SpanContext;
-}
-
-export interface IExportJobStatusResponse {
-  completedJobs: JobExportResponse[] | undefined;
-  failedJobs: JobExportResponse[] | undefined;
+  percentage?: number;
 }
 
 export interface IStorageStatusResponse {
@@ -155,16 +35,16 @@ export interface IStorageStatusResponse {
   size: number;
 }
 
-export interface IStorageEstimation {
-  jpegTileEstimatedSizeInBytes: number;
-  pngTileEstimatedSizeInBytes: number;
-  storageFactorBuffer: number;
-  validateStorageSize: boolean;
+export interface IJobStatusResponse {
+  percentage?: number;
+  status: OperationStatus;
 }
+
+export type LayerInfo = Required<IRasterCatalogUpsertRequestBody>;
 
 export interface IGeometryRecordBase {
   zoomLevel: number;
-  sanitizedBox?: BBox | null | undefined;
+  sanitizedBox?: BBox | null;
 }
 
 export interface IGeometryRecord extends IGeometryRecordBase {
@@ -175,55 +55,43 @@ export interface IGeometryRecord extends IGeometryRecordBase {
   minZoomLevel: number;
 }
 
-export type TaskResponse = ITaskResponse<ITaskParameters>;
-
-// new API based on multi resolution
-export type JobExportResponse = IJobResponse<IJobExportParameters, ITaskParameters>;
-export type CreateExportJobBody = ICreateJobBody<IJobExportParameters, ITaskParameters>;
-export type CreateFinalizeTaskBody = ICreateTaskBody<ITaskFinalizeParameters>;
-export type JobFinalizeResponse = IJobResponse<IJobExportParameters, ITaskFinalizeParameters>;
-
-export interface IQueueConfig {
-  jobManagerBaseUrl: string;
-  heartbeatManagerBaseUrl: string;
-  dequeueFinalizeIntervalMs: number;
-  heartbeatIntervalMs: number;
-  jobType: string;
-  tilesTaskType: string;
+export interface JobExportDuplicationParams {
+  productId: string;
+  version: string;
+  catalogId: string;
+  crs: string;
+  roi: RoiFeatureCollection;
 }
 
-export interface IClientBase {
-  url: string;
+export interface ITaskParameters {
+  blockDuplication?: boolean;
 }
 
-export interface IJobManager extends IClientBase {
-  jobDomain: string;
-  dequeueFinalizeIntervalMs: number;
+export interface IExportInitRequest {
+  crs: string;
+  roi: RoiFeatureCollection;
+  callbackUrls?: CallbackUrlsTargetArray;
+  fileNamesTemplates: LinksDefinition;
+  relativeDirectoryPath: string;
+  catalogId: string;
+  priority?: number;
+  version: string;
+  productId: string;
+  productType: RasterProductTypes;
+  packageRelativePath: string;
+  gpkgEstimatedSize: number;
+  targetFormat: TileOutputFormat;
+  outputFormatStrategy: TileFormatStrategy;
+  description?: string;
+  jobTrackerUrl: string;
 }
 
-export interface IRasterCatalogManager extends IClientBase {}
+export type CreateExportJobBody = ICreateJobBody<ExportJobParameters, ITaskParameters>;
 
-export interface IHeartbeatManager extends IClientBase {
-  heartbeatIntervalMs: number;
+export interface IStorageEstimation {
+  jpegTileEstimatedSizeInBytes: number;
+  pngTileEstimatedSizeInBytes: number;
+  storageFactorBuffer: number;
 }
 
-export interface IExternalClientsConfig {
-  clientsUrls: {
-    jobManager: IJobManager;
-    rasterCatalogManager: IRasterCatalogManager;
-    heartbeatManager: IHeartbeatManager;
-    finalizeTasksAttempts: number;
-  };
-  httpRetry: IHttpRetryConfig;
-  disableHttpClientLogs: boolean;
-}
-
-//consider changing from nested interface
-export interface IJobDefinitions {
-  jobs: {
-    export: { type: string };
-  };
-  tasks: {
-    export: { type: string };
-  };
-}
+export type JobExportResponse = IJobResponse<ExportJobParameters, unknown>;

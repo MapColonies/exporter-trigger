@@ -19,35 +19,28 @@ data:
   LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
   TELEMETRY_TRACING_ENABLED: {{ $tracing.enabled | quote }}
   {{ if $tracing.enabled }}
-  TELEMETRY_TRACING_URL: {{ $tracing.url }}
+  TELEMETRY_TRACING_URL: {{ $tracing.url | quote }}
   {{ end }}
   TELEMETRY_METRICS_ENABLED: {{ $metrics.enabled | quote }}
   {{ if $metrics.enabled}}
-  TELEMETRY_METRICS_URL: {{ $metrics.url }}
+  TELEMETRY_METRICS_URL: {{ $metrics.url | quote }}
   {{ end }}
   JOB_MANAGER_URL: {{ $serviceUrls.jobManager | quote }}
+  JOB_TRACKER_URL: {{ $serviceUrls.jobTracker | quote }}
   CLEANUP_EXPIRATION_DAYS: {{ .Values.env.cleanupExpirationDays | quote }}
   RASTER_CATALOG_MANAGER_URL: {{ $serviceUrls.catalogManager | quote }}
   JOB_DOMAIN: {{ .Values.global.domain | quote }}
   EXPORT_JOB_TYPE: {{ $jobDefinitions.jobs.export.type | quote }}
-  TILES_TASK_TYPE: {{ $jobDefinitions.tasks.export.type | quote }}
   HTTP_RETRY_ATTEMPTS: {{ .Values.env.httpRetry.attempts | quote }}
   HTTP_RETRY_DELAY: {{ .Values.env.httpRetry.delay | quote }}
   HTTP_RETRY_SHOULD_RESET_TIMEOUT: {{ .Values.env.httpRetry.shouldResetTimeout | quote }}
   DISABLE_HTTP_CLIENT_LOGS: {{ .Values.env.disableHttpClientLogs | quote }}
   TILES_PROVIDER: {{ $storage.tilesStorageProvider | quote }}
-  DOWNLOAD_SERVER_PUBLIC_DNS: {{ $serviceUrls.downloadServerPublicDNS | quote }}
-  FINALIZE_POLLING_TIMEOUT_MS: {{ .Values.env.finalizePollingTimeMS | quote }}
   JPEG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.jpegTileEstimatedSizeInBytes | quote }}
   PNG_TILE_ESTIMATED_SIZE_IN_BYTES: {{ .Values.env.estimatedStorageCalculation.pngTileEstimatedSizeInBytes | quote }}
   STORAGE_FACTOR_BUFFER: {{ .Values.env.estimatedStorageCalculation.storageFactorBuffer | quote }}
-  VALIDATE_STORAGE_SIZE: {{ .Values.env.estimatedStorageCalculation.validateStorageSize | quote }}
-  QUEUE_JOB_MANAGER_BASE_URL: {{ $serviceUrls.jobManager | quote }}
-  QUEUE_HEART_BEAT_MANAGER_BASE_URL: {{ $serviceUrls.heartbeatManager | quote }}
-  QUEUE_DEQUEUE_FINALIZE_INTERVAL_MS: {{ .Values.env.queue.dequeueFinalizeIntervalMs | quote }}
-  QUEUE_HEART_BEAT_INTERVAL_MS: {{ .Values.env.queue.heartbeatIntervalMs | quote }}
-  FINALIZE_TASK_TYPE: {{ $jobDefinitions.tasks.finalize.type | quote }}
-  FINALIZE_TASKS_ATTEMPTS: {{ .Values.env.queue.finalizeTasksAttempts | quote }}
+  INIT_TASK_TYPE: {{ $jobDefinitions.tasks.init.type | quote }}
   ROI_BUFFER_METER: {{ .Values.env.roiBufferMeter | quote }}
   MIN_CONTAINED_PERCENTAGE: {{ .Values.env.minContainedPercentage | quote }}
+  CONFIG_OFFLINE_MODE: {{ .Values.global.configOfflineMode | quote }}
 {{- end }}
