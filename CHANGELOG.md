@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.0](https://github.com/MapColonies/exporter-trigger/compare/v2.20.5...v3.0.0) (2025-03-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* init task creator structure ([#106](https://github.com/MapColonies/exporter-trigger/issues/106))
+
+### Code Refactoring
+
+* init task creator structure ([#106](https://github.com/MapColonies/exporter-trigger/issues/106)) ([0027d87](https://github.com/MapColonies/exporter-trigger/commit/0027d8765e727114932aaef95c44d88f1288e757))
+
 ### [2.20.5](https://github.com/MapColonies/exporter-trigger/compare/v2.20.4...v2.20.5) (2025-02-18)
 
 
