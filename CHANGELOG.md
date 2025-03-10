@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.0](https://github.com/MapColonies/exporter-trigger/compare/v3.0.0...v3.1.0) (2025-03-10)
+
+
+### Features
+
+* add entityName to additional params ([#108](https://github.com/MapColonies/exporter-trigger/issues/108)) ([589b414](https://github.com/MapColonies/exporter-trigger/commit/589b414dffab2df13b3c2336e80ef3ebf27f10f1))
+
 ## [3.0.0](https://github.com/MapColonies/exporter-trigger/compare/v2.20.5...v3.0.0) (2025-03-06)
 
 
