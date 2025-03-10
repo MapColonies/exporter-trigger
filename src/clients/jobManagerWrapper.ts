@@ -108,6 +108,7 @@ export class JobManagerWrapper extends JobManagerClient {
         targetFormat: data.targetFormat,
         outputFormatStrategy: data.outputFormatStrategy,
         jobTrackerServiceURL: data.jobTrackerUrl,
+        polygonPartsEntityName: data.polygonPartsEntityName,
       },
       cleanupDataParams: {
         directoryPath: data.relativeDirectoryPath,

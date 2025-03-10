@@ -70,6 +70,7 @@ export const inProgressJobsResponse = [
         targetFormat: TileOutputFormat.PNG,
         gpkgEstimatedSize: 11111,
         jobTrackerServiceURL: 'http://job-tracker',
+        polygonPartsEntityName: 'some_name_orthophoto',
       },
       exportInputParams: {
         crs: 'EPSG:4326',
@@ -165,6 +166,7 @@ export const inProgressJobsResponse = [
         targetFormat: TileOutputFormat.PNG,
         gpkgEstimatedSize: 11111,
         jobTrackerServiceURL: 'http://job-tracker',
+        polygonPartsEntityName: 'some_name_orthophoto',
       },
       exportInputParams: {
         crs: 'EPSG:4326',

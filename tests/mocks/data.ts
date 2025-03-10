@@ -145,6 +145,7 @@ export const createExportData: IExportInitRequest = {
   outputFormatStrategy: 'mixed',
   gpkgEstimatedSize: 1111,
   jobTrackerUrl: 'http://job-tracker',
+  polygonPartsEntityName: 'some_name_orthophoto',
 };
 
 export function generateCreateJobRequest(createExportData: IExportInitRequest): CreateExportJobBody {
@@ -167,6 +168,7 @@ export function generateCreateJobRequest(createExportData: IExportInitRequest): 
         targetFormat: createExportData.targetFormat,
         gpkgEstimatedSize: createExportData.gpkgEstimatedSize,
         jobTrackerServiceURL: createExportData.jobTrackerUrl,
+        polygonPartsEntityName: createExportData.polygonPartsEntityName,
       },
       cleanupDataParams: {
         directoryPath: createExportData.relativeDirectoryPath,
@@ -239,6 +241,7 @@ export const initExportRequestBody = {
       targetFormat: TileOutputFormat.PNG,
       gpkgEstimatedSize: 12500,
       jobTrackerServiceURL: 'http://job-tracker',
+      polygonPartsEntityName: 'some_name_orthophoto',
     },
     cleanupDataParams: {
       directoryPath: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7',
@@ -323,6 +326,7 @@ export const initExportRequestBodyNoRoiWithCallback = {
       targetFormat: TileOutputFormat.PNG,
       gpkgEstimatedSize: 12500,
       jobTrackerServiceURL: 'http://job-tracker',
+      polygonPartsEntityName: 'some_name_orthophoto',
     },
     cleanupDataParams: {
       directoryPath: 'b30e5a99b78a6c10e65164fd54b14ad0',

@@ -4,6 +4,7 @@ import {
   CallbackUrlsTargetArray,
   ExportJobParameters,
   LinksDefinition,
+  PolygonPartsEntityName,
   RasterProductTypes,
   RoiFeatureCollection,
   TileFormatStrategy,
@@ -84,6 +85,7 @@ export interface IExportInitRequest {
   outputFormatStrategy: TileFormatStrategy;
   description?: string;
   jobTrackerUrl: string;
+  polygonPartsEntityName: PolygonPartsEntityName;
 }
 
 export type CreateExportJobBody = ICreateJobBody<ExportJobParameters, ITaskParameters>;

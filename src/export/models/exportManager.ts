@@ -20,6 +20,7 @@ import {
   RoiFeatureCollection,
   RasterLayerMetadata,
   CORE_VALIDATIONS,
+  generateEntityName,
 } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateExportRequest } from '@src/utils/zod/schemas';
@@ -81,6 +82,7 @@ export class ExportManager {
 
     //creation of params
     const computedAttributes = this.computeFilePathAttributes(productType, productId, version, featuresRecords);
+    const polygonPartsEntityName = generateEntityName(productId, productType);
 
     const exportInitRequest: IExportInitRequest = {
       crs: crs ?? DEFAULT_CRS,
@@ -99,6 +101,7 @@ export class ExportManager {
       outputFormatStrategy: TileFormatStrategy.MIXED,
       gpkgEstimatedSize: estimatesGpkgSize,
       jobTrackerUrl: this.jobTrackerUrl,
+      polygonPartsEntityName,
     };
     const jobCreated = await this.jobManagerClient.createExportJob(exportInitRequest);
     return jobCreated;
