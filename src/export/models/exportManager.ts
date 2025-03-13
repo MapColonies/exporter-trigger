@@ -61,14 +61,13 @@ export class ExportManager {
 
     const { productId, productVersion: version, maxResolutionDeg: srcRes } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;
-    const callbacksUrls = callbackURLs
-      ? callbackURLs.map(
-          (url) =>
-            <CallbackUrl>{
-              url,
-            }
-        )
-      : undefined;
+    const callbacksUrls = callbackURLs?.map(
+      (url) =>
+        <CallbackUrl>{
+          url,
+        }
+    );
+
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
 
     // ROI vs layer validation section - zoom + geo intersection
