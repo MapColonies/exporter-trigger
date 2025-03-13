@@ -3,6 +3,7 @@ import { ICreateJobBody, IJobResponse, OperationStatus } from '@map-colonies/mc-
 import {
   CallbackUrlsTargetArray,
   ExportJobParameters,
+  fileNamesTemplatesSchema,
   LinksDefinition,
   PolygonPartsEntityName,
   RasterProductTypes,
@@ -11,6 +12,7 @@ import {
   TileOutputFormat,
 } from '@map-colonies/raster-shared';
 import { BBox, Geometry } from 'geojson';
+import z from 'zod';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -97,3 +99,5 @@ export interface IStorageEstimation {
 }
 
 export type JobExportResponse = IJobResponse<ExportJobParameters, unknown>;
+
+export type FileNamesTemplates = z.infer<typeof fileNamesTemplatesSchema>;

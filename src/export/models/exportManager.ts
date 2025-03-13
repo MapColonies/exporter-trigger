@@ -6,21 +6,27 @@ import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { feature, featureCollection } from '@turf/helpers';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
-import { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
+import {
+  FileNamesTemplates,
+  IConfig,
+  ICreateExportJobResponse,
+  IExportInitRequest,
+  IGeometryRecord,
+  IJobStatusResponse,
+} from '@src/common/interfaces';
 import { MultiPolygon, Polygon } from 'geojson';
 import { calculateEstimateGpkgSize, parseFeatureCollection } from '@src/common/utils';
 import {
-  LinksDefinition,
   TileFormatStrategy,
   SourceType,
   CallbackExportResponse,
-  CallbackUrls,
   RoiProperties,
   RasterProductTypes,
   RoiFeatureCollection,
   RasterLayerMetadata,
   CORE_VALIDATIONS,
   generateEntityName,
+  CallbackUrl,
 } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateExportRequest } from '@src/utils/zod/schemas';
@@ -61,7 +67,7 @@ export class ExportManager {
 
     const { productId, productVersion: version, maxResolutionDeg: srcRes } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;
-    const callbacks = callbackURLs ? callbackURLs.map((url) => <CallbackUrls>{ url }) : undefined;
+    const callbacks = callbackURLs ? callbackURLs.map((url) => <CallbackUrl>{ url }) : undefined;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
 
     // ROI vs layer validation section - zoom + geo intersection
@@ -126,7 +132,7 @@ export class ExportManager {
     catalogId: string,
     roi: RoiFeatureCollection,
     crs: string,
-    callbacks?: CallbackUrls[]
+    callbacks?: CallbackUrl[]
   ): Promise<CallbackExportResponse | ICreateExportJobResponse | undefined> {
     const duplicationExist = await this.validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, callbacks);
 
@@ -174,11 +180,11 @@ export class ExportManager {
     productId: string,
     version: string,
     featuresRecords: IGeometryRecord[]
-  ): { fileNamesTemplates: LinksDefinition; additionalIdentifiers: string; packageRelativePath: string } {
+  ): { fileNamesTemplates: FileNamesTemplates; additionalIdentifiers: string; packageRelativePath: string } {
     const prefixPackageName = this.generateExportFileNames(productType, productId, version, featuresRecords);
     const packageName = `${prefixPackageName}.gpkg`;
-    const fileNamesTemplates: LinksDefinition = {
-      dataURI: packageName,
+    const fileNamesTemplates: FileNamesTemplates = {
+      packageName,
     };
     const additionalIdentifiers = uuidv4();
     const separator = this.getSeparator();
