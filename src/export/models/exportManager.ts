@@ -6,14 +6,7 @@ import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { feature, featureCollection } from '@turf/helpers';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
-import {
-  FileNamesTemplates,
-  IConfig,
-  ICreateExportJobResponse,
-  IExportInitRequest,
-  IGeometryRecord,
-  IJobStatusResponse,
-} from '@src/common/interfaces';
+import { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
 import { MultiPolygon, Polygon } from 'geojson';
 import { calculateEstimateGpkgSize, parseFeatureCollection } from '@src/common/utils';
 import {
@@ -27,6 +20,7 @@ import {
   CORE_VALIDATIONS,
   generateEntityName,
   CallbackUrl,
+  FileNamesTemplates,
 } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateExportRequest } from '@src/utils/zod/schemas';
@@ -67,7 +61,14 @@ export class ExportManager {
 
     const { productId, productVersion: version, maxResolutionDeg: srcRes } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;
-    const callbacks = callbackURLs ? callbackURLs.map((url) => <CallbackUrl>{ url }) : undefined;
+    const callbacksUrls = callbackURLs
+      ? callbackURLs.map(
+          (url) =>
+            <CallbackUrl>{
+              url,
+            }
+        )
+      : undefined;
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
 
     // ROI vs layer validation section - zoom + geo intersection
@@ -78,7 +79,7 @@ export class ExportManager {
       srcRes
     );
 
-    const duplicationExist = await this.findJobDuplications(productId, version, catalogId, roi, crs ?? DEFAULT_CRS, callbacks);
+    const duplicationExist = await this.findJobDuplications(productId, version, catalogId, roi, crs ?? DEFAULT_CRS, callbacksUrls);
     if (duplicationExist) {
       return duplicationExist;
     }
@@ -93,7 +94,7 @@ export class ExportManager {
     const exportInitRequest: IExportInitRequest = {
       crs: crs ?? DEFAULT_CRS,
       roi: roi,
-      callbackUrls: callbacks,
+      callbackUrls: callbacksUrls,
       fileNamesTemplates: computedAttributes.fileNamesTemplates,
       relativeDirectoryPath: computedAttributes.additionalIdentifiers,
       packageRelativePath: computedAttributes.packageRelativePath,
@@ -132,9 +133,9 @@ export class ExportManager {
     catalogId: string,
     roi: RoiFeatureCollection,
     crs: string,
-    callbacks?: CallbackUrl[]
+    callbackUrls?: CallbackUrl[]
   ): Promise<CallbackExportResponse | ICreateExportJobResponse | undefined> {
-    const duplicationExist = await this.validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, callbacks);
+    const duplicationExist = await this.validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, callbackUrls);
 
     if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
       const callbackParam = duplicationExist as CallbackExportResponse;
@@ -183,7 +184,7 @@ export class ExportManager {
   ): { fileNamesTemplates: FileNamesTemplates; additionalIdentifiers: string; packageRelativePath: string } {
     const prefixPackageName = this.generateExportFileNames(productType, productId, version, featuresRecords);
     const packageName = `${prefixPackageName}.gpkg`;
-    const fileNamesTemplates: FileNamesTemplates = {
+    const fileNamesTemplates = {
       packageName,
     };
     const additionalIdentifiers = uuidv4();

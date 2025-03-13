@@ -3,8 +3,7 @@ import { ICreateJobBody, IJobResponse, OperationStatus } from '@map-colonies/mc-
 import {
   CallbackUrlsTargetArray,
   ExportJobParameters,
-  fileNamesTemplatesSchema,
-  LinksDefinition,
+  FileNamesTemplates,
   PolygonPartsEntityName,
   RasterProductTypes,
   RoiFeatureCollection,
@@ -74,7 +73,7 @@ export interface IExportInitRequest {
   crs: string;
   roi: RoiFeatureCollection;
   callbackUrls?: CallbackUrlsTargetArray;
-  fileNamesTemplates: LinksDefinition;
+  fileNamesTemplates: FileNamesTemplates;
   relativeDirectoryPath: string;
   catalogId: string;
   priority?: number;
@@ -99,5 +98,3 @@ export interface IStorageEstimation {
 }
 
 export type JobExportResponse = IJobResponse<ExportJobParameters, unknown>;
-
-export type FileNamesTemplates = z.infer<typeof fileNamesTemplatesSchema>;
