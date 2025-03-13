@@ -29,7 +29,7 @@ export const parseFeatureCollection = (featuresCollection: RoiFeatureCollection)
   return parsedGeoRecord;
 };
 
-export const calculateEstimateGpkgSize = (featuresRecords: IGeometryRecord[], tileOutputFormat: TileOutputFormat): number => {
+export const calculateEstimatedGpkgSize = (featuresRecords: IGeometryRecord[], tileOutputFormat: TileOutputFormat): number => {
   const tileEstimatedSize = getTileEstimatedSize(tileOutputFormat);
   const batches: ITileRange[] = [];
   featuresRecords.forEach((record) => {

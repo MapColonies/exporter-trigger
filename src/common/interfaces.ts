@@ -3,7 +3,7 @@ import { ICreateJobBody, IJobResponse, OperationStatus } from '@map-colonies/mc-
 import {
   CallbackUrlsTargetArray,
   ExportJobParameters,
-  LinksDefinition,
+  FileNamesTemplates,
   PolygonPartsEntityName,
   RasterProductTypes,
   RoiFeatureCollection,
@@ -11,6 +11,7 @@ import {
   TileOutputFormat,
 } from '@map-colonies/raster-shared';
 import { BBox, Geometry } from 'geojson';
+import z from 'zod';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -72,7 +73,7 @@ export interface IExportInitRequest {
   crs: string;
   roi: RoiFeatureCollection;
   callbackUrls?: CallbackUrlsTargetArray;
-  fileNamesTemplates: LinksDefinition;
+  fileNamesTemplates: FileNamesTemplates;
   relativeDirectoryPath: string;
   catalogId: string;
   priority?: number;

@@ -131,7 +131,7 @@ export const createExportData: IExportInitRequest = {
     },
   ],
   fileNamesTemplates: {
-    dataURI: 'Orthophoto_SOME_NAME_1_0_0_2025_01_06T09_29_04_933Z.gpkg',
+    packageName: 'Orthophoto_SOME_NAME_1_0_0_2025_01_06T09_29_04_933Z.gpkg',
   },
   relativeDirectoryPath: 'e315e6d204d92b1d2dbfdaab96ff2a7e',
   packageRelativePath: 'e315e6d204d92b1d2dbfdaab96ff2a7e/Orthophoto_SOME_NAME_1_0_0_2025_01_06T09_29_04_933Z.gpkg',
@@ -233,7 +233,7 @@ export const initExportRequestBody = {
     },
     additionalParams: {
       fileNamesTemplates: {
-        dataURI: 'Orthophoto_SOME_NAME_1_0_0_2025_01_09T10_04_06_711Z.gpkg',
+        packageName: 'Orthophoto_SOME_NAME_1_0_0_2025_01_09T10_04_06_711Z.gpkg',
       },
       relativeDirectoryPath: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7',
       packageRelativePath: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7/Orthophoto_SOME_NAME_1_0_0_2025_01_09T10_04_06_711Z.gpkg',
@@ -318,7 +318,7 @@ export const initExportRequestBodyNoRoiWithCallback = {
     },
     additionalParams: {
       fileNamesTemplates: {
-        dataURI: 'Orthophoto_SOME_NAME_1_0_0_2025_01_09T12_39_36_961Z.gpkg',
+        packageName: 'Orthophoto_SOME_NAME_1_0_0_2025_01_09T12_39_36_961Z.gpkg',
       },
       relativeDirectoryPath: 'b30e5a99b78a6c10e65164fd54b14ad0',
       packageRelativePath: 'b30e5a99b78a6c10e65164fd54b14ad0/Orthophoto_SOME_NAME_1_0_0_2025_01_09T12_39_36_961Z.gpkg',
@@ -600,18 +600,18 @@ export const createExportRequestWithoutCallback: CreateExportRequest = {
 
 export const createExportRequestNoRoiWithCallback: CreateExportRequest = {
   dbId: catalogId,
-  callbackURLs: ['http://callback1'],
+  callbackUrlArray: ['http://callback1'],
 };
 
 export const createExportRequestWithRoiAndCallback: CreateExportRequest = {
   dbId: catalogId,
-  callbackURLs: ['http://example.getmap.com/callback', 'http://example.getmap.com/callback2'],
+  callbackUrlArray: ['http://example.getmap.com/callback', 'http://example.getmap.com/callback2'],
   roi: defaultRoi,
 };
 
 export const createExportRequestWithRoiAndNewCallback: CreateExportRequest = {
   dbId: catalogId,
-  callbackURLs: ['http://example.getmap.com/callback3'],
+  callbackUrlArray: ['http://example.getmap.com/callback3'],
   roi: defaultRoi,
 };
 

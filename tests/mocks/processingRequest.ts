@@ -62,7 +62,7 @@ export const inProgressJobsResponse = [
     parameters: {
       additionalParams: {
         fileNamesTemplates: {
-          dataURI: 'Orthophoto_SOME_NAME_1_0_0_2025_01_02T12_00_02_621Z.gpkg',
+          packageName: 'Orthophoto_SOME_NAME_1_0_0_2025_01_02T12_00_02_621Z.gpkg',
         },
         packageRelativePath: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7/Orthophoto_SOME_NAME_1_0_0_2025_01_02T12_00_02_621Z.gpkg',
         relativeDirectoryPath: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7',
@@ -158,7 +158,7 @@ export const inProgressJobsResponse = [
     parameters: {
       additionalParams: {
         fileNamesTemplates: {
-          dataURI: 'Orthophoto_SOME_NAME_1_0_0_2025_01_05T09_37_40_928Z.gpkg',
+          packageName: 'Orthophoto_SOME_NAME_1_0_0_2025_01_05T09_37_40_928Z.gpkg',
         },
         packageRelativePath: '65adbc306ad555ca82ca12df9153dee1/Orthophoto_SOME_NAME_1_0_0_2025_01_05T09_37_40_928Z.gpkg',
         relativeDirectoryPath: '65adbc306ad555ca82ca12df9153dee1',

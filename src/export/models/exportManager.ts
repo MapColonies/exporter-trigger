@@ -8,19 +8,19 @@ import { feature, featureCollection } from '@turf/helpers';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
 import { MultiPolygon, Polygon } from 'geojson';
-import { calculateEstimateGpkgSize, parseFeatureCollection } from '@src/common/utils';
+import { calculateEstimatedGpkgSize, parseFeatureCollection } from '@src/common/utils';
 import {
-  LinksDefinition,
   TileFormatStrategy,
   SourceType,
   CallbackExportResponse,
-  CallbackUrls,
   RoiProperties,
   RasterProductTypes,
   RoiFeatureCollection,
   RasterLayerMetadata,
   CORE_VALIDATIONS,
   generateEntityName,
+  CallbackUrl,
+  FileNamesTemplates,
 } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateExportRequest } from '@src/utils/zod/schemas';
@@ -49,7 +49,7 @@ export class ExportManager {
 
   @withSpanAsyncV4
   public async createExport(exportRequest: CreateExportRequest): Promise<ICreateExportJobResponse | CallbackExportResponse> {
-    const { dbId: catalogId, crs, priority, callbackURLs, description } = exportRequest;
+    const { dbId: catalogId, crs, priority, callbackUrlArray, description } = exportRequest;
     const layerMetadata = await this.validationManager.findLayer(catalogId);
 
     let roi = exportRequest.roi;
@@ -61,7 +61,13 @@ export class ExportManager {
 
     const { productId, productVersion: version, maxResolutionDeg: srcRes } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;
-    const callbacks = callbackURLs ? callbackURLs.map((url) => <CallbackUrls>{ url }) : undefined;
+    const callbackUrls = callbackUrlArray?.map(
+      (url) =>
+        <CallbackUrl>{
+          url,
+        }
+    );
+
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
 
     // ROI vs layer validation section - zoom + geo intersection
@@ -72,13 +78,13 @@ export class ExportManager {
       srcRes
     );
 
-    const duplicationExist = await this.findJobDuplications(productId, version, catalogId, roi, crs ?? DEFAULT_CRS, callbacks);
+    const duplicationExist = await this.findJobDuplications(productId, version, catalogId, roi, crs ?? DEFAULT_CRS, callbackUrls);
     if (duplicationExist) {
       return duplicationExist;
     }
 
-    const estimatesGpkgSize = calculateEstimateGpkgSize(featuresRecords, layerMetadata.tileOutputFormat);
-    await this.validationManager.validateFreeSpace(estimatesGpkgSize, this.gpkgsLocation);
+    const gpkgEstimatedSize = calculateEstimatedGpkgSize(featuresRecords, layerMetadata.tileOutputFormat);
+    await this.validationManager.validateFreeSpace(gpkgEstimatedSize, this.gpkgsLocation);
 
     //creation of params
     const computedAttributes = this.computeFilePathAttributes(productType, productId, version, featuresRecords);
@@ -86,20 +92,20 @@ export class ExportManager {
 
     const exportInitRequest: IExportInitRequest = {
       crs: crs ?? DEFAULT_CRS,
-      roi: roi,
-      callbackUrls: callbacks,
+      roi,
+      callbackUrls,
       fileNamesTemplates: computedAttributes.fileNamesTemplates,
       relativeDirectoryPath: computedAttributes.additionalIdentifiers,
       packageRelativePath: computedAttributes.packageRelativePath,
       catalogId,
-      version: version,
+      version,
       productId,
       productType,
       priority: priority ?? DEFAULT_PRIORITY,
       description,
       targetFormat: layerMetadata.tileOutputFormat,
       outputFormatStrategy: TileFormatStrategy.MIXED,
-      gpkgEstimatedSize: estimatesGpkgSize,
+      gpkgEstimatedSize,
       jobTrackerUrl: this.jobTrackerUrl,
       polygonPartsEntityName,
     };
@@ -126,9 +132,9 @@ export class ExportManager {
     catalogId: string,
     roi: RoiFeatureCollection,
     crs: string,
-    callbacks?: CallbackUrls[]
+    callbackUrls?: CallbackUrl[]
   ): Promise<CallbackExportResponse | ICreateExportJobResponse | undefined> {
-    const duplicationExist = await this.validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, callbacks);
+    const duplicationExist = await this.validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, callbackUrls);
 
     if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
       const callbackParam = duplicationExist as CallbackExportResponse;
@@ -174,11 +180,11 @@ export class ExportManager {
     productId: string,
     version: string,
     featuresRecords: IGeometryRecord[]
-  ): { fileNamesTemplates: LinksDefinition; additionalIdentifiers: string; packageRelativePath: string } {
+  ): { fileNamesTemplates: FileNamesTemplates; additionalIdentifiers: string; packageRelativePath: string } {
     const prefixPackageName = this.generateExportFileNames(productType, productId, version, featuresRecords);
     const packageName = `${prefixPackageName}.gpkg`;
-    const fileNamesTemplates: LinksDefinition = {
-      dataURI: packageName,
+    const fileNamesTemplates = {
+      packageName,
     };
     const additionalIdentifiers = uuidv4();
     const separator = this.getSeparator();

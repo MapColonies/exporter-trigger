@@ -1,4 +1,4 @@
-import { roiFeatureCollectionSchema } from '@map-colonies/raster-shared';
+import { callbackUrlSchema, roiFeatureCollectionSchema } from '@map-colonies/raster-shared';
 import z from 'zod';
 
 export const createExportRequestSchema = z.object({
@@ -6,7 +6,7 @@ export const createExportRequestSchema = z.object({
   crs: z.string().optional(),
   priority: z.number().optional(),
   roi: roiFeatureCollectionSchema.optional(),
-  callbackURLs: z.array(z.string()).optional(),
+  callbackUrlArray: callbackUrlSchema.shape.url.array().optional(),
   description: z.string().optional(),
 });
 
