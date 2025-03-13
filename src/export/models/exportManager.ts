@@ -8,7 +8,7 @@ import { feature, featureCollection } from '@turf/helpers';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
 import { MultiPolygon, Polygon } from 'geojson';
-import { calculateEstimateGpkgSize, parseFeatureCollection } from '@src/common/utils';
+import { calculateEstimatedGpkgSize, parseFeatureCollection } from '@src/common/utils';
 import {
   TileFormatStrategy,
   SourceType,
@@ -49,7 +49,7 @@ export class ExportManager {
 
   @withSpanAsyncV4
   public async createExport(exportRequest: CreateExportRequest): Promise<ICreateExportJobResponse | CallbackExportResponse> {
-    const { dbId: catalogId, crs, priority, callbackURLs, description } = exportRequest;
+    const { dbId: catalogId, crs, priority, callbackUrlArray, description } = exportRequest;
     const layerMetadata = await this.validationManager.findLayer(catalogId);
 
     let roi = exportRequest.roi;
@@ -61,7 +61,7 @@ export class ExportManager {
 
     const { productId, productVersion: version, maxResolutionDeg: srcRes } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;
-    const callbacksUrls = callbackURLs?.map(
+    const callbackUrls = callbackUrlArray?.map(
       (url) =>
         <CallbackUrl>{
           url,
@@ -78,13 +78,13 @@ export class ExportManager {
       srcRes
     );
 
-    const duplicationExist = await this.findJobDuplications(productId, version, catalogId, roi, crs ?? DEFAULT_CRS, callbacksUrls);
+    const duplicationExist = await this.findJobDuplications(productId, version, catalogId, roi, crs ?? DEFAULT_CRS, callbackUrls);
     if (duplicationExist) {
       return duplicationExist;
     }
 
-    const estimatesGpkgSize = calculateEstimateGpkgSize(featuresRecords, layerMetadata.tileOutputFormat);
-    await this.validationManager.validateFreeSpace(estimatesGpkgSize, this.gpkgsLocation);
+    const gpkgEstimatedSize = calculateEstimatedGpkgSize(featuresRecords, layerMetadata.tileOutputFormat);
+    await this.validationManager.validateFreeSpace(gpkgEstimatedSize, this.gpkgsLocation);
 
     //creation of params
     const computedAttributes = this.computeFilePathAttributes(productType, productId, version, featuresRecords);
@@ -92,20 +92,20 @@ export class ExportManager {
 
     const exportInitRequest: IExportInitRequest = {
       crs: crs ?? DEFAULT_CRS,
-      roi: roi,
-      callbackUrls: callbacksUrls,
+      roi,
+      callbackUrls,
       fileNamesTemplates: computedAttributes.fileNamesTemplates,
       relativeDirectoryPath: computedAttributes.additionalIdentifiers,
       packageRelativePath: computedAttributes.packageRelativePath,
       catalogId,
-      version: version,
+      version,
       productId,
       productType,
       priority: priority ?? DEFAULT_PRIORITY,
       description,
       targetFormat: layerMetadata.tileOutputFormat,
       outputFormatStrategy: TileFormatStrategy.MIXED,
-      gpkgEstimatedSize: estimatesGpkgSize,
+      gpkgEstimatedSize,
       jobTrackerUrl: this.jobTrackerUrl,
       polygonPartsEntityName,
     };

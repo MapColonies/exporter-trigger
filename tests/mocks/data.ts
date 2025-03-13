@@ -600,18 +600,18 @@ export const createExportRequestWithoutCallback: CreateExportRequest = {
 
 export const createExportRequestNoRoiWithCallback: CreateExportRequest = {
   dbId: catalogId,
-  callbackURLs: ['http://callback1'],
+  callbackUrlArray: ['http://callback1'],
 };
 
 export const createExportRequestWithRoiAndCallback: CreateExportRequest = {
   dbId: catalogId,
-  callbackURLs: ['http://example.getmap.com/callback', 'http://example.getmap.com/callback2'],
+  callbackUrlArray: ['http://example.getmap.com/callback', 'http://example.getmap.com/callback2'],
   roi: defaultRoi,
 };
 
 export const createExportRequestWithRoiAndNewCallback: CreateExportRequest = {
   dbId: catalogId,
-  callbackURLs: ['http://example.getmap.com/callback3'],
+  callbackUrlArray: ['http://example.getmap.com/callback3'],
   roi: defaultRoi,
 };
 
