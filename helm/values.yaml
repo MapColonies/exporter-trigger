@@ -23,6 +23,7 @@ serviceUrls:
   catalogManager: ""
   jobManager: ""
   jobTracker: ""
+
 storage:
   tilesStorageProvider: ''
   fs:
