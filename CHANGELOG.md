@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.2](https://github.com/MapColonies/exporter-trigger/compare/v3.1.1...v3.1.2) (2025-03-30)
+
+
+### Bug Fixes
+
+* rename callbackUrlArray to callbackURLs in exportManager and schemas to match the openapi spec ([#113](https://github.com/MapColonies/exporter-trigger/issues/113)) ([87d32f1](https://github.com/MapColonies/exporter-trigger/commit/87d32f13e51dbefdc2f4c13757fc45321c9cbbc4))
+
 ## [3.1.0](https://github.com/MapColonies/exporter-trigger/compare/v3.0.0...v3.1.0) (2025-03-10)
 
 
