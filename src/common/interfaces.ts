@@ -11,7 +11,6 @@ import {
   TileOutputFormat,
 } from '@map-colonies/raster-shared';
 import { BBox, Geometry } from 'geojson';
-import z from 'zod';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
