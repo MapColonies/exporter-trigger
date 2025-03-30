@@ -51,7 +51,7 @@ describe('SchemasValidations', () => {
   });
 
   it('should throw an error if callbackURLs is not an array of strings', () => {
-    expect(() => createExportRequestSchema.parse({ ...validUserExportRequest, callbackUrlArray: [123] })).toThrow();
+    expect(() => createExportRequestSchema.parse({ ...validUserExportRequest, callbackURLs: [123] })).toThrow();
   });
 
   it('should throw an error if priority is not a number', () => {
