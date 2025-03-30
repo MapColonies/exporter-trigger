@@ -6,7 +6,7 @@ export const createExportRequestSchema = z.object({
   crs: z.string().optional(),
   priority: z.number().optional(),
   roi: roiFeatureCollectionSchema.optional(),
-  callbackUrlArray: callbackUrlSchema.shape.url.array().optional(),
+  callbackURLs: callbackUrlSchema.shape.url.array().optional(),
   description: z.string().optional(),
 });
 

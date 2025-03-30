@@ -49,7 +49,7 @@ export class ExportManager {
 
   @withSpanAsyncV4
   public async createExport(exportRequest: CreateExportRequest): Promise<ICreateExportJobResponse | CallbackExportResponse> {
-    const { dbId: catalogId, crs, priority, callbackUrlArray, description } = exportRequest;
+    const { dbId: catalogId, crs, priority, callbackURLs, description } = exportRequest;
     const layerMetadata = await this.validationManager.findLayer(catalogId);
 
     let roi = exportRequest.roi;
@@ -61,7 +61,7 @@ export class ExportManager {
 
     const { productId, productVersion: version, maxResolutionDeg: srcRes } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;
-    const callbackUrls = callbackUrlArray?.map(
+    const callbackUrls = callbackURLs?.map(
       (url) =>
         <CallbackUrl>{
           url,
