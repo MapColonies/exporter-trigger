@@ -818,24 +818,22 @@ export const duplicateJobResponseWithParams = {
       },
       jobId: '4bebe2f8-5bb2-489a-8341-b80e0f704d40',
       links: {
-        dataURI:
-          'https://download-dev.mapcolonies.net/api/raster/v1/downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.gpkg',
-        metadataURI:
-          'https://download-dev.mapcolonies.net/api/raster/v1/downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.json',
+        dataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
+        metadataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
       },
       status: 'Completed',
       fileSize: 102400,
       artifacts: [
         {
-          url: 'https://download-dev.mapcolonies.net/api/raster/v1/downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.gpkg',
-          name: 'Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.gpkg',
+          url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
+          name: 'test.gpkg',
           size: 102400,
           type: 'GPKG',
           sha256: '8fca0427fcc4f57cadb3799ad44d621333716c3515ccf7d15208dae0aba6adb0',
         },
         {
-          url: 'https://download-dev.mapcolonies.net/api/raster/v1/downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.json',
-          name: 'Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.json',
+          url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
+          name: 'test.json',
           size: 1834,
           type: 'METADATA',
         },
@@ -848,9 +846,9 @@ export const duplicateJobResponseWithParams = {
       targetFormat: 'PNG',
       gpkgEstimatedSize: 25000,
       fileNamesTemplates: {
-        packageName: 'Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.gpkg',
+        packageName: 'test.gpkg',
       },
-      packageRelativePath: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.gpkg',
+      packageRelativePath: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
       jobTrackerServiceURL: 'https://raster-core-dev-job-tracker-route-raster-dev.apps.j1lk3njp.eastus.aroapp.io',
       outputFormatStrategy: 'mixed',
       relativeDirectoryPath: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd',
@@ -940,24 +938,22 @@ export const expectedResponse = {
   },
   jobId: '4bebe2f8-5bb2-489a-8341-b80e0f704d40',
   links: {
-    dataURI:
-      'https://download-dev.mapcolonies.net/api/raster/v1/downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.gpkg',
-    metadataURI:
-      'https://download-dev.mapcolonies.net/api/raster/v1/downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.json',
+    dataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
+    metadataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
   },
   status: 'Completed',
   fileSize: 102400,
   artifacts: [
     {
-      url: 'https://download-dev.mapcolonies.net/api/raster/v1/downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.gpkg',
-      name: 'Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.gpkg',
+      url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
+      name: 'test.gpkg',
       size: 102400,
       type: 'GPKG',
       sha256: '8fca0427fcc4f57cadb3799ad44d621333716c3515ccf7d15208dae0aba6adb0',
     },
     {
-      url: 'https://download-dev.mapcolonies.net/api/raster/v1/downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.json',
-      name: 'Orthophoto_Naive_Cache_Check_V2_1_0_1_2025_05_19T10_13_41_589Z.json',
+      url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
+      name: 'test.json',
       size: 1834,
       type: 'METADATA',
     },
