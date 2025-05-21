@@ -849,7 +849,7 @@ export const duplicateJobResponseWithParams = {
         packageName: 'test.gpkg',
       },
       packageRelativePath: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
-      jobTrackerServiceURL: 'https://raster-core-dev-job-tracker-route-raster-dev.apps.j1lk3njp.eastus.aroapp.io',
+      jobTrackerServiceURL: 'http://job-tracker',
       outputFormatStrategy: 'mixed',
       relativeDirectoryPath: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd',
       polygonPartsEntityName: 'naive_cache_check_v2_orthophoto',
