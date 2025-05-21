@@ -25,7 +25,7 @@ import {
   JobExportDuplicationParams,
   JobExportResponse,
 } from '../../common/interfaces';
-import { checkRoiFeatureCollectionResemblance, sanitizeBbox } from '../../utils/geometry';
+import { checkRoiFeatureCollectionSimilarity, sanitizeBbox } from '../../utils/geometry';
 
 @injectable()
 export class ValidationManager {
@@ -153,7 +153,7 @@ export class ValidationManager {
           job.internalId === jobParams.catalogId &&
           job.version === jobParams.version &&
           job.parameters.exportInputParams.crs === jobParams.crs &&
-          checkRoiFeatureCollectionResemblance(job.parameters.exportInputParams.roi, jobParams.roi)
+          checkRoiFeatureCollectionSimilarity(job.parameters.exportInputParams.roi, jobParams.roi, { config: this.config })
       );
       return duplicateJob;
     }

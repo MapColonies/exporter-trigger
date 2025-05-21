@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { Logger } from '@map-colonies/js-logger';
 import { container } from 'tsyringe';
-import config from 'config';
 import { area, buffer, feature, featureCollection, intersect } from '@turf/turf';
 import PolygonBbox from '@turf/bbox';
 import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
@@ -9,25 +8,22 @@ import booleanContains from '@turf/boolean-contains';
 import { snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
 import { SERVICES } from '@src/common/constants';
-
-const roiBufferMeter = config.get<number>('roiBufferMeter');
-const minContainedPercentage = config.get<number>('minContainedPercentage');
+import { IConfig } from '@src/common/interfaces';
 
 const areRoiPropertiesEqual = (props1: RoiProperties, props2: RoiProperties): boolean => {
   return props1.maxResolutionDeg === props2.maxResolutionDeg && props1.minResolutionDeg === props2.minResolutionDeg;
 };
 
 const areGeometriesSimilar = (feature1: Feature, feature2: Feature, options: { minContainedPercentage: number; bufferMeter: number }): boolean => {
-  // Calculate areas first
-  const area1 = area(feature1);
-  const area2 = area(feature2);
-
   // Check direct containment
   const feature1ContainsFeature2 = booleanContains(feature1, feature2);
   const feature2ContainsFeature1 = booleanContains(feature2, feature1);
 
   if (feature1ContainsFeature2 || feature2ContainsFeature1) {
     // Even with containment, check if areas are within threshold
+    const area1 = area(feature1);
+    const area2 = area(feature2);
+
     const areaRatio = Math.min(area1, area2) / Math.max(area1, area2);
     const thresholdRatio = options.minContainedPercentage / 100;
 
@@ -49,7 +45,9 @@ const areGeometriesSimilar = (feature1: Feature, feature2: Feature, options: { m
   return booleanContains(bufferedFeature1, feature2) || booleanContains(bufferedFeature2, feature1);
 };
 
-export const checkRoiFeatureCollectionResemblance = (fc1: RoiFeatureCollection, fc2: RoiFeatureCollection): boolean => {
+export const checkRoiFeatureCollectionSimilarity = (fc1: RoiFeatureCollection, fc2: RoiFeatureCollection, options: { config: IConfig }): boolean => {
+  const roiBufferMeter = options.config.get<number>('roiBufferMeter');
+  const minContainedPercentage = options.config.get<number>('minContainedPercentage');
   const logger: Logger = container.resolve(SERVICES.LOGGER);
   // If feature counts differ, they're not similar
   if (fc1.features.length !== fc2.features.length) {
@@ -79,7 +77,7 @@ export const checkRoiFeatureCollectionResemblance = (fc1: RoiFeatureCollection, 
         continue;
       }
 
-      // Check geometric resemblance
+      // Check geometric similarity
       const geometriesSimilar = areGeometriesSimilar(feature1, feature2, { minContainedPercentage, bufferMeter: roiBufferMeter });
       logger.debug({
         msg: 'Checking geometries',

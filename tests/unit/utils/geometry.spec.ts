@@ -1,17 +1,17 @@
 import { container } from 'tsyringe';
-import { Feature, MultiPolygon, Polygon } from 'geojson';
+import { Feature, Polygon } from 'geojson';
 import jsLogger from '@map-colonies/js-logger';
 import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
 import * as turf from '@turf/turf';
-import { registerDefaultConfig } from '../../mocks/config';
+import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { sanitizeBboxMock, sanitizeBboxRequestMock, notIntersectedPolygon } from '../../mocks/geometryMocks';
-import { checkRoiFeatureCollectionResemblance, sanitizeBbox } from '../../../src/utils/geometry';
+import { checkRoiFeatureCollectionSimilarity, sanitizeBbox } from '../../../src/utils/geometry';
 import { SERVICES } from '../../../src/common/constants';
 
 describe('Geometry Utils', () => {
   beforeEach(() => {
-    const logger = jsLogger({ enabled: false });
     registerDefaultConfig();
+    const logger = jsLogger({ enabled: false });
     container.register(SERVICES.LOGGER, { useValue: logger });
   });
   afterEach(() => {
@@ -38,14 +38,7 @@ describe('Geometry Utils', () => {
     });
   });
 
-  describe('checkRoiFeatureCollectionResemblance', () => {
-    function createFeatureCollection(features: Feature<Polygon | MultiPolygon, RoiProperties>[]): RoiFeatureCollection {
-      return {
-        type: 'FeatureCollection',
-        features: features,
-      };
-    }
-
+  describe('checkRoiFeatureCollectionSimilarity', () => {
     function createPolygonFeature(id: string, coords: number[][], properties: RoiProperties): Feature<Polygon, RoiProperties> {
       return {
         type: 'Feature',
@@ -57,9 +50,24 @@ describe('Geometry Utils', () => {
         },
       };
     }
-
     const props1 = { maxResolutionDeg: 0.1, minResolutionDeg: 0.01 };
     const props2 = { maxResolutionDeg: 0.2, minResolutionDeg: 0.02 };
+
+    it('should return true when features are identical', () => {
+      const square = [
+        [0, 0],
+        [0, 10],
+        [10, 10],
+        [10, 0],
+        [0, 0],
+      ];
+      const fc1 = turf.featureCollection([createPolygonFeature('f1', square, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2', square, props1)]);
+
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+
+      expect(result).toBeTruthy();
+    });
 
     // Different feature count
     it('should return false when collections have different numbers of features', () => {
@@ -70,21 +78,23 @@ describe('Geometry Utils', () => {
         [10, 0],
         [0, 0],
       ];
-      const fc1 = createFeatureCollection([createPolygonFeature('f1', square, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2a', square, props1), createPolygonFeature('f2b', square, props1)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1', square, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2a', square, props1), createPolygonFeature('f2b', square, props1)]);
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(false);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+
+      expect(result).toBeFalsy();
     });
 
     // Empty feature collections
     it('should return true when both collections are empty', () => {
-      const fc1 = createFeatureCollection([]);
-      const fc2 = createFeatureCollection([]);
+      const fc1 = turf.featureCollection([]) as RoiFeatureCollection;
+      const fc2 = turf.featureCollection([]) as RoiFeatureCollection;
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(true);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+
+      expect(result).toBeTruthy();
     });
 
     // Different properties
@@ -96,12 +106,13 @@ describe('Geometry Utils', () => {
         [10, 0],
         [0, 0],
       ];
-      const fc1 = createFeatureCollection([createPolygonFeature('f1', square, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2', square, props2)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1', square, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2', square, props2)]);
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(false);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+
+      expect(result).toBeFalsy();
     });
 
     // Containment with area ratio within threshold
@@ -123,12 +134,12 @@ describe('Geometry Utils', () => {
         [0.2, 0.2],
       ];
 
-      const fc1 = createFeatureCollection([createPolygonFeature('f1', outerSquare, props1)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1', outerSquare, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2', innerSquare, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2', innerSquare, props1)]);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
     });
 
     // Containment with area ratio below threshold
@@ -150,12 +161,12 @@ describe('Geometry Utils', () => {
         [2, 2],
       ];
 
-      const fc1 = createFeatureCollection([createPolygonFeature('f1', outerSquare, props1)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1', outerSquare, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2', innerSquare, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2', innerSquare, props1)]);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
     });
 
     // Buffer doesn't create containment
@@ -176,12 +187,12 @@ describe('Geometry Utils', () => {
         [20, 0],
       ];
 
-      const fc1 = createFeatureCollection([createPolygonFeature('f1', square1, props1)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1', square1, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2', square2, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2', square2, props1)]);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
     });
 
     // Multiple features - all match
@@ -218,12 +229,12 @@ describe('Geometry Utils', () => {
         [20.5, 0.5],
       ];
 
-      const fc1 = createFeatureCollection([createPolygonFeature('f1a', square1a, props1), createPolygonFeature('f1b', square1b, props1)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1a', square1a, props1), createPolygonFeature('f1b', square1b, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2a', square2a, props1), createPolygonFeature('f2b', square2b, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2a', square2a, props1), createPolygonFeature('f2b', square2b, props1)]);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
     });
 
     // Multiple features - some don't match
@@ -260,12 +271,13 @@ describe('Geometry Utils', () => {
         [40, 0],
       ]; // Far from any square in fc1
 
-      const fc1 = createFeatureCollection([createPolygonFeature('f1a', square1a, props1), createPolygonFeature('f1b', square1b, props1)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1a', square1a, props1), createPolygonFeature('f1b', square1b, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2a', square2a, props1), createPolygonFeature('f2b', square2b, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2a', square2a, props1), createPolygonFeature('f2b', square2b, props1)]);
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(false);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+
+      expect(result).toBeFalsy();
     });
 
     // Multiple features - different order
@@ -302,16 +314,16 @@ describe('Geometry Utils', () => {
         [20.5, 0.5],
       ]; // Matches square1b
 
-      const fc1 = createFeatureCollection([createPolygonFeature('f1a', square1a, props1), createPolygonFeature('f1b', square1b, props1)]);
-
-      const fc2 = createFeatureCollection([
+      const fc1 = turf.featureCollection([createPolygonFeature('f1a', square1a, props1), createPolygonFeature('f1b', square1b, props1)]);
+      const fc2 = turf.featureCollection([
         // Order reversed compared to fc1
         createPolygonFeature('f2b', square2b, props1),
         createPolygonFeature('f2a', square2a, props1),
       ]);
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(true);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+
+      expect(result).toBeTruthy();
     });
 
     // Ambiguous matching
@@ -334,12 +346,12 @@ describe('Geometry Utils', () => {
         [0.5, 0.5],
       ];
 
-      const fc1 = createFeatureCollection([createPolygonFeature('f1a', square1, props1), createPolygonFeature('f1b', square1, props1)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1a', square1, props1), createPolygonFeature('f1b', square1, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2a', square2, props1), createPolygonFeature('f2b', square2, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2a', square2, props1), createPolygonFeature('f2b', square2, props1)]);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
     });
 
     // Exactly at threshold boundary
@@ -367,12 +379,12 @@ describe('Geometry Utils', () => {
         [offset, offset],
       ];
 
-      const fc1 = createFeatureCollection([createPolygonFeature('f1', outerSquare, props1)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1', outerSquare, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2', innerSquare, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2', innerSquare, props1)]);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
     });
 
     // Invalid geometry handling
@@ -395,13 +407,12 @@ describe('Geometry Utils', () => {
         [0, 0],
       ];
 
-      const fc1 = createFeatureCollection([createPolygonFeature('f1', validSquare, props1)]);
+      const fc1 = turf.featureCollection([createPolygonFeature('f1', validSquare, props1)]);
+      const fc2 = turf.featureCollection([createPolygonFeature('f2', invalidPolygon, props1)]);
 
-      const fc2 = createFeatureCollection([createPolygonFeature('f2', invalidPolygon, props1)]);
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
-      const result = checkRoiFeatureCollectionResemblance(fc1, fc2);
-
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
     });
   });
 });

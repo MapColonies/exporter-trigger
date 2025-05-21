@@ -13,6 +13,7 @@ export class RasterCatalogManagerClient extends HttpClient {
     @inject(SERVICES.LOGGER) protected readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
+    const x = config.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url');
     super(
       logger,
       config.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url'),
