@@ -1,7 +1,7 @@
 import { container } from 'tsyringe';
-import { Feature, Polygon } from 'geojson';
+import { Polygon } from 'geojson';
 import jsLogger from '@map-colonies/js-logger';
-import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
+import { RoiFeatureCollection } from '@map-colonies/raster-shared';
 import * as turf from '@turf/turf';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { sanitizeBboxMock, sanitizeBboxRequestMock, notIntersectedPolygon } from '../../mocks/geometryMocks';
