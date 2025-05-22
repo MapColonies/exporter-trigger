@@ -1,8 +1,17 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { RecordType } from '@map-colonies/mc-model-types';
 import { BBox, Polygon } from 'geojson';
-import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { RasterProductTypes, RoiFeatureCollection, TileFormatStrategy, TileOutputFormat, Transparency } from '@map-colonies/raster-shared';
+import { IFindJobsRequest, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
+import {
+  CallbackExportResponse,
+  ExportArtifactType,
+  ExportJobParameters,
+  RasterProductTypes,
+  RoiFeatureCollection,
+  TileFormatStrategy,
+  TileOutputFormat,
+  Transparency,
+} from '@map-colonies/raster-shared';
 import { CreateExportRequest } from '@src/utils/zod/schemas';
 import {
   CreateExportJobBody,
@@ -11,8 +20,13 @@ import {
   IGeometryRecord,
   IJobStatusResponse,
   JobExportDuplicationParams,
+  LayerInfo,
 } from '../../src/common/interfaces';
 import { inProgressJobsResponse } from './processingRequest';
+
+type DateToString<T> = {
+  [K in keyof T]: T[K] extends Date ? string : T[K] extends Date | undefined ? string | undefined : T[K];
+};
 
 const catalogId = '8b867544-2dab-43a1-be6e-f23ec83c19b4';
 const crs = 'EPSG:4326';
@@ -662,16 +676,15 @@ export const createExportResponse: ICreateExportJobResponse = {
   status: OperationStatus.PENDING,
 };
 
-export const layerMetadataResponse = {
+export const layerMetadataResponse: LayerInfo = {
   metadata: {
-    type: 'RECORD_RASTER',
+    type: RecordType.RECORD_RASTER,
     description: 'string',
     producerName: 'string',
     productSubType: 'string',
     srsName: 'WGS84GEO',
     scale: 100000000,
     productBoundingBox: '-180.000000000000000,-89.999999973571548,179.999999973571533,89.999999973571548',
-    productStatus: 'UNPUBLISHED',
     classification: '6',
     id: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
     srs: '4326',
@@ -679,15 +692,15 @@ export const layerMetadataResponse = {
     maxResolutionDeg: 0.02197265625,
     minResolutionDeg: 0.02197265625,
     rms: 0,
-    creationDateUTC: '2025-05-19T08:39:37.486Z',
-    ingestionDate: '2025-05-19T08:39:37.486Z',
+    creationDateUTC: new Date('2025-05-19T08:39:37.486Z'),
+    ingestionDate: new Date('2025-05-19T08:39:37.486Z'),
     minHorizontalAccuracyCE90: 10,
     maxHorizontalAccuracyCE90: 10,
     region: ['string'],
     sensors: ['string'],
-    imagingTimeBeginUTC: '2024-01-28T13:47:43.427Z',
-    imagingTimeEndUTC: '2024-01-28T13:47:43.427Z',
-    updateDateUTC: '2025-05-19T05:39:37.486Z',
+    imagingTimeBeginUTC: new Date('2024-01-28T13:47:43.427Z'),
+    imagingTimeEndUTC: new Date('2024-01-28T13:47:43.427Z'),
+    updateDateUTC: new Date('2025-05-19T05:39:37.486Z'),
     maxResolutionMeter: 8000,
     minResolutionMeter: 8000,
     displayPath: 'dd0b2205-a79c-421d-8e06-d12d52118689',
@@ -696,7 +709,7 @@ export const layerMetadataResponse = {
     tileOutputFormat: 'PNG',
     productName: '2Parts',
     productId: 'Naive_Cache_Check_V2',
-    productType: 'Orthophoto',
+    productType: RasterProductTypes.ORTHOPHOTO,
     footprint: {
       type: 'Polygon',
       coordinates: [
@@ -711,6 +724,7 @@ export const layerMetadataResponse = {
       bbox: [-180, -89.99999997357155, 179.99999997357153, 89.99999997357155],
     },
   },
+  links: [],
 };
 
 export const roiRequest: CreateExportRequest = {
@@ -753,23 +767,24 @@ export const duplicationParams: IFindJobsRequest = {
   status: OperationStatus.COMPLETED,
 };
 
-export const duplicateJobsResponseWithoutParams = [
+export const duplicateJobsResponseWithoutParams: IJobResponse<unknown, unknown>[] = [
   {
     id: '4bebe2f8-5bb2-489a-8341-b80e0f704d40',
     resourceId: 'Naive_Cache_Check_V2',
     version: '1.0',
     type: 'Export',
+    parameters: {},
     description: 'Max zoom:1',
-    status: 'Completed',
+    status: OperationStatus.COMPLETED,
     percentage: 100,
     reason: 'Job completed successfully',
     domain: 'RASTER',
     isCleaned: false,
     priority: 0,
-    expirationDate: null,
+    expirationDate: undefined,
     internalId: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
-    producerName: null,
-    productName: null,
+    producerName: undefined,
+    productName: undefined,
     productType: 'Orthophoto',
     additionalIdentifiers: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd',
     taskCount: 3,
@@ -784,13 +799,8 @@ export const duplicateJobsResponseWithoutParams = [
   },
 ];
 
-export const duplicateJobResponseWithParams = {
-  id: '4bebe2f8-5bb2-489a-8341-b80e0f704d40',
-  resourceId: 'Naive_Cache_Check_V2',
-  version: '1.0',
-  type: 'Export',
-  description: 'Max zoom:1',
-  internalId: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
+export const duplicateJobResponseWithParams: IJobResponse<ExportJobParameters, unknown> = {
+  ...duplicateJobsResponseWithoutParams[0],
   parameters: {
     callbackParams: {
       roi: {
@@ -821,25 +831,25 @@ export const duplicateJobResponseWithParams = {
         dataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
         metadataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
       },
-      status: 'Completed',
+      status: OperationStatus.COMPLETED,
       fileSize: 102400,
       artifacts: [
         {
           url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
           name: 'test.gpkg',
           size: 102400,
-          type: 'GPKG',
+          type: ExportArtifactType.GPKG,
           sha256: '8fca0427fcc4f57cadb3799ad44d621333716c3515ccf7d15208dae0aba6adb0',
         },
         {
           url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
           name: 'test.json',
           size: 1834,
-          type: 'METADATA',
+          type: ExportArtifactType.METADATA,
         },
       ],
       description: 'The export process completed successfully.',
-      expirationTime: '2025-06-02T10:13:46.000Z',
+      expirationTime: new Date('2025-06-18T10:15:50.000Z'),
       recordCatalogId: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
     },
     additionalParams: {
@@ -856,7 +866,7 @@ export const duplicateJobResponseWithParams = {
     },
     cleanupDataParams: {
       directoryPath: '/outputs/gpkgs/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd',
-      cleanupExpirationTimeUTC: '2025-06-18T10:15:50.000Z',
+      cleanupExpirationTimeUTC: new Date('2025-06-18T10:15:50.000Z'),
     },
     exportInputParams: {
       crs: 'EPSG:4326',
@@ -890,29 +900,9 @@ export const duplicateJobResponseWithParams = {
       ],
     },
   },
-  status: 'Completed',
-  percentage: 100,
-  reason: 'Job completed successfully',
-  domain: 'RASTER',
-  isCleaned: false,
-  priority: 0,
-  expirationDate: null,
-  producerName: null,
-  productName: null,
-  productType: 'Orthophoto',
-  additionalIdentifiers: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd',
-  taskCount: 3,
-  completedTasks: 3,
-  failedTasks: 0,
-  expiredTasks: 0,
-  pendingTasks: 0,
-  inProgressTasks: 0,
-  abortedTasks: 0,
-  created: '2025-05-19T10:13:41.801Z',
-  updated: '2025-05-19T10:15:51.403Z',
 };
 
-export const expectedResponse = {
+export const expectedResponse: DateToString<CallbackExportResponse> = {
   roi: {
     type: 'FeatureCollection',
     features: [
@@ -941,29 +931,40 @@ export const expectedResponse = {
     dataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
     metadataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
   },
-  status: 'Completed',
+  status: OperationStatus.COMPLETED,
   fileSize: 102400,
   artifacts: [
     {
       url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
       name: 'test.gpkg',
       size: 102400,
-      type: 'GPKG',
+      type: ExportArtifactType.GPKG,
       sha256: '8fca0427fcc4f57cadb3799ad44d621333716c3515ccf7d15208dae0aba6adb0',
     },
     {
       url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
       name: 'test.json',
       size: 1834,
-      type: 'METADATA',
+      type: ExportArtifactType.METADATA,
     },
   ],
   description: 'The export process completed successfully.',
-  expirationTime: '2025-06-02T10:13:46.000Z',
+  expirationTime: '2025-06-18T10:15:50.000Z',
   recordCatalogId: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
 };
 
-export const createExportDuplicateResponseTestCases = [
+export interface Test {
+  description: string;
+  request: CreateExportRequest;
+  findLayerParams: { id: string };
+  layerMetadataResponse: LayerInfo[];
+  duplicationParams: IFindJobsRequest;
+  duplicateJobsResponseWithoutParams: IJobResponse<unknown, unknown>[];
+  duplicateJobResponseWithParams: IJobResponse<ExportJobParameters, unknown>;
+  expected: DateToString<CallbackExportResponse>;
+}
+
+export const createExportDuplicateResponseTestCases: Test[] = [
   {
     description: 'Should return existing completed job when ROI exactly matches',
     request: roiRequest,

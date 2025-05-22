@@ -217,7 +217,9 @@ describe('ValidationManager', () => {
         .reply(200, completedJobWithChangedExpiration)
         .persist();
       nock(jobManagerURL).put(`/jobs/${completedExportJobsResponse[0].id}`, JSON.stringify(updateExpirationParams)).reply(200);
+
       const expirationDateSpy = jest.spyOn(jobManagerWrapper, 'updateJobExpirationDate');
+      completedJobCallback.expirationTime = newExpirationDate as unknown as string;
 
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs);
 

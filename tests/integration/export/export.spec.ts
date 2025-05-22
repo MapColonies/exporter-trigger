@@ -31,7 +31,7 @@ import {
 import { ValidationManager } from '@src/export/models/validationManager';
 import { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
 import { JobExportResponse } from '@src/common/interfaces';
-import { CreateExportRequest } from '@src/utils/zod/schemas';
+import { JobManagerWrapper } from '@src/clients/jobManagerWrapper';
 import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { getApp } from '../../../src/app';
 import { ExportSender } from './helpers/exportSender';
@@ -60,8 +60,10 @@ describe('export', function () {
   });
 
   afterEach(function () {
+    nock.cleanAll();
     resetContainer();
     jest.resetAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('create', function () {
@@ -197,7 +199,7 @@ describe('export', function () {
       it('should return 200 status code , create init job when no roi provided and with callback', async function () {
         const layerId = createExportRequestWithoutCallback.dbId;
         (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
-
+        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T12_39_36_961Z');
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
         nock(jobManagerURL)
           .get('/jobs')
@@ -216,7 +218,6 @@ describe('export', function () {
           .reply(200, inProgressJobsResponse);
 
         nock(jobManagerURL).post(`/jobs`, initExportRequestBodyNoRoiWithCallback).reply(200, initExportResponse);
-        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T12_39_36_961Z');
 
         const response = await requestSender.export(createExportRequestNoRoiWithCallback);
 
@@ -322,11 +323,13 @@ describe('export', function () {
           nock(jobManagerURL)
             .get(`/jobs/${duplicateJobsResponseWithoutParams[0].id}`)
             .query({ shouldReturnTasks: false })
-            .reply(200, duplicateJobResponseWithParams)
-            .persist();
+            .reply(200, duplicateJobResponseWithParams);
           nock(jobManagerURL).put(`/jobs/${duplicateJobsResponseWithoutParams[0].id}`).reply(200);
+          jest
+            .spyOn(JobManagerWrapper.prototype, 'updateJobExpirationDate')
+            .mockResolvedValue(duplicateJobResponseWithParams.parameters.cleanupDataParams?.cleanupExpirationTimeUTC);
 
-          const response = await requestSender.export(request as CreateExportRequest);
+          const response = await requestSender.export(request);
           expect(response.body).toEqual(expected);
           expect(response.status).toBe(httpStatusCodes.OK);
         },
@@ -456,7 +459,7 @@ describe('export', function () {
       it('should return 200 status code and the tasks matched the jobId', async function () {
         const jobRequest = inProgressJobsResponse[0] as unknown as JobExportResponse;
 
-        nock(jobManagerURL).get(`/jobs/${jobRequest.id}`).reply(200, jobRequest);
+        nock(jobManagerURL).get(`/jobs/${jobRequest.id}`).query({ shouldReturnTasks: false }).reply(200, jobRequest);
 
         const response = await requestSender.getStatusByJobId(jobRequest.id);
 

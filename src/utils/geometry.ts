@@ -91,12 +91,14 @@ export const checkRoiFeatureCollectionSimilarity = (fc1: RoiFeatureCollection, f
         break;
       }
     }
+    if (!fc1Matched[i]) {
+      logger.debug({ msg: 'At least one feature in fc1 has no match, featureCollection has no similarity' });
+      return false;
+    }
   }
 
-  // Return true only if all features in both collections found a match
-  const allMatched = fc1Matched.every((matched) => matched) && fc2Matched.every((matched) => matched);
-  logger.debug({ msg: 'All features matched?', allMatched });
-  return allMatched;
+  logger.debug({ msg: 'All features matched successfully, featureCollection has similarity' });
+  return true;
 };
 
 export const sanitizeBbox = ({

@@ -137,10 +137,11 @@ export class ValidationManager {
     const exportJobs = await this.jobManagerClient.findExportJobs(OperationStatus.COMPLETED, dupParams);
     const duplicateJob = this.findDuplicatedExportJob(exportJobs, dupParams);
     if (duplicateJob) {
-      await this.jobManagerClient.updateJobExpirationDate(duplicateJob.id);
+      const expirationDate = await this.jobManagerClient.updateJobExpirationDate(duplicateJob.id);
       return {
         ...duplicateJob.parameters.callbackParams,
         status: OperationStatus.COMPLETED,
+        expirationTime: expirationDate,
       } as CallbackExportResponse;
     }
   }

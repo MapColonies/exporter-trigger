@@ -39,30 +39,24 @@ describe('Geometry Utils', () => {
   });
 
   describe('checkRoiFeatureCollectionSimilarity', () => {
-    function createPolygonFeature(id: string, coords: number[][], properties: RoiProperties): Feature<Polygon, RoiProperties> {
-      return {
-        type: 'Feature',
-        id,
-        properties,
-        geometry: {
-          type: 'Polygon',
-          coordinates: [coords],
-        },
-      };
-    }
     const props1 = { maxResolutionDeg: 0.1, minResolutionDeg: 0.01 };
     const props2 = { maxResolutionDeg: 0.2, minResolutionDeg: 0.02 };
 
     it('should return true when features are identical', () => {
-      const square = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
-      const fc1 = turf.featureCollection([createPolygonFeature('f1', square, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2', square, props1)]);
+      const squarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
+      const fc1 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f1' })]);
+      const fc2 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f2' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -71,16 +65,21 @@ describe('Geometry Utils', () => {
 
     // Different feature count
     it('should return false when collections have different numbers of features', () => {
-      const square = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
+      const squarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1', square, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2a', square, props1), createPolygonFeature('f2b', square, props1)]);
+      const fc1 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f1' })]);
+      const fc2 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f2a' }), turf.feature(squarePolygon, props1, { id: 'f2b' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -99,16 +98,21 @@ describe('Geometry Utils', () => {
 
     // Different properties
     it('should return false when features have different properties', () => {
-      const square = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
+      const squarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1', square, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2', square, props2)]);
+      const fc1 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f1' })]);
+      const fc2 = turf.featureCollection([turf.feature(squarePolygon, props2, { id: 'f2' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -118,24 +122,35 @@ describe('Geometry Utils', () => {
     // Containment with area ratio within threshold
     it('should return true when one feature contains another and area ratio is within threshold', () => {
       // Square: 100 sq units
-      const outerSquare = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
-      // Inner square: 96 sq units (96% of outer) - above 90% threshold
-      const innerSquare = [
-        [0.2, 0.2],
-        [0.2, 9.8],
-        [9.8, 9.8],
-        [9.8, 0.2],
-        [0.2, 0.2],
-      ];
+      const outerSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1', outerSquare, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2', innerSquare, props1)]);
+      // Inner square: 96 sq units (96% of outer) - above 90% threshold
+      const innerSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0.2, 0.2],
+            [0.2, 9.8],
+            [9.8, 9.8],
+            [9.8, 0.2],
+            [0.2, 0.2],
+          ],
+        ],
+      };
+
+      const fc1 = turf.featureCollection([turf.feature(outerSquarePolygon, props1, { id: 'f1' })]);
+      const fc2 = turf.featureCollection([turf.feature(innerSquarePolygon, props1, { id: 'f2' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -145,24 +160,35 @@ describe('Geometry Utils', () => {
     // Containment with area ratio below threshold
     it('should return false when one feature contains another but area ratio is below threshold', () => {
       // Square: 100 sq units
-      const outerSquare = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
-      // Inner square: 64 sq units (64% of outer) - below 90% threshold
-      const innerSquare = [
-        [2, 2],
-        [2, 8],
-        [8, 8],
-        [8, 2],
-        [2, 2],
-      ];
+      const outerSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1', outerSquare, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2', innerSquare, props1)]);
+      // Inner square: 64 sq units (64% of outer) - below 90% threshold
+      const innerSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [2, 2],
+            [2, 8],
+            [8, 8],
+            [8, 2],
+            [2, 2],
+          ],
+        ],
+      };
+
+      const fc1 = turf.featureCollection([turf.feature(outerSquarePolygon, props1, { id: 'f1' })]);
+      const fc2 = turf.featureCollection([turf.feature(innerSquarePolygon, props1, { id: 'f2' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -172,23 +198,34 @@ describe('Geometry Utils', () => {
     // Buffer doesn't create containment
     it("should return false when buffer doesn't create containment", () => {
       // Two squares that are 10 meters apart - beyond the 5 meter buffer
-      const square1 = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
-      const square2 = [
-        [20, 0],
-        [20, 10],
-        [30, 10],
-        [30, 0],
-        [20, 0],
-      ];
+      const square1Polygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1', square1, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2', square2, props1)]);
+      const square2Polygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [20, 0],
+            [20, 10],
+            [30, 10],
+            [30, 0],
+            [20, 0],
+          ],
+        ],
+      };
+
+      const fc1 = turf.featureCollection([turf.feature(square1Polygon, props1, { id: 'f1' })]);
+      const fc2 = turf.featureCollection([turf.feature(square2Polygon, props1, { id: 'f2' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -198,39 +235,68 @@ describe('Geometry Utils', () => {
     // Multiple features - all match
     it('should return true when all features in collections find matches', () => {
       // First collection has two squares
-      const square1a = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
-      const square1b = [
-        [20, 0],
-        [20, 10],
-        [30, 10],
-        [30, 0],
-        [20, 0],
-      ];
+      const square1aPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
+
+      const square1bPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [20, 0],
+            [20, 10],
+            [30, 10],
+            [30, 0],
+            [20, 0],
+          ],
+        ],
+      };
 
       // Second collection has matching squares (slightly smaller but within threshold)
-      const square2a = [
-        [0.5, 0.5],
-        [0.5, 9.5],
-        [9.5, 9.5],
-        [9.5, 0.5],
-        [0.5, 0.5],
-      ];
-      const square2b = [
-        [20.5, 0.5],
-        [20.5, 9.5],
-        [29.5, 9.5],
-        [29.5, 0.5],
-        [20.5, 0.5],
-      ];
+      const square2aPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0.5, 0.5],
+            [0.5, 9.5],
+            [9.5, 9.5],
+            [9.5, 0.5],
+            [0.5, 0.5],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1a', square1a, props1), createPolygonFeature('f1b', square1b, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2a', square2a, props1), createPolygonFeature('f2b', square2b, props1)]);
+      const square2bPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [20.5, 0.5],
+            [20.5, 9.5],
+            [29.5, 9.5],
+            [29.5, 0.5],
+            [20.5, 0.5],
+          ],
+        ],
+      };
+
+      const fc1 = turf.featureCollection([
+        turf.feature(square1aPolygon, props1, { id: 'f1a' }),
+        turf.feature(square1bPolygon, props1, { id: 'f1b' }),
+      ]);
+
+      const fc2 = turf.featureCollection([
+        turf.feature(square2aPolygon, props1, { id: 'f2a' }),
+        turf.feature(square2bPolygon, props1, { id: 'f2b' }),
+      ]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -240,40 +306,68 @@ describe('Geometry Utils', () => {
     // Multiple features - some don't match
     it("should return false when some features don't find matches", () => {
       // First collection has two squares
-      const square1a = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
-      const square1b = [
-        [20, 0],
-        [20, 10],
-        [30, 10],
-        [30, 0],
-        [20, 0],
-      ];
+      const square1aPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
+
+      const square1bPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [20, 0],
+            [20, 10],
+            [30, 10],
+            [30, 0],
+            [20, 0],
+          ],
+        ],
+      };
 
       // Second collection has one matching square and one non-matching
-      const square2a = [
-        [0.5, 0.5],
-        [0.5, 9.5],
-        [9.5, 9.5],
-        [9.5, 0.5],
-        [0.5, 0.5],
-      ]; // Matches square1a
-      const square2b = [
-        [40, 0],
-        [40, 10],
-        [50, 10],
-        [50, 0],
-        [40, 0],
-      ]; // Far from any square in fc1
+      const square2aPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0.5, 0.5],
+            [0.5, 9.5],
+            [9.5, 9.5],
+            [9.5, 0.5],
+            [0.5, 0.5],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1a', square1a, props1), createPolygonFeature('f1b', square1b, props1)]);
+      const square2bPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [40, 0],
+            [40, 10],
+            [50, 10],
+            [50, 0],
+            [40, 0],
+          ],
+        ],
+      };
 
-      const fc2 = turf.featureCollection([createPolygonFeature('f2a', square2a, props1), createPolygonFeature('f2b', square2b, props1)]);
+      const fc1 = turf.featureCollection([
+        turf.feature(square1aPolygon, props1, { id: 'f1a' }),
+        turf.feature(square1bPolygon, props1, { id: 'f1b' }),
+      ]);
+
+      const fc2 = turf.featureCollection([
+        turf.feature(square2aPolygon, props1, { id: 'f2a' }),
+        turf.feature(square2bPolygon, props1, { id: 'f2b' }),
+      ]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -283,42 +377,68 @@ describe('Geometry Utils', () => {
     // Multiple features - different order
     it('should match features correctly regardless of order', () => {
       // First collection has two squares
-      const square1a = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
-      const square1b = [
-        [20, 0],
-        [20, 10],
-        [30, 10],
-        [30, 0],
-        [20, 0],
-      ];
+      const square1aPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
+
+      const square1bPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [20, 0],
+            [20, 10],
+            [30, 10],
+            [30, 0],
+            [20, 0],
+          ],
+        ],
+      };
 
       // Second collection has matching squares but in reverse order
-      const square2a = [
-        [0.5, 0.5],
-        [0.5, 9.5],
-        [9.5, 9.5],
-        [9.5, 0.5],
-        [0.5, 0.5],
-      ]; // Matches square1a
-      const square2b = [
-        [20.5, 0.5],
-        [20.5, 9.5],
-        [29.5, 9.5],
-        [29.5, 0.5],
-        [20.5, 0.5],
-      ]; // Matches square1b
+      const square2aPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0.5, 0.5],
+            [0.5, 9.5],
+            [9.5, 9.5],
+            [9.5, 0.5],
+            [0.5, 0.5],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1a', square1a, props1), createPolygonFeature('f1b', square1b, props1)]);
+      const square2bPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [20.5, 0.5],
+            [20.5, 9.5],
+            [29.5, 9.5],
+            [29.5, 0.5],
+            [20.5, 0.5],
+          ],
+        ],
+      };
+
+      const fc1 = turf.featureCollection([
+        turf.feature(square1aPolygon, props1, { id: 'f1a' }),
+        turf.feature(square1bPolygon, props1, { id: 'f1b' }),
+      ]);
+
       const fc2 = turf.featureCollection([
         // Order reversed compared to fc1
-        createPolygonFeature('f2b', square2b, props1),
-        createPolygonFeature('f2a', square2a, props1),
+        turf.feature(square2bPolygon, props1, { id: 'f2b' }),
+        turf.feature(square2aPolygon, props1, { id: 'f2a' }),
       ]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
@@ -329,25 +449,36 @@ describe('Geometry Utils', () => {
     // Ambiguous matching
     it('should handle ambiguous matching correctly', () => {
       // First collection has two identical squares at the same location
-      const square1 = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
+      const square1Polygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
       // Second collection has two identical squares at the same location
-      const square2 = [
-        [0.5, 0.5],
-        [0.5, 9.5],
-        [9.5, 9.5],
-        [9.5, 0.5],
-        [0.5, 0.5],
-      ];
+      const square2Polygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0.5, 0.5],
+            [0.5, 9.5],
+            [9.5, 9.5],
+            [9.5, 0.5],
+            [0.5, 0.5],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1a', square1, props1), createPolygonFeature('f1b', square1, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2a', square2, props1), createPolygonFeature('f2b', square2, props1)]);
+      const fc1 = turf.featureCollection([turf.feature(square1Polygon, props1, { id: 'f1a' }), turf.feature(square1Polygon, props1, { id: 'f1b' })]);
+
+      const fc2 = turf.featureCollection([turf.feature(square2Polygon, props1, { id: 'f2a' }), turf.feature(square2Polygon, props1, { id: 'f2b' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -357,13 +488,18 @@ describe('Geometry Utils', () => {
     // Exactly at threshold boundary
     it('should handle area ratio exactly at threshold boundary', () => {
       // Square: 100 sq units
-      const outerSquare = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
+      const outerSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
       // Inner square with exactly 90% area of outer square - exactly at the threshold
       // For a square, side length = sqrt(area)
@@ -371,16 +507,21 @@ describe('Geometry Utils', () => {
       const sideLength = Math.sqrt(90);
       const offset = (10 - sideLength) / 2; // To center the smaller square
 
-      const innerSquare = [
-        [offset, offset],
-        [offset, offset + sideLength],
-        [offset + sideLength, offset + sideLength],
-        [offset + sideLength, offset],
-        [offset, offset],
-      ];
+      const innerSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [offset, offset],
+            [offset, offset + sideLength],
+            [offset + sideLength, offset + sideLength],
+            [offset + sideLength, offset],
+            [offset, offset],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1', outerSquare, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2', innerSquare, props1)]);
+      const fc1 = turf.featureCollection([turf.feature(outerSquarePolygon, props1, { id: 'f1' })]);
+      const fc2 = turf.featureCollection([turf.feature(innerSquarePolygon, props1, { id: 'f2' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
@@ -390,25 +531,35 @@ describe('Geometry Utils', () => {
     // Invalid geometry handling
     it('should handle invalid geometries gracefully', () => {
       // Create valid geometry
-      const validSquare = [
-        [0, 0],
-        [0, 10],
-        [10, 10],
-        [10, 0],
-        [0, 0],
-      ];
+      const validSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
       // Create invalid geometry (self-intersecting polygon)
-      const invalidPolygon = [
-        [0, 0],
-        [10, 10],
-        [0, 10],
-        [10, 0],
-        [0, 0],
-      ];
+      const invalidPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [10, 10],
+            [0, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
-      const fc1 = turf.featureCollection([createPolygonFeature('f1', validSquare, props1)]);
-      const fc2 = turf.featureCollection([createPolygonFeature('f2', invalidPolygon, props1)]);
+      const fc1 = turf.featureCollection([turf.feature(validSquarePolygon, props1, { id: 'f1' })]);
+      const fc2 = turf.featureCollection([turf.feature(invalidPolygon, props1, { id: 'f2' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 

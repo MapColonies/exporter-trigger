@@ -65,7 +65,7 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   @withSpanAsyncV4
-  public async updateJobExpirationDate(jobId: string): Promise<void> {
+  public async updateJobExpirationDate(jobId: string): Promise<Date | undefined> {
     const newExpirationDate = getUTCDate();
     newExpirationDate.setDate(newExpirationDate.getDate() + this.expirationDays);
     const job = await this.getJob<ExportJobParameters, unknown>(jobId);
@@ -82,9 +82,11 @@ export class JobManagerWrapper extends JobManagerClient {
           },
         },
       });
+      return newExpirationDate;
     } else {
       const msg = `didn't update expiration date, as current expiration date is later than current expiration date`;
       this.logger.info({ msg, jobId, oldExpirationDate, newExpirationDate });
+      return job.parameters.cleanupDataParams?.cleanupExpirationTimeUTC;
     }
   }
 
