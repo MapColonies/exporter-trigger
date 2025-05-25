@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.3](https://github.com/MapColonies/exporter-trigger/compare/v3.1.2...v3.1.3) (2025-05-25)
+
+
+### Bug Fixes
+
+* naive-cache returns cache when zoom level changed ([#115](https://github.com/MapColonies/exporter-trigger/issues/115)) ([6893966](https://github.com/MapColonies/exporter-trigger/commit/689396683ba512c923aea8e5b8ab0b5ea0895103))
+
 ## [3.1.2](https://github.com/MapColonies/exporter-trigger/compare/v3.1.1...v3.1.2) (2025-03-30)
 
 
