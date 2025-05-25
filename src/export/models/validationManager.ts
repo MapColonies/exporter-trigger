@@ -25,7 +25,7 @@ import {
   JobExportDuplicationParams,
   JobExportResponse,
 } from '../../common/interfaces';
-import { checkFeaturesResemblance, sanitizeBbox } from '../../utils/geometry';
+import { checkRoiFeatureCollectionSimilarity, sanitizeBbox } from '../../utils/geometry';
 
 @injectable()
 export class ValidationManager {
@@ -137,10 +137,11 @@ export class ValidationManager {
     const exportJobs = await this.jobManagerClient.findExportJobs(OperationStatus.COMPLETED, dupParams);
     const duplicateJob = this.findDuplicatedExportJob(exportJobs, dupParams);
     if (duplicateJob) {
-      await this.jobManagerClient.updateJobExpirationDate(duplicateJob.id);
+      const expirationDate = await this.jobManagerClient.updateJobExpirationDate(duplicateJob.id);
       return {
         ...duplicateJob.parameters.callbackParams,
         status: OperationStatus.COMPLETED,
+        expirationTime: expirationDate,
       } as CallbackExportResponse;
     }
   }
@@ -153,7 +154,7 @@ export class ValidationManager {
           job.internalId === jobParams.catalogId &&
           job.version === jobParams.version &&
           job.parameters.exportInputParams.crs === jobParams.crs &&
-          checkFeaturesResemblance(job.parameters.exportInputParams.roi, jobParams.roi)
+          checkRoiFeatureCollectionSimilarity(job.parameters.exportInputParams.roi, jobParams.roi, { config: this.config })
       );
       return duplicateJob;
     }

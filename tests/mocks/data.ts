@@ -1,8 +1,17 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { RecordType } from '@map-colonies/mc-model-types';
 import { BBox, Polygon } from 'geojson';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { RasterProductTypes, RoiFeatureCollection, TileFormatStrategy, TileOutputFormat, Transparency } from '@map-colonies/raster-shared';
+import { IFindJobsRequest, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
+import {
+  CallbackExportResponse,
+  ExportArtifactType,
+  ExportJobParameters,
+  RasterProductTypes,
+  RoiFeatureCollection,
+  TileFormatStrategy,
+  TileOutputFormat,
+  Transparency,
+} from '@map-colonies/raster-shared';
 import { CreateExportRequest } from '@src/utils/zod/schemas';
 import {
   CreateExportJobBody,
@@ -11,8 +20,13 @@ import {
   IGeometryRecord,
   IJobStatusResponse,
   JobExportDuplicationParams,
+  LayerInfo,
 } from '../../src/common/interfaces';
 import { inProgressJobsResponse } from './processingRequest';
+
+type DateToString<T> = {
+  [K in keyof T]: T[K] extends Date ? string : T[K] extends Date | undefined ? string | undefined : T[K];
+};
 
 const catalogId = '8b867544-2dab-43a1-be6e-f23ec83c19b4';
 const crs = 'EPSG:4326';
@@ -661,3 +675,340 @@ export const createExportResponse: ICreateExportJobResponse = {
   jobId: 'ef1a76e2-3a4b-49e6-90ee-e97c402dd3d8',
   status: OperationStatus.PENDING,
 };
+
+export const layerMetadataResponse: LayerInfo = {
+  metadata: {
+    type: RecordType.RECORD_RASTER,
+    description: 'string',
+    producerName: 'string',
+    productSubType: 'string',
+    srsName: 'WGS84GEO',
+    scale: 100000000,
+    productBoundingBox: '-180.000000000000000,-89.999999973571548,179.999999973571533,89.999999973571548',
+    classification: '6',
+    id: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
+    srs: '4326',
+    productVersion: '1.0',
+    maxResolutionDeg: 0.02197265625,
+    minResolutionDeg: 0.02197265625,
+    rms: 0,
+    creationDateUTC: new Date('2025-05-19T08:39:37.486Z'),
+    ingestionDate: new Date('2025-05-19T08:39:37.486Z'),
+    minHorizontalAccuracyCE90: 10,
+    maxHorizontalAccuracyCE90: 10,
+    region: ['string'],
+    sensors: ['string'],
+    imagingTimeBeginUTC: new Date('2024-01-28T13:47:43.427Z'),
+    imagingTimeEndUTC: new Date('2024-01-28T13:47:43.427Z'),
+    updateDateUTC: new Date('2025-05-19T05:39:37.486Z'),
+    maxResolutionMeter: 8000,
+    minResolutionMeter: 8000,
+    displayPath: 'dd0b2205-a79c-421d-8e06-d12d52118689',
+    transparency: 'TRANSPARENT',
+    tileMimeFormat: 'image/png',
+    tileOutputFormat: 'PNG',
+    productName: '2Parts',
+    productId: 'Naive_Cache_Check_V2',
+    productType: RasterProductTypes.ORTHOPHOTO,
+    footprint: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-180, 89.99999970523892],
+          [179.99999997357153, 89.99999997357155],
+          [179.99999997357153, -89.99999997357155],
+          [-179.99999997357153, -89.99999997357155],
+          [-180, 89.99999970523892],
+        ],
+      ],
+      bbox: [-180, -89.99999997357155, 179.99999997357153, 89.99999997357155],
+    },
+  },
+  links: [],
+};
+
+export const roiRequest: CreateExportRequest = {
+  dbId: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
+  roi: {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {
+          maxResolutionDeg: 0.087890625,
+          minResolutionDeg: 0.703125,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [34.479280463428466, 31.472217896295774],
+              [34.480316474833614, 31.470300615520685],
+              [34.482525329337875, 31.47145098869808],
+              [34.479280463428466, 31.472217896295774],
+            ],
+          ],
+        },
+      },
+    ],
+  },
+  callbackURLs: ['https://webhook-test.com'],
+  crs: 'EPSG:4326',
+  priority: 0,
+  description: '',
+};
+
+export const duplicationParams: IFindJobsRequest = {
+  resourceId: 'Naive_Cache_Check_V2',
+  version: '1.0',
+  isCleaned: false,
+  type: 'Export',
+  shouldReturnTasks: false,
+  status: OperationStatus.COMPLETED,
+};
+
+export const duplicateJobsResponseWithoutParams: IJobResponse<unknown, unknown>[] = [
+  {
+    id: '4bebe2f8-5bb2-489a-8341-b80e0f704d40',
+    resourceId: 'Naive_Cache_Check_V2',
+    version: '1.0',
+    type: 'Export',
+    parameters: {},
+    description: 'Max zoom:1',
+    status: OperationStatus.COMPLETED,
+    percentage: 100,
+    reason: 'Job completed successfully',
+    domain: 'RASTER',
+    isCleaned: false,
+    priority: 0,
+    expirationDate: undefined,
+    internalId: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
+    producerName: undefined,
+    productName: undefined,
+    productType: 'Orthophoto',
+    additionalIdentifiers: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd',
+    taskCount: 3,
+    completedTasks: 3,
+    failedTasks: 0,
+    expiredTasks: 0,
+    pendingTasks: 0,
+    inProgressTasks: 0,
+    abortedTasks: 0,
+    created: '2025-05-19T10:13:41.801Z',
+    updated: '2025-05-19T10:15:51.403Z',
+  },
+];
+
+export const duplicateJobResponseWithParams: IJobResponse<ExportJobParameters, unknown> = {
+  ...duplicateJobsResponseWithoutParams[0],
+  parameters: {
+    callbackParams: {
+      roi: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [
+                [
+                  [34.479280463428466, 31.472217896295774],
+                  [34.480316474833614, 31.470300615520685],
+                  [34.482525329337875, 31.47145098869808],
+                  [34.479280463428466, 31.472217896295774],
+                ],
+              ],
+            },
+            properties: {
+              maxResolutionDeg: 0.087890625,
+              minResolutionDeg: 0.703125,
+            },
+          },
+        ],
+      },
+      jobId: '4bebe2f8-5bb2-489a-8341-b80e0f704d40',
+      links: {
+        dataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
+        metadataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
+      },
+      status: OperationStatus.COMPLETED,
+      fileSize: 102400,
+      artifacts: [
+        {
+          url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
+          name: 'test.gpkg',
+          size: 102400,
+          type: ExportArtifactType.GPKG,
+          sha256: '8fca0427fcc4f57cadb3799ad44d621333716c3515ccf7d15208dae0aba6adb0',
+        },
+        {
+          url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
+          name: 'test.json',
+          size: 1834,
+          type: ExportArtifactType.METADATA,
+        },
+      ],
+      description: 'The export process completed successfully.',
+      expirationTime: new Date('2025-06-18T10:15:50.000Z'),
+      recordCatalogId: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
+    },
+    additionalParams: {
+      targetFormat: 'PNG',
+      gpkgEstimatedSize: 25000,
+      fileNamesTemplates: {
+        packageName: 'test.gpkg',
+      },
+      packageRelativePath: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
+      jobTrackerServiceURL: 'http://job-tracker',
+      outputFormatStrategy: 'mixed',
+      relativeDirectoryPath: '6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd',
+      polygonPartsEntityName: 'naive_cache_check_v2_orthophoto',
+    },
+    cleanupDataParams: {
+      directoryPath: '/outputs/gpkgs/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd',
+      cleanupExpirationTimeUTC: new Date('2025-06-18T10:15:50.000Z'),
+    },
+    exportInputParams: {
+      crs: 'EPSG:4326',
+      roi: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [
+                [
+                  [34.479280463428466, 31.472217896295774],
+                  [34.480316474833614, 31.470300615520685],
+                  [34.482525329337875, 31.47145098869808],
+                  [34.479280463428466, 31.472217896295774],
+                ],
+              ],
+            },
+            properties: {
+              maxResolutionDeg: 0.087890625,
+              minResolutionDeg: 0.703125,
+            },
+          },
+        ],
+      },
+      callbackUrls: [
+        {
+          url: 'https://webhook-test.com/7e3bb99c19bea30ac50fcf479802d569',
+        },
+      ],
+    },
+  },
+};
+
+export const expectedResponse: DateToString<CallbackExportResponse> = {
+  roi: {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [34.479280463428466, 31.472217896295774],
+              [34.480316474833614, 31.470300615520685],
+              [34.482525329337875, 31.47145098869808],
+              [34.479280463428466, 31.472217896295774],
+            ],
+          ],
+        },
+        properties: {
+          maxResolutionDeg: 0.087890625,
+          minResolutionDeg: 0.703125,
+        },
+      },
+    ],
+  },
+  jobId: '4bebe2f8-5bb2-489a-8341-b80e0f704d40',
+  links: {
+    dataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
+    metadataURI: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
+  },
+  status: OperationStatus.COMPLETED,
+  fileSize: 102400,
+  artifacts: [
+    {
+      url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.gpkg',
+      name: 'test.gpkg',
+      size: 102400,
+      type: ExportArtifactType.GPKG,
+      sha256: '8fca0427fcc4f57cadb3799ad44d621333716c3515ccf7d15208dae0aba6adb0',
+    },
+    {
+      url: 'http://download-server//downloads/6f2a4f2c-72d0-4a52-a9ff-b4c7b833d6fd/test.json',
+      name: 'test.json',
+      size: 1834,
+      type: ExportArtifactType.METADATA,
+    },
+  ],
+  description: 'The export process completed successfully.',
+  expirationTime: '2025-06-18T10:15:50.000Z',
+  recordCatalogId: '7494fdc8-5898-4a85-babe-27f6f4a937b7',
+};
+
+export interface Test {
+  description: string;
+  request: CreateExportRequest;
+  findLayerParams: { id: string };
+  layerMetadataResponse: LayerInfo[];
+  duplicationParams: IFindJobsRequest;
+  duplicateJobsResponseWithoutParams: IJobResponse<unknown, unknown>[];
+  duplicateJobResponseWithParams: IJobResponse<ExportJobParameters, unknown>;
+  expected: DateToString<CallbackExportResponse>;
+}
+
+export const createExportDuplicateResponseTestCases: Test[] = [
+  {
+    description: 'Should return existing completed job when ROI exactly matches',
+    request: roiRequest,
+    findLayerParams: { id: layerMetadataResponse.metadata.id },
+    layerMetadataResponse: [layerMetadataResponse],
+    duplicationParams: duplicationParams,
+    duplicateJobsResponseWithoutParams,
+    duplicateJobResponseWithParams,
+    expected: expectedResponse,
+  },
+  {
+    description: 'Should return existing completed job when ROI coordinates are similar but within buffer threshold',
+    request: {
+      ...roiRequest,
+      roi: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: {
+              maxResolutionDeg: 0.087890625,
+              minResolutionDeg: 0.703125,
+            },
+            geometry: {
+              type: 'Polygon',
+              coordinates: [
+                [
+                  // Slightly modified coordinates (about 1m difference)
+                  [34.4792805, 31.472218],
+                  [34.4803165, 31.4703007],
+                  [34.4825254, 31.4714511],
+                  [34.4792805, 31.472218],
+                ],
+              ],
+            },
+          },
+        ],
+      },
+    },
+    findLayerParams: { id: layerMetadataResponse.metadata.id },
+    layerMetadataResponse: [layerMetadataResponse],
+    duplicationParams: duplicationParams,
+    duplicateJobsResponseWithoutParams,
+    duplicateJobResponseWithParams,
+    expected: expectedResponse,
+  },
+];
