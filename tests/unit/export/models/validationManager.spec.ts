@@ -206,6 +206,10 @@ describe('ValidationManager', () => {
           },
         },
       };
+
+      const expirationDateSpy = jest.spyOn(jobManagerWrapper, 'updateJobExpirationDate');
+      const completedJobCallbackWithUpdatedExpiration = { ...completedJobCallback, expirationTime: newExpirationDate as unknown as string };
+
       completedJobWithChangedExpiration.parameters.cleanupDataParams.cleanupExpirationTimeUTC = '2025-02-01T12:28:50.000Z';
       nock(jobManagerURL)
         .get('/jobs')
@@ -218,12 +222,9 @@ describe('ValidationManager', () => {
         .persist();
       nock(jobManagerURL).put(`/jobs/${completedExportJobsResponse[0].id}`, JSON.stringify(updateExpirationParams)).reply(200);
 
-      const expirationDateSpy = jest.spyOn(jobManagerWrapper, 'updateJobExpirationDate');
-      completedJobCallback.expirationTime = newExpirationDate as unknown as string;
-
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs);
 
-      expect(result).toEqual(completedJobCallback);
+      expect(result).toEqual(completedJobCallbackWithUpdatedExpiration);
       expect(expirationDateSpy).toHaveBeenCalledTimes(1);
     });
 

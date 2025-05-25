@@ -477,7 +477,6 @@ describe('Geometry Utils', () => {
       };
 
       const fc1 = turf.featureCollection([turf.feature(square1Polygon, props1, { id: 'f1a' }), turf.feature(square1Polygon, props1, { id: 'f1b' })]);
-
       const fc2 = turf.featureCollection([turf.feature(square2Polygon, props1, { id: 'f2a' }), turf.feature(square2Polygon, props1, { id: 'f2b' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
