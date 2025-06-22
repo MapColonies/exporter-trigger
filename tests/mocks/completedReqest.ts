@@ -272,6 +272,46 @@ export const completedExportJobsResponse = [
   },
 ];
 
+export const completedExportJobWithMultiPolygonResponse = [
+  {
+    ...completedExportJobsResponse[0],
+    parameters: {
+      ...completedExportJobsResponse[0].parameters,
+      exportInputParams: {
+        ...completedExportJobsResponse[0].parameters.exportInputParams,
+        roi: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [34.87000705462921, 32.320051061366286],
+                    [34.86995011524371, 32.310003589241816],
+                    [34.86166293308631, 32.30705797419132],
+                    [34.85658310461213, 32.306627461492724],
+                    [34.858009398393136, 32.30242602926131],
+                    [34.86240586576869, 32.302565947922105],
+                    [34.87994657123383, 32.309811903560316],
+                    [34.88012126260725, 32.32004979867182],
+                    [34.87000705462921, 32.320051061366286],
+                  ],
+                ],
+              },
+              properties: {
+                maxResolutionDeg: 0.703125,
+                minResolutionDeg: 0.703125,
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
+];
+
 export const updateCompletedExpirationParams = {
   parameters: {
     ...completedExportJobsResponse[0].parameters,
@@ -285,5 +325,10 @@ export const updateCompletedExpirationParams = {
 
 export const completedJobCallback = {
   ...completedExportJobsResponse[0].parameters.callbackParams,
+  status: OperationStatus.COMPLETED,
+};
+
+export const completedJobCallbackWithMultiPolygon = {
+  ...completedExportJobWithMultiPolygonResponse[0].parameters.callbackParams,
   status: OperationStatus.COMPLETED,
 };

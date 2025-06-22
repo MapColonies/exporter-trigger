@@ -1,11 +1,11 @@
 import { container } from 'tsyringe';
-import { Polygon } from 'geojson';
+import { Polygon, MultiPolygon } from 'geojson';
 import jsLogger from '@map-colonies/js-logger';
 import { RoiFeatureCollection } from '@map-colonies/raster-shared';
 import * as turf from '@turf/turf';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { sanitizeBboxMock, sanitizeBboxRequestMock, notIntersectedPolygon } from '../../mocks/geometryMocks';
-import { checkRoiFeatureCollectionSimilarity, sanitizeBbox } from '../../../src/utils/geometry';
+import { checkRoiFeatureCollectionSimilarity, sanitizeBbox, safeContains } from '../../../src/utils/geometry';
 import { SERVICES } from '../../../src/common/constants';
 
 describe('Geometry Utils', () => {
@@ -563,6 +563,420 @@ describe('Geometry Utils', () => {
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
 
       expect(result).toBeFalsy();
+    });
+  });
+
+  describe('safeContains', () => {
+    const props = { maxResolutionDeg: 0.1, minResolutionDeg: 0.01 };
+
+    describe('Regular Polygon containment', () => {
+      it('should return true when outer polygon contains inner polygon', () => {
+        const outerPolygon: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [0, 10],
+              [10, 10],
+              [10, 0],
+              [0, 0],
+            ],
+          ],
+        };
+
+        const innerPolygon: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [2, 2],
+              [2, 8],
+              [8, 8],
+              [8, 2],
+              [2, 2],
+            ],
+          ],
+        };
+
+        const outerFeature = turf.feature(outerPolygon, props);
+        const innerFeature = turf.feature(innerPolygon, props);
+
+        const result = safeContains(outerFeature, innerFeature);
+        expect(result).toBeTruthy();
+      });
+
+      it('should return false when polygons do not overlap', () => {
+        const polygon1: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [0, 5],
+              [5, 5],
+              [5, 0],
+              [0, 0],
+            ],
+          ],
+        };
+
+        const polygon2: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [10, 10],
+              [10, 15],
+              [15, 15],
+              [15, 10],
+              [10, 10],
+            ],
+          ],
+        };
+
+        const feature1 = turf.feature(polygon1, props);
+        const feature2 = turf.feature(polygon2, props);
+
+        const result = safeContains(feature1, feature2);
+        expect(result).toBeFalsy();
+      });
+
+      it('should return false when inner polygon is larger than outer polygon', () => {
+        const smallPolygon: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [2, 2],
+              [2, 8],
+              [8, 8],
+              [8, 2],
+              [2, 2],
+            ],
+          ],
+        };
+
+        const largePolygon: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [0, 10],
+              [10, 10],
+              [10, 0],
+              [0, 0],
+            ],
+          ],
+        };
+
+        const smallFeature = turf.feature(smallPolygon, props);
+        const largeFeature = turf.feature(largePolygon, props);
+
+        const result = safeContains(smallFeature, largeFeature);
+        expect(result).toBeFalsy();
+      });
+    });
+
+    describe('MultiPolygon as container', () => {
+      it('should return true when any polygon in MultiPolygon contains the feature', () => {
+        // MultiPolygon with two separate polygons
+        const multiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // First polygon
+            [
+              [
+                [0, 0],
+                [0, 10],
+                [10, 10],
+                [10, 0],
+                [0, 0],
+              ],
+            ],
+            // Second polygon
+            [
+              [
+                [20, 20],
+                [20, 30],
+                [30, 30],
+                [30, 20],
+                [20, 20],
+              ],
+            ],
+          ],
+        };
+
+        // Small polygon contained in the first polygon of the MultiPolygon
+        const containedPolygon: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [2, 2],
+              [2, 8],
+              [8, 8],
+              [8, 2],
+              [2, 2],
+            ],
+          ],
+        };
+
+        const multiFeature = turf.feature(multiPolygon, props);
+        const containedFeature = turf.feature(containedPolygon, props);
+
+        const result = safeContains(multiFeature, containedFeature);
+        expect(result).toBeTruthy();
+      });
+
+      it('should return false when no polygon in MultiPolygon contains the feature', () => {
+        // MultiPolygon with two separate polygons
+        const multiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // First polygon
+            [
+              [
+                [0, 0],
+                [0, 10],
+                [10, 10],
+                [10, 0],
+                [0, 0],
+              ],
+            ],
+            // Second polygon
+            [
+              [
+                [20, 20],
+                [20, 30],
+                [30, 30],
+                [30, 20],
+                [20, 20],
+              ],
+            ],
+          ],
+        };
+
+        // Polygon not contained in any part of the MultiPolygon
+        const outsidePolygon: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [15, 15],
+              [15, 18],
+              [18, 18],
+              [18, 15],
+              [15, 15],
+            ],
+          ],
+        };
+
+        const multiFeature = turf.feature(multiPolygon, props);
+        const outsideFeature = turf.feature(outsidePolygon, props);
+
+        const result = safeContains(multiFeature, outsideFeature);
+        expect(result).toBeFalsy();
+      });
+    });
+
+    describe('MultiPolygon as contained feature', () => {
+      it('should return true when all polygons in MultiPolygon are contained', () => {
+        // Large container polygon
+        const containerPolygon: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-5, -5],
+              [-5, 35],
+              [35, 35],
+              [35, -5],
+              [-5, -5],
+            ],
+          ],
+        };
+
+        // MultiPolygon with two polygons both inside the container
+        const multiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // First polygon - inside container
+            [
+              [
+                [0, 0],
+                [0, 10],
+                [10, 10],
+                [10, 0],
+                [0, 0],
+              ],
+            ],
+            // Second polygon - also inside container
+            [
+              [
+                [20, 20],
+                [20, 30],
+                [30, 30],
+                [30, 20],
+                [20, 20],
+              ],
+            ],
+          ],
+        };
+
+        const containerFeature = turf.feature(containerPolygon, props);
+        const multiFeature = turf.feature(multiPolygon, props);
+
+        const result = safeContains(containerFeature, multiFeature);
+        expect(result).toBeTruthy();
+      });
+
+      it('should return false when some polygons in MultiPolygon are not contained', () => {
+        // Small container polygon
+        const containerPolygon: Polygon = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [0, 15],
+              [15, 15],
+              [15, 0],
+              [0, 0],
+            ],
+          ],
+        };
+
+        // MultiPolygon with one polygon inside and one outside the container
+        const multiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // First polygon - inside container
+            [
+              [
+                [2, 2],
+                [2, 8],
+                [8, 8],
+                [8, 2],
+                [2, 2],
+              ],
+            ],
+            // Second polygon - outside container
+            [
+              [
+                [20, 20],
+                [20, 30],
+                [30, 30],
+                [30, 20],
+                [20, 20],
+              ],
+            ],
+          ],
+        };
+
+        const containerFeature = turf.feature(containerPolygon, props);
+        const multiFeature = turf.feature(multiPolygon, props);
+
+        const result = safeContains(containerFeature, multiFeature);
+        expect(result).toBeFalsy();
+      });
+    });
+
+    describe('MultiPolygon to MultiPolygon containment', () => {
+      it('should return true when container MultiPolygon contains all polygons of contained MultiPolygon', () => {
+        // Container MultiPolygon with one large polygon that contains both small polygons
+        const containerMultiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // One large container polygon that contains both small polygons
+            [
+              [
+                [-10, -10],
+                [-10, 40],
+                [40, 40],
+                [40, -10],
+                [-10, -10],
+              ],
+            ],
+          ],
+        };
+
+        // Contained MultiPolygon with two smaller polygons inside the large container
+        const containedMultiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // First small polygon
+            [
+              [
+                [0, 0],
+                [0, 10],
+                [10, 10],
+                [10, 0],
+                [0, 0],
+              ],
+            ],
+            // Second small polygon
+            [
+              [
+                [20, 20],
+                [20, 30],
+                [30, 30],
+                [30, 20],
+                [20, 20],
+              ],
+            ],
+          ],
+        };
+
+        const containerFeature = turf.feature(containerMultiPolygon, props);
+        const containedFeature = turf.feature(containedMultiPolygon, props);
+
+        const result = safeContains(containerFeature, containedFeature);
+        expect(result).toBeTruthy();
+      });
+
+      it('should return false when container MultiPolygon cannot contain all polygons of contained MultiPolygon', () => {
+        // Container MultiPolygon with one large polygon
+        const containerMultiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // Only one container polygon
+            [
+              [
+                [-5, -5],
+                [-5, 15],
+                [15, 15],
+                [15, -5],
+                [-5, -5],
+              ],
+            ],
+          ],
+        };
+
+        // Contained MultiPolygon with polygons that can't all fit
+        const containedMultiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // First polygon - fits in container
+            [
+              [
+                [0, 0],
+                [0, 10],
+                [10, 10],
+                [10, 0],
+                [0, 0],
+              ],
+            ],
+            // Second polygon - outside container range
+            [
+              [
+                [20, 20],
+                [20, 30],
+                [30, 30],
+                [30, 20],
+                [20, 20],
+              ],
+            ],
+          ],
+        };
+
+        const containerFeature = turf.feature(containerMultiPolygon, props);
+        const containedFeature = turf.feature(containedMultiPolygon, props);
+
+        const result = safeContains(containerFeature, containedFeature);
+        expect(result).toBeFalsy();
+      });
     });
   });
 });

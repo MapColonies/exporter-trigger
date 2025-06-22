@@ -15,9 +15,9 @@ const areRoiPropertiesEqual = (props1: RoiProperties, props2: RoiProperties): bo
 };
 
 const areGeometriesSimilar = (feature1: Feature, feature2: Feature, options: { minContainedPercentage: number; bufferMeter: number }): boolean => {
-  // Check direct containment
-  const feature1ContainsFeature2 = booleanContains(feature1, feature2);
-  const feature2ContainsFeature1 = booleanContains(feature2, feature1);
+  // Check direct containment using safe contains helper
+  const feature1ContainsFeature2 = safeContains(feature1, feature2);
+  const feature2ContainsFeature1 = safeContains(feature2, feature1);
 
   if (feature1ContainsFeature2 || feature2ContainsFeature1) {
     // Even with containment, check if areas are within threshold
@@ -41,8 +41,42 @@ const areGeometriesSimilar = (feature1: Feature, feature2: Feature, options: { m
   if (bufferedFeature1 === undefined || bufferedFeature2 === undefined) {
     return false;
   }
-  // Check if buffered feature1 contains feature2 or vice versa
-  return booleanContains(bufferedFeature1, feature2) || booleanContains(bufferedFeature2, feature1);
+  // Check if buffered feature1 contains feature2 or vice versa using safe contains helper
+  return safeContains(bufferedFeature1, feature2) || safeContains(bufferedFeature2, feature1);
+};
+
+/**
+ * Helper function to handle booleanContains with MultiPolygon geometries
+ * Works around Turf.js bug with MultiPolygon containment checks
+ */
+export const safeContains = (containerFeature: Feature, containedFeature: Feature): boolean => {
+  try {
+    // Handle MultiPolygon in containerFeature
+    if (containerFeature.geometry.type === 'MultiPolygon') {
+      const multiPolygon = containerFeature.geometry;
+      return multiPolygon.coordinates.some((coords) => {
+        const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
+        const polygonFeature = feature(polygon, containerFeature.properties);
+        return safeContains(polygonFeature, containedFeature);
+      });
+    }
+
+    // Handle MultiPolygon in containedFeature
+    if (containedFeature.geometry.type === 'MultiPolygon') {
+      const multiPolygon = containedFeature.geometry;
+      return multiPolygon.coordinates.every((coords) => {
+        const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
+        const polygonFeature = feature(polygon, containedFeature.properties);
+        return safeContains(containerFeature, polygonFeature);
+      });
+    }
+
+    // Both are regular polygons, use standard booleanContains
+    return booleanContains(containerFeature, containedFeature);
+  } catch (error) {
+    // If there's any error with the containment check, return false
+    return false;
+  }
 };
 
 export const checkRoiFeatureCollectionSimilarity = (fc1: RoiFeatureCollection, fc2: RoiFeatureCollection, options: { config: IConfig }): boolean => {

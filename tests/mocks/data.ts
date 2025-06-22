@@ -612,6 +612,10 @@ export const createExportRequestWithoutCallback: CreateExportRequest = {
   roi: defaultRoi,
 };
 
+export const createExportRequestWithoutRoi: CreateExportRequest = {
+  dbId: catalogId,
+  crs,
+};
 export const createExportRequestNoRoiWithCallback: CreateExportRequest = {
   dbId: catalogId,
   callbackURLs: ['http://callback1'],

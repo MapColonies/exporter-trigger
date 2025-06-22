@@ -9,6 +9,7 @@ import {
   createExportNotIntersectedPolygon,
   createExportRequestNoRoiWithCallback,
   createExportRequestWithoutCallback,
+  createExportRequestWithoutRoi,
   createExportRequestWithRoiAndCallback,
   createExportRequestWithRoiAndNewCallback,
   createExportResponse,
@@ -19,7 +20,13 @@ import {
   layerInfo,
 } from '@tests/mocks/data';
 import nock from 'nock';
-import { completedExportJobsResponse, completedExportParams, completedJobCallback } from '@tests/mocks/completedReqest';
+import {
+  completedExportJobsResponse,
+  completedExportJobWithMultiPolygonResponse,
+  completedExportParams,
+  completedJobCallback,
+  completedJobCallbackWithMultiPolygon,
+} from '@tests/mocks/completedReqest';
 import {
   addedCallbackUrl,
   findCriteria,
@@ -35,6 +42,7 @@ import { JobManagerWrapper } from '@src/clients/jobManagerWrapper';
 import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { getApp } from '../../../src/app';
 import { ExportSender } from './helpers/exportSender';
+import { layerWithMultiPolygonFootprint } from '@tests/mocks/geometryMocks';
 
 jest.mock('uuid', () => ({
   v4: jest.fn(),
@@ -335,6 +343,72 @@ describe('export', function () {
         },
         1000000
       );
+
+      it('should return 200 status code and create export job with MultiPolygon footprint from layer', async function () {
+        // Create export request WITHOUT ROI (so it will use layer footprint)
+        const createExportRequestWithMultiPolygon = {
+          dbId: createExportRequestWithoutCallback.dbId,
+          crs: createExportRequestWithoutCallback.crs,
+          // No ROI - will use layer footprint
+        };
+
+        const layerId = createExportRequestWithMultiPolygon.dbId;
+
+        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBody.additionalIdentifiers);
+        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+
+        nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(completedExportParams as Record<string, string>)
+          .reply(200, undefined);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(inProgressExportParams as Record<string, string>)
+          .reply(200, undefined);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(pendingExportParams as Record<string, string>)
+          .reply(200, undefined);
+        nock(jobManagerURL)
+          .post(`/jobs/find`, findCriteria as Record<string, string>)
+          .reply(200, inProgressJobsResponse);
+
+        nock(jobManagerURL)
+          .post(`/jobs`, (body) => {
+            return body.parameters?.exportInputParams?.roi?.features?.[0]?.geometry?.type === 'MultiPolygon';
+          })
+          .reply(200, initExportResponse);
+
+        const response = await requestSender.export(createExportRequestWithMultiPolygon);
+
+        // Verify response creates new job with MultiPolygon footprint
+        expect(response.body).toEqual(createExportResponse);
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 200 status code and return completed job when no ROI provided with MultiPolygon footprint', async function () {
+        const layerId = createExportRequestWithoutRoi.dbId;
+
+        nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(completedExportParams as Record<string, string>)
+          .reply(200, completedExportJobWithMultiPolygonResponse);
+        nock(jobManagerURL)
+          .get(`/jobs/${completedExportJobWithMultiPolygonResponse[0].id}`)
+          .query({ shouldReturnTasks: false })
+          .reply(200, completedExportJobWithMultiPolygonResponse[0])
+          .persist();
+
+        const response = await requestSender.export(createExportRequestWithoutRoi);
+
+        expect(response.body).toEqual(completedJobCallbackWithMultiPolygon);
+
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
     });
 
     describe('Bad Path', function () {
