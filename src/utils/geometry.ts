@@ -51,23 +51,39 @@ const areGeometriesSimilar = (feature1: Feature, feature2: Feature, options: { m
  */
 export const safeContains = (containerFeature: Feature, containedFeature: Feature): boolean => {
   try {
-    // Handle MultiPolygon in containerFeature
+    // Quick equality check - if geometries are identical, one contains the other
+    if (JSON.stringify(containerFeature.geometry) === JSON.stringify(containedFeature.geometry)) {
+      return true;
+    }
+
+    // Handle both MultiPolygons
+    if (containerFeature.geometry.type === 'MultiPolygon' && containedFeature.geometry.type === 'MultiPolygon') {
+      const containedMultiPolygon = containedFeature.geometry;
+      // Every polygon in contained MultiPolygon must be contained by at least one polygon in container MultiPolygon
+      return containedMultiPolygon.coordinates.every((containedCoords) => {
+        const containedPolygon = { type: 'Polygon', coordinates: containedCoords } as Polygon;
+        const containedPolygonFeature = feature(containedPolygon, containedFeature.properties);
+        return safeContains(containerFeature, containedPolygonFeature);
+      });
+    }
+
+    // Handle MultiPolygon in containerFeature only
     if (containerFeature.geometry.type === 'MultiPolygon') {
       const multiPolygon = containerFeature.geometry;
       return multiPolygon.coordinates.some((coords) => {
         const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
         const polygonFeature = feature(polygon, containerFeature.properties);
-        return safeContains(polygonFeature, containedFeature);
+        return booleanContains(polygonFeature, containedFeature);
       });
     }
 
-    // Handle MultiPolygon in containedFeature
+    // Handle MultiPolygon in containedFeature only
     if (containedFeature.geometry.type === 'MultiPolygon') {
       const multiPolygon = containedFeature.geometry;
       return multiPolygon.coordinates.every((coords) => {
         const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
         const polygonFeature = feature(polygon, containedFeature.properties);
-        return safeContains(containerFeature, polygonFeature);
+        return booleanContains(containerFeature, polygonFeature);
       });
     }
 
