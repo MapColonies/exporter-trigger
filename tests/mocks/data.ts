@@ -279,6 +279,86 @@ export const initExportRequestBody = {
   ],
 };
 
+export const initExportRequestBodyWithMultiPolygon = {
+  resourceId: 'SOME_NAME',
+  version: '1.0',
+  type: 'Export',
+  domain: 'RASTER',
+  parameters: {
+    exportInputParams: {
+      roi: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: {
+              maxResolutionDeg: 0.703125,
+              minResolutionDeg: 0.703125,
+            },
+            geometry: {
+              type: 'MultiPolygon',
+              coordinates: [
+                [
+                  [
+                    [34.85671849225366, 32.306563240778644],
+                    [34.858090125180894, 32.30241218787266],
+                    [34.862337900781455, 32.30263664191864],
+                    [34.86154145051941, 32.30708703329364],
+                    [34.85671849225366, 32.306563240778644],
+                  ],
+                ],
+                [
+                  [
+                    [34.87, 32.31],
+                    [34.88, 32.31],
+                    [34.88, 32.32],
+                    [34.87, 32.32],
+                    [34.87, 32.31],
+                  ],
+                ],
+              ],
+              bbox: [34.85671849225366, 32.30241218787266, 34.88, 32.32],
+            },
+          },
+        ],
+      },
+      callbackUrls: undefined,
+      crs: 'EPSG:4326',
+    },
+    additionalParams: {
+      fileNamesTemplates: {
+        packageName: 'Orthophoto_SOME_NAME_1_0_0_2025_01_09T10_04_06_711Z.gpkg',
+      },
+      relativeDirectoryPath: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7',
+      packageRelativePath: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7/Orthophoto_SOME_NAME_1_0_0_2025_01_09T10_04_06_711Z.gpkg',
+      outputFormatStrategy: TileFormatStrategy.MIXED,
+      targetFormat: TileOutputFormat.PNG,
+      gpkgEstimatedSize: 12500,
+      jobTrackerServiceURL: 'http://job-tracker',
+      polygonPartsEntityName: 'some_name_orthophoto',
+    },
+    cleanupDataParams: {
+      directoryPath: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7',
+      cleanupExpirationTimeUTC: '2025_01_09T10_04_06_711Z',
+    },
+  },
+  internalId: '8b867544-2dab-43a1-be6e-f23ec83c19b4',
+  productType: RasterProductTypes.ORTHOPHOTO,
+  priority: 1000,
+  description: undefined,
+  status: OperationStatus.PENDING,
+  percentage: 0,
+  additionalIdentifiers: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7',
+  tasks: [
+    {
+      type: 'init',
+      parameters: {
+        blockDuplication: true,
+      },
+    },
+  ],
+};
+
 export const initExportResponse = {
   id: 'ef1a76e2-3a4b-49e6-90ee-e97c402dd3d8',
 };

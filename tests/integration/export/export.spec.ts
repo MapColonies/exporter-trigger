@@ -16,6 +16,7 @@ import {
   getJobStatusByIdResponse,
   initExportRequestBody,
   initExportRequestBodyNoRoiWithCallback,
+  initExportRequestBodyWithMultiPolygon,
   initExportResponse,
   layerInfo,
 } from '@tests/mocks/data';
@@ -39,10 +40,10 @@ import { ValidationManager } from '@src/export/models/validationManager';
 import { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
 import { JobExportResponse } from '@src/common/interfaces';
 import { JobManagerWrapper } from '@src/clients/jobManagerWrapper';
+import { layerWithMultiPolygonFootprint } from '@tests/mocks/geometryMocks';
 import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { getApp } from '../../../src/app';
 import { ExportSender } from './helpers/exportSender';
-import { layerWithMultiPolygonFootprint } from '@tests/mocks/geometryMocks';
 
 jest.mock('uuid', () => ({
   v4: jest.fn(),
@@ -374,11 +375,7 @@ describe('export', function () {
           .post(`/jobs/find`, findCriteria as Record<string, string>)
           .reply(200, inProgressJobsResponse);
 
-        nock(jobManagerURL)
-          .post(`/jobs`, (body) => {
-            return body.parameters?.exportInputParams?.roi?.features?.[0]?.geometry?.type === 'MultiPolygon';
-          })
-          .reply(200, initExportResponse);
+        nock(jobManagerURL).post(`/jobs`, initExportRequestBodyWithMultiPolygon).reply(200, initExportResponse);
 
         const response = await requestSender.export(createExportRequestWithMultiPolygon);
 

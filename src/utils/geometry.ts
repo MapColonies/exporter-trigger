@@ -52,6 +52,7 @@ const areGeometriesSimilar = (feature1: Feature, feature2: Feature, options: { m
 export const safeContains = (containerFeature: Feature, containedFeature: Feature): boolean => {
   try {
     // Quick equality check - if geometries are identical, one contains the other
+    //Avoids expensive geometric calculations for identical shapes
     if (JSON.stringify(containerFeature.geometry) === JSON.stringify(containedFeature.geometry)) {
       return true;
     }
