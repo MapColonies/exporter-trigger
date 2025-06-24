@@ -59,7 +59,7 @@ export class ExportManager {
       roi = this.setRoi(layerMetadata);
     }
 
-    const { productId, productVersion: version, maxResolutionDeg: srcRes } = layerMetadata;
+    const { productId, productVersion: version, maxResolutionDeg: srcRes, productName } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;
     const callbackUrls = callbackURLs?.map(
       (url) =>
@@ -100,6 +100,7 @@ export class ExportManager {
       catalogId,
       version,
       productId,
+      productName,
       productType,
       priority: priority ?? DEFAULT_PRIORITY,
       description,

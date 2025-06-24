@@ -152,6 +152,7 @@ export const createExportData: IExportInitRequest = {
   catalogId: '8b867544-2dab-43a1-be6e-f23ec83c19b4',
   version: '1.0',
   productId: 'SOME_NAME',
+  productName: 'SOME_NAME',
   productType: RasterProductTypes.ORTHOPHOTO,
   priority: 0,
   description: 'This is roi exporting example',
@@ -191,6 +192,7 @@ export function generateCreateJobRequest(createExportData: IExportInitRequest): 
     },
     internalId: createExportData.catalogId,
     productType: createExportData.productType,
+    productName: createExportData.productName,
     priority: createExportData.priority,
     description: createExportData.description,
     status: OperationStatus.PENDING,
@@ -263,6 +265,7 @@ export const initExportRequestBody = {
     },
   },
   internalId: '8b867544-2dab-43a1-be6e-f23ec83c19b4',
+  productName: 'string',
   productType: RasterProductTypes.ORTHOPHOTO,
   priority: 1000,
   description: undefined,
@@ -288,6 +291,7 @@ export const initExportRequestBodyNoRoiWithCallback = {
   version: '1.0',
   type: 'Export',
   domain: 'RASTER',
+  productName: 'string',
   parameters: {
     exportInputParams: {
       roi: {

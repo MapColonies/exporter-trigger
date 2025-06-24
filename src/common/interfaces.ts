@@ -78,6 +78,7 @@ export interface IExportInitRequest {
   priority?: number;
   version: string;
   productId: string;
+  productName: string;
   productType: RasterProductTypes;
   packageRelativePath: string;
   gpkgEstimatedSize: number;
