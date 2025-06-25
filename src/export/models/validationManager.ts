@@ -154,7 +154,7 @@ export class ValidationManager {
           job.internalId === jobParams.catalogId &&
           job.version === jobParams.version &&
           job.parameters.exportInputParams.crs === jobParams.crs &&
-          checkRoiFeatureCollectionSimilarity(job.parameters.exportInputParams.roi, jobParams.roi, { config: this.config })
+          checkRoiFeatureCollectionSimilarity(jobParams.roi, job.parameters.exportInputParams.roi, { config: this.config })
       );
       return duplicateJob;
     }

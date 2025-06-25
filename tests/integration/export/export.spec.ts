@@ -23,9 +23,12 @@ import {
 import nock from 'nock';
 import {
   completedExportJobsResponse,
+  completedExportJobsResponseWithBufferedRoi,
   completedExportJobWithMultiPolygonResponse,
+  completedExportJobWithMultiPolygonRoiForMultiPolygonLayer,
   completedExportParams,
   completedJobCallback,
+  completedJobCallbackWithBufferedRoi,
   completedJobCallbackWithMultiPolygon,
 } from '@tests/mocks/completedReqest';
 import {
@@ -125,6 +128,28 @@ describe('export', function () {
         const response = await requestSender.export(createExportRequestWithoutCallback);
 
         expect(response.body).toEqual(completedJobCallback);
+
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 200 status code and return completed job when roi is contained by buffer of job roi', async function () {
+        const layerId = createExportRequestWithoutCallback.dbId;
+
+        nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(completedExportParams as Record<string, string>)
+          .reply(200, completedExportJobsResponseWithBufferedRoi);
+        nock(jobManagerURL)
+          .get(`/jobs/${completedExportJobsResponseWithBufferedRoi[0].id}`)
+          .query({ shouldReturnTasks: false })
+          .reply(200, completedExportJobsResponseWithBufferedRoi[0])
+          .persist();
+
+        const response = await requestSender.export(createExportRequestWithoutCallback);
+
+        expect(response.body).toEqual(completedJobCallbackWithBufferedRoi);
 
         expect(response.status).toBe(httpStatusCodes.OK);
         expect(response).toSatisfyApiSpec();
@@ -403,6 +428,51 @@ describe('export', function () {
 
         expect(response.body).toEqual(completedJobCallbackWithMultiPolygon);
 
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 200 status code and return completed job when roi is multipolygon and contained by job multipolygon', async function () {
+        const createExportRequestWithMultiPolygon = {
+          dbId: createExportRequestWithoutCallback.dbId,
+          crs: createExportRequestWithoutCallback.crs,
+          // No ROI - will use layer footprint
+        };
+
+        const layerId = createExportRequestWithMultiPolygon.dbId;
+
+        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBody.additionalIdentifiers);
+        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+
+        nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(completedExportParams as Record<string, string>)
+          .reply(200, completedExportJobWithMultiPolygonRoiForMultiPolygonLayer);
+        nock(jobManagerURL)
+          .get(`/jobs/${completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0].id}`)
+          .query({ shouldReturnTasks: false })
+          .reply(200, completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0])
+          .persist();
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(inProgressExportParams as Record<string, string>)
+          .reply(200, undefined)
+          .persist();
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(pendingExportParams as Record<string, string>)
+          .reply(200, undefined);
+        nock(jobManagerURL)
+          .post(`/jobs/find`, findCriteria as Record<string, string>)
+          .reply(200, inProgressJobsResponse);
+
+        nock(jobManagerURL).post(`/jobs`, initExportRequestBodyWithMultiPolygon).reply(200, initExportResponse);
+
+        const response = await requestSender.export(createExportRequestWithMultiPolygon);
+
+        // Verify response creates new job with MultiPolygon footprint
+        expect(response.body).toEqual(createExportResponse);
         expect(response.status).toBe(httpStatusCodes.OK);
         expect(response).toSatisfyApiSpec();
       });

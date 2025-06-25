@@ -119,24 +119,10 @@ describe('Geometry Utils', () => {
       expect(result).toBeFalsy();
     });
 
-    // Containment with area ratio within threshold
-    it('should return true when one feature contains another and area ratio is within threshold', () => {
-      // Square: 100 sq units
-      const outerSquarePolygon: Polygon = {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [0, 0],
-            [0, 10],
-            [10, 10],
-            [10, 0],
-            [0, 0],
-          ],
-        ],
-      };
-
-      // Inner square: 96 sq units (96% of outer) - above 90% threshold
-      const innerSquarePolygon: Polygon = {
+    // Job ROI contains request ROI with area ratio within threshold
+    it('should return true when job ROI contains request ROI and area ratio is within threshold', () => {
+      // Request ROI: Inner square: 96 sq units
+      const requestSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -149,18 +135,8 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      const fc1 = turf.featureCollection([turf.feature(outerSquarePolygon, props1, { id: 'f1' })]);
-      const fc2 = turf.featureCollection([turf.feature(innerSquarePolygon, props1, { id: 'f2' })]);
-
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
-
-      expect(result).toBeTruthy();
-    });
-
-    // Containment with area ratio below threshold
-    it('should return false when one feature contains another but area ratio is below threshold', () => {
-      // Square: 100 sq units
-      const outerSquarePolygon: Polygon = {
+      // Job ROI: Outer square: 100 sq units - contains request (96% ratio above 90% threshold)
+      const jobSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -173,8 +149,18 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Inner square: 64 sq units (64% of outer) - below 90% threshold
-      const innerSquarePolygon: Polygon = {
+      const requestRoi = turf.featureCollection([turf.feature(requestSquarePolygon, props1, { id: 'f1' })]);
+      const jobRoi = turf.featureCollection([turf.feature(jobSquarePolygon, props1, { id: 'f2' })]);
+
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+
+      expect(result).toBeTruthy();
+    });
+
+    // Job ROI contains request ROI but area ratio below threshold
+    it('should return false when job ROI contains request ROI but area ratio is below threshold', () => {
+      // Request ROI: Inner square: 64 sq units
+      const requestSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -187,10 +173,62 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      const fc1 = turf.featureCollection([turf.feature(outerSquarePolygon, props1, { id: 'f1' })]);
-      const fc2 = turf.featureCollection([turf.feature(innerSquarePolygon, props1, { id: 'f2' })]);
+      // Job ROI: Outer square: 100 sq units - contains request (64% ratio below 90% threshold)
+      const jobSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+      const requestRoi = turf.featureCollection([turf.feature(requestSquarePolygon, props1, { id: 'f1' })]);
+      const jobRoi = turf.featureCollection([turf.feature(jobSquarePolygon, props1, { id: 'f2' })]);
+
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+
+      expect(result).toBeFalsy();
+    });
+
+    // Request ROI larger than job ROI - should not be similar
+    it('should return false when request ROI is larger than job ROI', () => {
+      // Request ROI: Large square: 100 sq units
+      const requestSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
+
+      // Job ROI: Small square: 36 sq units - cannot contain request
+      const jobSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [2, 2],
+            [2, 8],
+            [8, 8],
+            [8, 2],
+            [2, 2],
+          ],
+        ],
+      };
+
+      const requestRoi = turf.featureCollection([turf.feature(requestSquarePolygon, props1, { id: 'f1' })]);
+      const jobRoi = turf.featureCollection([turf.feature(jobSquarePolygon, props1, { id: 'f2' })]);
+
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
 
       expect(result).toBeFalsy();
     });
@@ -232,37 +270,10 @@ describe('Geometry Utils', () => {
       expect(result).toBeFalsy();
     });
 
-    // Multiple features - all match
+    // Multiple features - all match (job ROI contains request ROI)
     it('should return true when all features in collections find matches', () => {
-      // First collection has two squares
-      const square1aPolygon: Polygon = {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [0, 0],
-            [0, 10],
-            [10, 10],
-            [10, 0],
-            [0, 0],
-          ],
-        ],
-      };
-
-      const square1bPolygon: Polygon = {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [20, 0],
-            [20, 10],
-            [30, 10],
-            [30, 0],
-            [20, 0],
-          ],
-        ],
-      };
-
-      // Second collection has matching squares (slightly smaller but within threshold)
-      const square2aPolygon: Polygon = {
+      // Request ROI has two smaller squares
+      const requestSquare1: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -275,7 +286,7 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      const square2bPolygon: Polygon = {
+      const requestSquare2: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -288,17 +299,41 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      const fc1 = turf.featureCollection([
-        turf.feature(square1aPolygon, props1, { id: 'f1a' }),
-        turf.feature(square1bPolygon, props1, { id: 'f1b' }),
+      // Job ROI has corresponding larger squares that contain the request squares
+      const jobSquare1: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
+
+      const jobSquare2: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [20, 0],
+            [20, 10],
+            [30, 10],
+            [30, 0],
+            [20, 0],
+          ],
+        ],
+      };
+
+      const requestRoi = turf.featureCollection([
+        turf.feature(requestSquare1, props1, { id: 'f1a' }),
+        turf.feature(requestSquare2, props1, { id: 'f1b' }),
       ]);
 
-      const fc2 = turf.featureCollection([
-        turf.feature(square2aPolygon, props1, { id: 'f2a' }),
-        turf.feature(square2bPolygon, props1, { id: 'f2b' }),
-      ]);
+      const jobRoi = turf.featureCollection([turf.feature(jobSquare1, props1, { id: 'f2a' }), turf.feature(jobSquare2, props1, { id: 'f2b' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
 
       expect(result).toBeTruthy();
     });
@@ -374,37 +409,10 @@ describe('Geometry Utils', () => {
       expect(result).toBeFalsy();
     });
 
-    // Multiple features - different order
+    // Multiple features - different order (job ROI contains request ROI)
     it('should match features correctly regardless of order', () => {
-      // First collection has two squares
-      const square1aPolygon: Polygon = {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [0, 0],
-            [0, 10],
-            [10, 10],
-            [10, 0],
-            [0, 0],
-          ],
-        ],
-      };
-
-      const square1bPolygon: Polygon = {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [20, 0],
-            [20, 10],
-            [30, 10],
-            [30, 0],
-            [20, 0],
-          ],
-        ],
-      };
-
-      // Second collection has matching squares but in reverse order
-      const square2aPolygon: Polygon = {
+      // Request ROI has two smaller squares
+      const requestSquare1: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -417,7 +425,7 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      const square2bPolygon: Polygon = {
+      const requestSquare2: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -430,26 +438,8 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      const fc1 = turf.featureCollection([
-        turf.feature(square1aPolygon, props1, { id: 'f1a' }),
-        turf.feature(square1bPolygon, props1, { id: 'f1b' }),
-      ]);
-
-      const fc2 = turf.featureCollection([
-        // Order reversed compared to fc1
-        turf.feature(square2bPolygon, props1, { id: 'f2b' }),
-        turf.feature(square2aPolygon, props1, { id: 'f2a' }),
-      ]);
-
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
-
-      expect(result).toBeTruthy();
-    });
-
-    // Ambiguous matching
-    it('should handle ambiguous matching correctly', () => {
-      // First collection has two identical squares at the same location
-      const square1Polygon: Polygon = {
+      // Job ROI has corresponding larger squares that contain the request squares
+      const jobSquare1: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -462,8 +452,39 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Second collection has two identical squares at the same location
-      const square2Polygon: Polygon = {
+      const jobSquare2: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [20, 0],
+            [20, 10],
+            [30, 10],
+            [30, 0],
+            [20, 0],
+          ],
+        ],
+      };
+
+      const requestRoi = turf.featureCollection([
+        turf.feature(requestSquare1, props1, { id: 'f1a' }),
+        turf.feature(requestSquare2, props1, { id: 'f1b' }),
+      ]);
+
+      const jobRoi = turf.featureCollection([
+        // Order reversed compared to requestRoi
+        turf.feature(jobSquare2, props1, { id: 'f2b' }),
+        turf.feature(jobSquare1, props1, { id: 'f2a' }),
+      ]);
+
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+
+      expect(result).toBeTruthy();
+    });
+
+    // Ambiguous matching (job ROI contains request ROI)
+    it('should handle ambiguous matching correctly', () => {
+      // Request ROI has two identical smaller squares at the same location
+      const requestSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -476,18 +497,8 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      const fc1 = turf.featureCollection([turf.feature(square1Polygon, props1, { id: 'f1a' }), turf.feature(square1Polygon, props1, { id: 'f1b' })]);
-      const fc2 = turf.featureCollection([turf.feature(square2Polygon, props1, { id: 'f2a' }), turf.feature(square2Polygon, props1, { id: 'f2b' })]);
-
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
-
-      expect(result).toBeTruthy();
-    });
-
-    // Exactly at threshold boundary
-    it('should handle area ratio exactly at threshold boundary', () => {
-      // Square: 100 sq units
-      const outerSquarePolygon: Polygon = {
+      // Job ROI has two identical larger squares at the same location that contain the request squares
+      const jobSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -500,13 +511,29 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Inner square with exactly 90% area of outer square - exactly at the threshold
+      const requestRoi = turf.featureCollection([
+        turf.feature(requestSquarePolygon, props1, { id: 'f1a' }),
+        turf.feature(requestSquarePolygon, props1, { id: 'f1b' }),
+      ]);
+      const jobRoi = turf.featureCollection([
+        turf.feature(jobSquarePolygon, props1, { id: 'f2a' }),
+        turf.feature(jobSquarePolygon, props1, { id: 'f2b' }),
+      ]);
+
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+
+      expect(result).toBeTruthy();
+    });
+
+    // Exactly at threshold boundary
+    it('should handle area ratio exactly at threshold boundary', () => {
+      // Request ROI: Inner square with exactly 90% area of job square - exactly at the threshold
       // For a square, side length = sqrt(area)
       // So sqrt(90) ≈ 9.487
       const sideLength = Math.sqrt(90);
       const offset = (10 - sideLength) / 2; // To center the smaller square
 
-      const innerSquarePolygon: Polygon = {
+      const requestSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -519,18 +546,8 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      const fc1 = turf.featureCollection([turf.feature(outerSquarePolygon, props1, { id: 'f1' })]);
-      const fc2 = turf.featureCollection([turf.feature(innerSquarePolygon, props1, { id: 'f2' })]);
-
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
-
-      expect(result).toBeTruthy();
-    });
-
-    // Invalid geometry handling
-    it('should handle invalid geometries gracefully', () => {
-      // Create valid geometry
-      const validSquarePolygon: Polygon = {
+      // Job ROI: Outer square: 100 sq units
+      const jobSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
           [
@@ -543,7 +560,17 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Create invalid geometry (self-intersecting polygon)
+      const requestRoi = turf.featureCollection([turf.feature(requestSquarePolygon, props1, { id: 'f1' })]);
+      const jobRoi = turf.featureCollection([turf.feature(jobSquarePolygon, props1, { id: 'f2' })]);
+
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+
+      expect(result).toBeTruthy();
+    });
+
+    // Invalid geometry handling
+    it('should handle invalid geometries gracefully', () => {
+      // Request ROI: Create invalid geometry (self-intersecting polygon)
       const invalidPolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -557,10 +584,24 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      const fc1 = turf.featureCollection([turf.feature(validSquarePolygon, props1, { id: 'f1' })]);
-      const fc2 = turf.featureCollection([turf.feature(invalidPolygon, props1, { id: 'f2' })]);
+      // Job ROI: Create valid geometry
+      const validSquarePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+        ],
+      };
 
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+      const requestRoi = turf.featureCollection([turf.feature(invalidPolygon, props1, { id: 'f1' })]);
+      const jobRoi = turf.featureCollection([turf.feature(validSquarePolygon, props1, { id: 'f2' })]);
+
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
 
       expect(result).toBeFalsy();
     });
