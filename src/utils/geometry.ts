@@ -70,48 +70,49 @@ const areGeometriesSimilar = (
  * Helper function to handle booleanContains with MultiPolygon geometries
  * Works around Turf.js bug with MultiPolygon containment checks
  */
-export const safeContains = (containerFeature: Feature, containedFeature: Feature): boolean => {
+export const safeContains = (completedJobRoi: Feature, requestedRoi: Feature): boolean => {
   try {
-    if (booleanEqual(containerFeature, containedFeature)) {
+    if (booleanEqual(completedJobRoi, requestedRoi)) {
       return true;
     }
+    if (completedJobRoi.geometry.type === 'MultiPolygon' && requestedRoi.geometry.type === 'Polygon') {
+      const multiPolygon = completedJobRoi.geometry;
+      return multiPolygon.coordinates.some((coords) => {
+        const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
+        const polygonFeature = feature(polygon, completedJobRoi.properties);
+        return booleanContains(polygonFeature, requestedRoi);
+      });
+    }
 
-    // Handle both MultiPolygons
-    //The only case in which this can happen is when jobRoi is from previous empty export roi request and the layer is a
-    // multipolygon and also the new export request was wihtout roi and the layer is multipolygon
-    //they can be not indentical when there were updates on the layer since the last export
-    if (containerFeature.geometry.type === 'MultiPolygon' && containedFeature.geometry.type === 'MultiPolygon') {
-      const containedMultiPolygon = containedFeature.geometry;
+    if (completedJobRoi.geometry.type === 'Polygon' && requestedRoi.geometry.type === 'Polygon') {
+      return booleanContains(completedJobRoi, requestedRoi);
+    }
+    return false;
+
+    //commented after decision on how to handle naive cache - kepd code fot possible future use
+
+    /**if (completedJobRoi.geometry.type === 'MultiPolygon' && requestedRoi.geometry.type === 'MultiPolygon') {
+      const containedMultiPolygon = requestedRoi.geometry;
       // Every polygon in contained MultiPolygon must be contained by at least one polygon in container MultiPolygon
       return containedMultiPolygon.coordinates.every((containedCoords) => {
         const containedPolygon = { type: 'Polygon', coordinates: containedCoords } as Polygon;
-        const containedPolygonFeature = feature(containedPolygon, containedFeature.properties);
-        return safeContains(containerFeature, containedPolygonFeature);
+        const containedPolygonFeature = feature(containedPolygon, requestedRoi.properties);
+        return safeContains(completedJobRoi, containedPolygonFeature);
       });
-    }
-
-    // Handle MultiPolygon in containerFeature only
-    if (containerFeature.geometry.type === 'MultiPolygon') {
-      const multiPolygon = containerFeature.geometry;
-      return multiPolygon.coordinates.some((coords) => {
-        const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
-        const polygonFeature = feature(polygon, containerFeature.properties);
-        return booleanContains(polygonFeature, containedFeature);
-      });
+      
     }
 
     // Handle MultiPolygon in containedFeature only
-    if (containedFeature.geometry.type === 'MultiPolygon') {
-      const multiPolygon = containedFeature.geometry;
+    if (requestedRoi.geometry.type === 'MultiPolygon') {
+      return false;
+      const multiPolygon = requestedRoi.geometry;
       return multiPolygon.coordinates.every((coords) => {
         const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
-        const polygonFeature = feature(polygon, containedFeature.properties);
-        return booleanContains(containerFeature, polygonFeature);
+        const polygonFeature = feature(polygon, requestedRoi.properties);
+        return booleanContains(completedJobRoi, polygonFeature);
       });
-    }
-
-    // Both are regular polygons, use standard booleanContains
-    return booleanContains(containerFeature, containedFeature);
+      
+    }*/
   } catch (error) {
     // If there's any error with the containment check, return false
     return false;
