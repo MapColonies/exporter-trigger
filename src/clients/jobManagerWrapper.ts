@@ -128,6 +128,7 @@ export class JobManagerWrapper extends JobManagerClient {
       productType: data.productType,
       priority: data.priority,
       description: data.description,
+      productName: data.productName,
       status: OperationStatus.PENDING,
       percentage: 0,
       additionalIdentifiers: data.relativeDirectoryPath,
