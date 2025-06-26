@@ -525,6 +525,80 @@ describe('Geometry Utils', () => {
       expect(result).toBeTruthy();
     });
 
+    it('should return true when buffer polygon contains polygon', () => {
+      const smallPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [2, 2],
+            [2, 8],
+            [8, 8],
+            [8, 2],
+            [2, 2],
+          ],
+        ],
+      };
+
+      const largePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            // Expand small polygon [2,2] to [8,8] by exactly 2 meters on each side
+            // 2 meters ≈ 0.000018 degrees, so expand by 0.000018 on each side
+            [1.999982, 1.999982],
+            [1.999982, 8.000018],
+            [8.000018, 8.000018],
+            [8.000018, 1.999982],
+            [1.999982, 1.999982],
+          ],
+        ],
+      };
+
+      const requestRoi = turf.featureCollection([turf.feature(largePolygon, props1, { id: 'f1a' })]);
+      const jobRoi = turf.featureCollection([turf.feature(smallPolygon, props1, { id: 'f2a' })]);
+
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+
+      expect(result).toBeTruthy();
+    });
+
+    it('should return false when buffer polygon doesnt contains polygon', () => {
+      const smallPolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [2, 2],
+            [2, 8],
+            [8, 8],
+            [8, 2],
+            [2, 2],
+          ],
+        ],
+      };
+
+      const largePolygon: Polygon = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            // Expand small polygon [2,2] to [8,8] by exactly 10 meters on each side
+            // 10 meters ≈ 0.00009 degrees, so expand by 0.00009 on each side
+            [1.99991, 1.99991],
+            [1.99991, 8.00009],
+            [8.00009, 8.00009],
+            [8.00009, 1.99991],
+            [1.99991, 1.99991],
+          ],
+        ],
+      };
+
+      const requestRoi = turf.featureCollection([turf.feature(largePolygon, props1, { id: 'f1a' })]);
+      const jobRoi = turf.featureCollection([turf.feature(smallPolygon, props1, { id: 'f2a' })]);
+
+      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+
+      expect(result).toBeFalsy();
+    });
+
     // Exactly at threshold boundary
     it('should handle area ratio exactly at threshold boundary', () => {
       // Request ROI: Inner square with exactly 90% area of job square - exactly at the threshold
@@ -1017,6 +1091,88 @@ describe('Geometry Utils', () => {
 
         const result = safeContains(containerFeature, containedFeature);
         expect(result).toBeFalsy();
+      });
+
+      it('should return true when MultiPolygon container with multiple separate polygons contains all polygons of contained MultiPolygon through recursive calls', () => {
+        // Container MultiPolygon with multiple separate polygons in different areas
+        const containerMultiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // First container polygon - left area
+            [
+              [
+                [-10, -10],
+                [-10, 20],
+                [20, 20],
+                [20, -10],
+                [-10, -10],
+              ],
+            ],
+            // Second container polygon - right area
+            [
+              [
+                [30, 30],
+                [30, 60],
+                [60, 60],
+                [60, 30],
+                [30, 30],
+              ],
+            ],
+            // Third container polygon - bottom area
+            [
+              [
+                [10, -30],
+                [10, -5],
+                [35, -5],
+                [35, -30],
+                [10, -30],
+              ],
+            ],
+          ],
+        };
+
+        // Contained MultiPolygon with polygons that fit in different container polygons
+        const containedMultiPolygon: MultiPolygon = {
+          type: 'MultiPolygon',
+          coordinates: [
+            // First polygon - contained by first container polygon (left area)
+            [
+              [
+                [0, 0],
+                [0, 10],
+                [10, 10],
+                [10, 0],
+                [0, 0],
+              ],
+            ],
+            // Second polygon - contained by second container polygon (right area)
+            [
+              [
+                [40, 40],
+                [40, 50],
+                [50, 50],
+                [50, 40],
+                [40, 40],
+              ],
+            ],
+            // Third polygon - contained by third container polygon (bottom area)
+            [
+              [
+                [15, -25],
+                [15, -15],
+                [25, -15],
+                [25, -25],
+                [15, -25],
+              ],
+            ],
+          ],
+        };
+
+        const containerFeature = turf.feature(containerMultiPolygon, props);
+        const containedFeature = turf.feature(containedMultiPolygon, props);
+
+        const result = safeContains(containerFeature, containedFeature);
+        expect(result).toBeTruthy();
       });
     });
   });
