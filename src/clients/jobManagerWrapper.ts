@@ -138,12 +138,14 @@ export class JobManagerWrapper extends JobManagerClient {
         };
       }),
     };
-    this.logger.info({ msg: `Entered createExportJob`, jobId: createJobRequest.internalId });
+    this.logger.info({ msg: `Raz5` });
+
     const res = await this.createJob<ExportJobParameters, ITaskParameters>(createJobRequest);
     const createJobResponse: ICreateExportJobResponse = {
       jobId: res.id,
       status: OperationStatus.PENDING,
     };
+
     return createJobResponse;
   }
 
