@@ -4,7 +4,6 @@ import { container } from 'tsyringe';
 import { area, buffer, feature, featureCollection, intersect } from '@turf/turf';
 import PolygonBbox from '@turf/bbox';
 import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
-import booleanContains from '@turf/boolean-contains';
 import booleanEqual from '@turf/boolean-equal';
 import { snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
@@ -15,26 +14,27 @@ const areRoiPropertiesEqual = (props1: RoiProperties, props2: RoiProperties): bo
   return props1.maxResolutionDeg === props2.maxResolutionDeg && props1.minResolutionDeg === props2.minResolutionDeg;
 };
 
+/**
+ * Check if containment exists and area ratio is within threshold
+ */
+const isContainedWithAreaThreshold = (containerFeature: Feature, containedFeature: Feature, thresholdRatio: number): boolean => {
+  if (!isGeometryContained(containerFeature, containedFeature)) {
+    return false;
+  }
+
+  const areaRatio = calculateAreaRatio(containedFeature, containerFeature);
+  return areaRatio >= thresholdRatio;
+};
+
 const areGeometriesSimilar = (
   requestRoiFeature: Feature,
   jobRoiFeature: Feature,
   options: { minContainedPercentage: number; bufferMeter: number }
 ): boolean => {
-  // Check if job ROI contains the request ROI (one-directional containment)
-  const jobRoiContainsRequestRoi = safeContains(jobRoiFeature, requestRoiFeature);
+  const thresholdRatio = options.minContainedPercentage / 100;
 
-  if (jobRoiContainsRequestRoi) {
-    // Check if areas are within threshold using job ROI
-    const requestArea = area(requestRoiFeature);
-    const jobArea = area(jobRoiFeature);
-
-    const areaRatio = requestArea / jobArea;
-    const thresholdRatio = options.minContainedPercentage / 100;
-
-    // If the area ratio is below threshold, they're too different in size
-    if (areaRatio < thresholdRatio) {
-      return false;
-    }
+  // Check if job ROI contains the request ROI with area threshold
+  if (isContainedWithAreaThreshold(jobRoiFeature, requestRoiFeature, thresholdRatio)) {
     return true;
   }
 
@@ -45,48 +45,65 @@ const areGeometriesSimilar = (
     return false;
   }
 
-  // Check if buffered job ROI contains the request ROI
-  const bufferedJobContainsRequest = safeContains(bufferedJobFeature, requestRoiFeature);
+  // Check if buffered job ROI contains the request ROI with area threshold
+  return isContainedWithAreaThreshold(bufferedJobFeature, requestRoiFeature, thresholdRatio);
+};
 
-  if (bufferedJobContainsRequest) {
-    // Check if areas are within threshold using buffered job ROI
-    const requestArea = area(requestRoiFeature);
-    const bufferedJobArea = area(bufferedJobFeature);
+const calculateAreaRatio = (feature1: Feature, feature2: Feature): number => {
+  const feature1Area = area(feature1);
+  const feature2Area = area(feature2);
+  const areaRatio = feature1Area / feature2Area;
+  return areaRatio;
+};
 
-    const areaRatio = requestArea / bufferedJobArea;
-    const thresholdRatio = options.minContainedPercentage / 100;
-
-    // If the request area is too small compared to buffered job area, they're too different in size
-    if (areaRatio < thresholdRatio) {
+/**
+ * Check if a polygon is fully contained within another polygon using intersection-based approach
+ * This avoids the Turf.js booleanContains bug with MultiPolygon
+ */
+const isPolygonContainedInPolygon = (containerPolygon: Feature<Polygon>, candidatePolygon: Feature<Polygon>): boolean => {
+  try {
+    const intersection = intersect(featureCollection([containerPolygon, candidatePolygon]));
+    if (!intersection) {
       return false;
     }
-    return true;
-  }
 
-  return false;
+    const candidateArea = area(candidatePolygon);
+    const intersectionArea = area(intersection);
+
+    // Use relative epsilon for floating point comparison to handle large area values
+    const relativeEpsilon = 1e-9;
+    const absoluteDifference = Math.abs(candidateArea - intersectionArea);
+    const relativeDifference = absoluteDifference / candidateArea;
+
+    return relativeDifference < relativeEpsilon || intersectionArea >= candidateArea;
+  } catch (error) {
+    return false;
+  }
 };
 
 /**
  * Helper function to handle booleanContains with MultiPolygon geometries
  * Works around Turf.js bug with MultiPolygon containment checks
  */
-export const safeContains = (completedJobRoi: Feature, requestedRoi: Feature): boolean => {
+export const isGeometryContained = (completedJobRoi: Feature, requestedRoi: Feature): boolean => {
   try {
     if (booleanEqual(completedJobRoi, requestedRoi)) {
       return true;
     }
+
     if (completedJobRoi.geometry.type === 'MultiPolygon' && requestedRoi.geometry.type === 'Polygon') {
       const multiPolygon = completedJobRoi.geometry;
       return multiPolygon.coordinates.some((coords) => {
         const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
         const polygonFeature = feature(polygon, completedJobRoi.properties);
-        return booleanContains(polygonFeature, requestedRoi);
+        return isPolygonContainedInPolygon(polygonFeature, requestedRoi as Feature<Polygon>);
       });
     }
 
     if (completedJobRoi.geometry.type === 'Polygon' && requestedRoi.geometry.type === 'Polygon') {
-      return booleanContains(completedJobRoi, requestedRoi);
+      return isPolygonContainedInPolygon(completedJobRoi as Feature<Polygon>, requestedRoi as Feature<Polygon>);
     }
+
     return false;
 
     //commented after decision on how to handle naive cache - kepd code fot possible future use

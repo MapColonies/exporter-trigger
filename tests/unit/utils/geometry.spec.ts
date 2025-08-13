@@ -5,7 +5,7 @@ import { RoiFeatureCollection } from '@map-colonies/raster-shared';
 import * as turf from '@turf/turf';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { sanitizeBboxMock, sanitizeBboxRequestMock, notIntersectedPolygon } from '../../mocks/geometryMocks';
-import { checkRoiFeatureCollectionSimilarity, sanitizeBbox, safeContains } from '../../../src/utils/geometry';
+import { checkRoiFeatureCollectionSimilarity, sanitizeBbox, isGeometryContained } from '../../../src/utils/geometry';
 import { SERVICES } from '../../../src/common/constants';
 
 describe('Geometry Utils', () => {
@@ -715,7 +715,7 @@ describe('Geometry Utils', () => {
         const outerFeature = turf.feature(outerPolygon, props);
         const innerFeature = turf.feature(innerPolygon, props);
 
-        const result = safeContains(outerFeature, innerFeature);
+        const result = isGeometryContained(outerFeature, innerFeature);
         expect(result).toBeTruthy();
       });
 
@@ -749,7 +749,7 @@ describe('Geometry Utils', () => {
         const feature1 = turf.feature(polygon1, props);
         const feature2 = turf.feature(polygon2, props);
 
-        const result = safeContains(feature1, feature2);
+        const result = isGeometryContained(feature1, feature2);
         expect(result).toBeFalsy();
       });
 
@@ -783,7 +783,7 @@ describe('Geometry Utils', () => {
         const smallFeature = turf.feature(smallPolygon, props);
         const largeFeature = turf.feature(largePolygon, props);
 
-        const result = safeContains(smallFeature, largeFeature);
+        const result = isGeometryContained(smallFeature, largeFeature);
         expect(result).toBeFalsy();
       });
     });
@@ -834,7 +834,7 @@ describe('Geometry Utils', () => {
         const multiFeature = turf.feature(multiPolygon, props);
         const containedFeature = turf.feature(containedPolygon, props);
 
-        const result = safeContains(multiFeature, containedFeature);
+        const result = isGeometryContained(multiFeature, containedFeature);
         expect(result).toBeTruthy();
       });
 
@@ -883,7 +883,7 @@ describe('Geometry Utils', () => {
         const multiFeature = turf.feature(multiPolygon, props);
         const outsideFeature = turf.feature(outsidePolygon, props);
 
-        const result = safeContains(multiFeature, outsideFeature);
+        const result = isGeometryContained(multiFeature, outsideFeature);
         expect(result).toBeFalsy();
       });
     });
@@ -934,7 +934,7 @@ describe('Geometry Utils', () => {
         const containerFeature = turf.feature(containerPolygon, props);
         const multiFeature = turf.feature(multiPolygon, props);
 
-        const result = safeContains(containerFeature, multiFeature);
+        const result = isGeometryContained(containerFeature, multiFeature);
         expect(result).toBeFalsy();
       });
 
@@ -1037,7 +1037,7 @@ describe('Geometry Utils', () => {
         const containerFeature = turf.feature(containerMultiPolygon, props);
         const containedFeature = turf.feature(containedMultiPolygon, props);
 
-        const result = safeContains(containerFeature, containedFeature);
+        const result = isGeometryContained(containerFeature, containedFeature);
         expect(result).toBeFalsy();
       });
 
