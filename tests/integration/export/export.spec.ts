@@ -590,10 +590,6 @@ describe('export', function () {
   });
 
   describe('getJobStatus', function () {
-    afterEach(function () {
-      resetContainer();
-      jest.resetAllMocks();
-    });
     describe('Happy Path', function () {
       it('should return 200 status code and the tasks matched the jobId', async function () {
         const jobRequest = inProgressJobsResponse[0] as unknown as JobExportResponse;
