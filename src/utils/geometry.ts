@@ -1,14 +1,11 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { Logger } from '@map-colonies/js-logger';
-import { container } from 'tsyringe';
 import { area, buffer, feature, featureCollection, intersect } from '@turf/turf';
 import PolygonBbox from '@turf/bbox';
 import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
 import booleanEqual from '@turf/boolean-equal';
 import { snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
-import { SERVICES } from '@src/common/constants';
-import { IConfig } from '@src/common/interfaces';
 
 const areRoiPropertiesEqual = (props1: RoiProperties, props2: RoiProperties): boolean => {
   return props1.maxResolutionDeg === props2.maxResolutionDeg && props1.minResolutionDeg === props2.minResolutionDeg;
