@@ -466,6 +466,9 @@ describe('export', function () {
 
         const response = await requestSender.export(createExportRequestWithMultiPolygon);
 
+        console.log('response', response.body);
+        console.log('postResponse', initExportResponse);
+
         // Verify response creates new job with MultiPolygon footprint
         expect(response.body).toEqual(createExportResponse);
         expect(response.status).toBe(httpStatusCodes.OK);
