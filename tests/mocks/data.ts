@@ -322,7 +322,7 @@ export const initExportRequestBodyWithMultiPolygon = {
           },
         ],
       },
-      callbackUrls: undefined,
+      callbackUrls: [],
       crs: 'EPSG:4326',
     },
     additionalParams: {

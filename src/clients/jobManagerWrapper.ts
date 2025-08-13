@@ -138,7 +138,6 @@ export class JobManagerWrapper extends JobManagerClient {
         };
       }),
     };
-    this.logger.info({ msg: `Raz5` });
 
     const res = await this.createJob<ExportJobParameters, ITaskParameters>(createJobRequest);
     const createJobResponse: ICreateExportJobResponse = {

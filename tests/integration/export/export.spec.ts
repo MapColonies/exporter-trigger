@@ -370,6 +370,7 @@ describe('export', function () {
         const createExportRequestWithMultiPolygon = {
           dbId: createExportRequestWithoutCallback.dbId,
           crs: createExportRequestWithoutCallback.crs,
+          callbackURLs: [],
           // No ROI - will use layer footprint
         };
 
@@ -427,10 +428,11 @@ describe('export', function () {
         expect(response).toSatisfyApiSpec();
       });
 
-      it.only('should return 200 status code and return completed job when roi is multipolygon and contained by job multipolygon', async function () {
+      it('should return 200 status code and return completed job when roi is multipolygon and contained by job multipolygon', async function () {
         const createExportRequestWithMultiPolygon = {
           dbId: createExportRequestWithoutCallback.dbId,
           crs: createExportRequestWithoutCallback.crs,
+          callbackURLs: [],
           // No ROI - will use layer footprint
         };
 
@@ -462,12 +464,9 @@ describe('export', function () {
           .post(`/jobs/find`, findCriteria as Record<string, string>)
           .reply(200, inProgressJobsResponse);
 
-        nock(jobManagerURL).post(`/jobs`, initExportRequestBodyWithMultiPolygon).reply(200, initExportResponse).persist();
+        nock(jobManagerURL).post(`/jobs`, initExportRequestBodyWithMultiPolygon).reply(200, initExportResponse);
 
         const response = await requestSender.export(createExportRequestWithMultiPolygon);
-
-        console.log('response', response.body);
-        console.log('postResponse', initExportResponse);
 
         // Verify response creates new job with MultiPolygon footprint
         expect(response.body).toEqual(createExportResponse);

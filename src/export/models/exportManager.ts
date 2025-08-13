@@ -49,7 +49,6 @@ export class ExportManager {
 
   @withSpanAsyncV4
   public async createExport(exportRequest: CreateExportRequest): Promise<ICreateExportJobResponse | CallbackExportResponse> {
-    this.logger.info({ msg: `Raz1` });
     const { dbId: catalogId, crs, priority, callbackURLs, description } = exportRequest;
     const layerMetadata = await this.validationManager.findLayer(catalogId);
 
@@ -78,7 +77,6 @@ export class ExportManager {
       maxZoom,
       srcRes
     );
-    this.logger.info({ msg: `Raz2` });
 
     const duplicationExist = await this.findJobDuplications(productId, version, catalogId, roi, crs ?? DEFAULT_CRS, callbackUrls);
     if (duplicationExist) {
@@ -86,7 +84,6 @@ export class ExportManager {
     }
 
     const gpkgEstimatedSize = calculateEstimatedGpkgSize(featuresRecords, layerMetadata.tileOutputFormat);
-    this.logger.info({ msg: `Raz3` });
 
     await this.validationManager.validateFreeSpace(gpkgEstimatedSize, this.gpkgsLocation);
 
@@ -113,11 +110,8 @@ export class ExportManager {
       jobTrackerUrl: this.jobTrackerUrl,
       polygonPartsEntityName,
     };
-    this.logger.info({ msg: `Raz4` });
 
     const jobCreated = await this.jobManagerClient.createExportJob(exportInitRequest);
-    this.logger.info({ msg: `Raz6` });
-
     return jobCreated;
   }
 
