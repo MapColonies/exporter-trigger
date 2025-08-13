@@ -371,6 +371,7 @@ describe('export', function () {
           dbId: createExportRequestWithoutCallback.dbId,
           crs: createExportRequestWithoutCallback.crs,
           callbackURLs: [],
+          description: 'lublub',
           // No ROI - will use layer footprint
         };
 
@@ -433,6 +434,7 @@ describe('export', function () {
           dbId: createExportRequestWithoutCallback.dbId,
           crs: createExportRequestWithoutCallback.crs,
           callbackURLs: [],
+          description: 'lublub',
           // No ROI - will use layer footprint
         };
 

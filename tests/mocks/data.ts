@@ -345,7 +345,7 @@ export const initExportRequestBodyWithMultiPolygon = {
   internalId: '8b867544-2dab-43a1-be6e-f23ec83c19b4',
   productType: RasterProductTypes.ORTHOPHOTO,
   priority: 1000,
-  description: undefined,
+  description: 'lublub',
   status: OperationStatus.PENDING,
   percentage: 0,
   additionalIdentifiers: '63baedae-cb5b-4c0a-a7db-8eb6b9105cb7',
