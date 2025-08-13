@@ -105,31 +105,6 @@ export const isGeometryContained = (completedJobRoi: Feature, requestedRoi: Feat
     }
 
     return false;
-
-    //commented after decision on how to handle naive cache - kepd code fot possible future use
-
-    /**if (completedJobRoi.geometry.type === 'MultiPolygon' && requestedRoi.geometry.type === 'MultiPolygon') {
-      const containedMultiPolygon = requestedRoi.geometry;
-      // Every polygon in contained MultiPolygon must be contained by at least one polygon in container MultiPolygon
-      return containedMultiPolygon.coordinates.every((containedCoords) => {
-        const containedPolygon = { type: 'Polygon', coordinates: containedCoords } as Polygon;
-        const containedPolygonFeature = feature(containedPolygon, requestedRoi.properties);
-        return isGeometryContained(completedJobRoi, containedPolygonFeature);
-      });
-      
-    }
-
-    // Handle MultiPolygon in containedFeature only
-    if (requestedRoi.geometry.type === 'MultiPolygon') {
-      return false;
-      const multiPolygon = requestedRoi.geometry;
-      return multiPolygon.coordinates.every((coords) => {
-        const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
-        const polygonFeature = feature(polygon, requestedRoi.properties);
-        return booleanContains(completedJobRoi, polygonFeature);
-      });
-      
-    }*/
   } catch (error) {
     // If there's any error with the containment check, return false
     return false;
@@ -139,11 +114,10 @@ export const isGeometryContained = (completedJobRoi: Feature, requestedRoi: Feat
 export const checkRoiFeatureCollectionSimilarity = (
   requestRoi: RoiFeatureCollection,
   jobRoi: RoiFeatureCollection,
-  options: { config: IConfig }
+  roiBufferMeter: number,
+  minContainedPercentage: number,
+  logger: Logger
 ): boolean => {
-  const roiBufferMeter = options.config.get<number>('roiBufferMeter');
-  const minContainedPercentage = options.config.get<number>('minContainedPercentage');
-  const logger: Logger = container.resolve(SERVICES.LOGGER);
   // If feature counts differ, they're not similar
   if (requestRoi.features.length !== jobRoi.features.length) {
     logger.debug({ msg: 'Feature counts differ, not similar', fc1Count: requestRoi.features.length, fc2Count: jobRoi.features.length });

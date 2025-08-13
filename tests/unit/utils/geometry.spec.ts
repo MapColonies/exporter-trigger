@@ -9,11 +9,17 @@ import { checkRoiFeatureCollectionSimilarity, sanitizeBbox, isGeometryContained 
 import { SERVICES } from '../../../src/common/constants';
 
 describe('Geometry Utils', () => {
+  let ROI_BUFFER_METER = 0;
+  let MIN_CONTAINED_PERCENTAGE = 0;
+  let logger;
   beforeEach(() => {
     registerDefaultConfig();
-    const logger = jsLogger({ enabled: false });
+    logger = jsLogger({ enabled: false });
     container.register(SERVICES.LOGGER, { useValue: logger });
+    ROI_BUFFER_METER = configMock.get<number>('roiBufferMeter');
+    MIN_CONTAINED_PERCENTAGE = configMock.get<number>('minContainedPercentage');
   });
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
@@ -58,7 +64,7 @@ describe('Geometry Utils', () => {
       const fc1 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f1' })]);
       const fc2 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f2' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
       expect(result).toBeTruthy();
     });
@@ -81,7 +87,7 @@ describe('Geometry Utils', () => {
       const fc1 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f1' })]);
       const fc2 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f2a' }), turf.feature(squarePolygon, props1, { id: 'f2b' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
       expect(result).toBeFalsy();
     });
@@ -91,7 +97,7 @@ describe('Geometry Utils', () => {
       const fc1 = turf.featureCollection([]) as RoiFeatureCollection;
       const fc2 = turf.featureCollection([]) as RoiFeatureCollection;
 
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
       expect(result).toBeTruthy();
     });
@@ -114,7 +120,7 @@ describe('Geometry Utils', () => {
       const fc1 = turf.featureCollection([turf.feature(squarePolygon, props1, { id: 'f1' })]);
       const fc2 = turf.featureCollection([turf.feature(squarePolygon, props2, { id: 'f2' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
       expect(result).toBeFalsy();
     });
@@ -152,7 +158,13 @@ describe('Geometry Utils', () => {
       const requestRoi = turf.featureCollection([turf.feature(requestSquarePolygon, props1, { id: 'f1' })]);
       const jobRoi = turf.featureCollection([turf.feature(jobSquarePolygon, props1, { id: 'f2' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeTruthy();
     });
@@ -190,7 +202,13 @@ describe('Geometry Utils', () => {
       const requestRoi = turf.featureCollection([turf.feature(requestSquarePolygon, props1, { id: 'f1' })]);
       const jobRoi = turf.featureCollection([turf.feature(jobSquarePolygon, props1, { id: 'f2' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeFalsy();
     });
@@ -228,7 +246,13 @@ describe('Geometry Utils', () => {
       const requestRoi = turf.featureCollection([turf.feature(requestSquarePolygon, props1, { id: 'f1' })]);
       const jobRoi = turf.featureCollection([turf.feature(jobSquarePolygon, props1, { id: 'f2' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeFalsy();
     });
@@ -265,7 +289,7 @@ describe('Geometry Utils', () => {
       const fc1 = turf.featureCollection([turf.feature(square1Polygon, props1, { id: 'f1' })]);
       const fc2 = turf.featureCollection([turf.feature(square2Polygon, props1, { id: 'f2' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
       expect(result).toBeFalsy();
     });
@@ -333,7 +357,13 @@ describe('Geometry Utils', () => {
 
       const jobRoi = turf.featureCollection([turf.feature(jobSquare1, props1, { id: 'f2a' }), turf.feature(jobSquare2, props1, { id: 'f2b' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeTruthy();
     });
@@ -404,7 +434,7 @@ describe('Geometry Utils', () => {
         turf.feature(square2bPolygon, props1, { id: 'f2b' }),
       ]);
 
-      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
       expect(result).toBeFalsy();
     });
@@ -476,7 +506,13 @@ describe('Geometry Utils', () => {
         turf.feature(jobSquare1, props1, { id: 'f2a' }),
       ]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeTruthy();
     });
@@ -520,7 +556,13 @@ describe('Geometry Utils', () => {
         turf.feature(jobSquarePolygon, props1, { id: 'f2b' }),
       ]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeTruthy();
     });
@@ -557,7 +599,13 @@ describe('Geometry Utils', () => {
       const requestRoi = turf.featureCollection([turf.feature(largePolygon, props1, { id: 'f1a' })]);
       const jobRoi = turf.featureCollection([turf.feature(smallPolygon, props1, { id: 'f2a' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeTruthy();
     });
@@ -594,7 +642,13 @@ describe('Geometry Utils', () => {
       const requestRoi = turf.featureCollection([turf.feature(largePolygon, props1, { id: 'f1a' })]);
       const jobRoi = turf.featureCollection([turf.feature(smallPolygon, props1, { id: 'f2a' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeFalsy();
     });
@@ -637,7 +691,13 @@ describe('Geometry Utils', () => {
       const requestRoi = turf.featureCollection([turf.feature(requestSquarePolygon, props1, { id: 'f1' })]);
       const jobRoi = turf.featureCollection([turf.feature(jobSquarePolygon, props1, { id: 'f2' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeTruthy();
     });
@@ -675,7 +735,13 @@ describe('Geometry Utils', () => {
       const requestRoi = turf.featureCollection([turf.feature(invalidPolygon, props1, { id: 'f1' })]);
       const jobRoi = turf.featureCollection([turf.feature(validSquarePolygon, props1, { id: 'f2' })]);
 
-      const result = checkRoiFeatureCollectionSimilarity(requestRoi, jobRoi, { config: configMock });
+      const result = checkRoiFeatureCollectionSimilarity(
+        requestRoi,
+        jobRoi,
+        ROI_BUFFER_METER,
+        MIN_CONTAINED_PERCENTAGE,
+        container.resolve(SERVICES.LOGGER)
+      );
 
       expect(result).toBeFalsy();
     });
