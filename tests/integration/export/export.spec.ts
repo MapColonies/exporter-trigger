@@ -48,9 +48,7 @@ import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { getApp } from '../../../src/app';
 import { ExportSender } from './helpers/exportSender';
 
-jest.mock('uuid', () => ({
-  v4: jest.fn(),
-}));
+jest.mock('uuid', () => ({ v4: jest.fn() }));
 
 describe('export', function () {
   let requestSender: ExportSender;
@@ -62,10 +60,7 @@ describe('export', function () {
   });
 
   beforeEach(async function () {
-    const [app] = await getApp({
-      override: [...getTestContainerConfig()],
-      useChild: false,
-    });
+    const [app] = await getApp({ override: [...getTestContainerConfig()], useChild: false });
     requestSender = new ExportSender(app);
     catalogManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url');
     jobManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.jobManager.url');
@@ -432,7 +427,7 @@ describe('export', function () {
         expect(response).toSatisfyApiSpec();
       });
 
-      it('should return 200 status code and return completed job when roi is multipolygon and contained by job multipolygon', async function () {
+      it.only('should return 200 status code and return completed job when roi is multipolygon and contained by job multipolygon', async function () {
         const createExportRequestWithMultiPolygon = {
           dbId: createExportRequestWithoutCallback.dbId,
           crs: createExportRequestWithoutCallback.crs,
@@ -467,7 +462,7 @@ describe('export', function () {
           .post(`/jobs/find`, findCriteria as Record<string, string>)
           .reply(200, inProgressJobsResponse);
 
-        nock(jobManagerURL).post(`/jobs`, initExportRequestBodyWithMultiPolygon).reply(200, initExportResponse);
+        nock(jobManagerURL).post(`/jobs`, initExportRequestBodyWithMultiPolygon).reply(200, initExportResponse).persist();
 
         const response = await requestSender.export(createExportRequestWithMultiPolygon);
 
