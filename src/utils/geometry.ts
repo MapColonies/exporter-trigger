@@ -114,7 +114,7 @@ export const isGeometryContained = (completedJobRoi: Feature, requestedRoi: Feat
       return containedMultiPolygon.coordinates.every((containedCoords) => {
         const containedPolygon = { type: 'Polygon', coordinates: containedCoords } as Polygon;
         const containedPolygonFeature = feature(containedPolygon, requestedRoi.properties);
-        return safeContains(completedJobRoi, containedPolygonFeature);
+        return isGeometryContained(completedJobRoi, containedPolygonFeature);
       });
       
     }

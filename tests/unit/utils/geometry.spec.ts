@@ -681,7 +681,7 @@ describe('Geometry Utils', () => {
     });
   });
 
-  describe('safeContains', () => {
+  describe('isGeometryContained', () => {
     const props = { maxResolutionDeg: 0.1, minResolutionDeg: 0.01 };
 
     describe('Regular Polygon containment', () => {
@@ -983,7 +983,7 @@ describe('Geometry Utils', () => {
       //   const containerFeature = turf.feature(containerPolygon, props);
       //   const multiFeature = turf.feature(multiPolygon, props);
 
-      //   const result = safeContains(containerFeature, multiFeature);
+      //   const result = isGeometryContained(containerFeature, multiFeature);
       //   expect(result).toBeFalsy();
       // });
     });
@@ -1089,7 +1089,7 @@ describe('Geometry Utils', () => {
       //   const containerFeature = turf.feature(containerMultiPolygon, props);
       //   const containedFeature = turf.feature(containedMultiPolygon, props);
 
-      //   const result = safeContains(containerFeature, containedFeature);
+      //   const result = isGeometryContained(containerFeature, containedFeature);
       //   expect(result).toBeFalsy();
       // });
     });
