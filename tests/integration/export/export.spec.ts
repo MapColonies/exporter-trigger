@@ -380,7 +380,7 @@ describe('export', function () {
 
         const layerId = createExportRequestWithMultiPolygon.dbId;
 
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBody.additionalIdentifiers);
+        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
         jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
@@ -441,7 +441,7 @@ describe('export', function () {
 
         const layerId = createExportRequestWithMultiPolygon.dbId;
 
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBody.additionalIdentifiers);
+        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
         jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
