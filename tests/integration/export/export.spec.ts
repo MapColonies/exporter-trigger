@@ -466,7 +466,7 @@ describe('export', function () {
           .post(`/jobs/find`, findCriteria as Record<string, string>)
           .reply(200, inProgressJobsResponse);
 
-        nock(jobManagerURL).post(`/jobs`, initExportRequestBodyWithMultiPolygon).reply(200, initExportResponse);
+        nock(jobManagerURL).post(`/jobs`).reply(200, initExportResponse);
 
         const response = await requestSender.export(createExportRequestWithMultiPolygon);
 
