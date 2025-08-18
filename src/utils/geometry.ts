@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { Logger } from '@map-colonies/js-logger';
-import { area, buffer, feature, featureCollection, intersect } from '@turf/turf';
+import { area, booleanContains, buffer, feature, featureCollection, intersect } from '@turf/turf';
 import PolygonBbox from '@turf/bbox';
 import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
 import booleanEqual from '@turf/boolean-equal';
@@ -54,31 +54,6 @@ const calculateAreaRatio = (feature1: Feature, feature2: Feature): number => {
 };
 
 /**
- * Check if a polygon is fully contained within another polygon using intersection-based approach
- * This avoids the Turf.js booleanContains bug with MultiPolygon
- */
-const isPolygonContainedInPolygon = (containerPolygon: Feature<Polygon>, candidatePolygon: Feature<Polygon>): boolean => {
-  try {
-    const intersection = intersect(featureCollection([containerPolygon, candidatePolygon]));
-    if (!intersection) {
-      return false;
-    }
-
-    const candidateArea = area(candidatePolygon);
-    const intersectionArea = area(intersection);
-
-    // Use relative epsilon for floating point comparison to handle large area values
-    const relativeEpsilon = 1e-9;
-    const absoluteDifference = Math.abs(candidateArea - intersectionArea);
-    const relativeDifference = absoluteDifference / candidateArea;
-
-    return relativeDifference < relativeEpsilon || intersectionArea >= candidateArea;
-  } catch (error) {
-    return false;
-  }
-};
-
-/**
  * Helper function to handle booleanContains with MultiPolygon geometries
  * Works around Turf.js bug with MultiPolygon containment checks
  */
@@ -88,17 +63,17 @@ export const isGeometryContained = (completedJobRoi: Feature, requestedRoi: Feat
       return true;
     }
 
-    if (completedJobRoi.geometry.type === 'MultiPolygon' && requestedRoi.geometry.type === 'Polygon') {
-      const multiPolygon = completedJobRoi.geometry;
-      return multiPolygon.coordinates.some((coords) => {
+    if (completedJobRoi.geometry.type === 'Polygon' && requestedRoi.geometry.type === 'MultiPolygon') {
+      const multiPolygon = requestedRoi.geometry;
+      return multiPolygon.coordinates.every((coords) => {
         const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
-        const polygonFeature = feature(polygon, completedJobRoi.properties);
-        return isPolygonContainedInPolygon(polygonFeature, requestedRoi as Feature<Polygon>);
+        const polygonFeature = feature(polygon, requestedRoi.properties);
+        return booleanContains(completedJobRoi as Feature<Polygon>, polygonFeature);
       });
     }
 
     if (completedJobRoi.geometry.type === 'Polygon' && requestedRoi.geometry.type === 'Polygon') {
-      return isPolygonContainedInPolygon(completedJobRoi as Feature<Polygon>, requestedRoi as Feature<Polygon>);
+      return booleanContains(completedJobRoi as Feature<Polygon>, requestedRoi as Feature<Polygon>);
     }
 
     return false;
@@ -117,7 +92,7 @@ export const checkRoiFeatureCollectionSimilarity = (
 ): boolean => {
   // If feature counts differ, they're not similar
   if (requestRoi.features.length !== jobRoi.features.length) {
-    logger.debug({ msg: 'Feature counts differ, not similar', fc1Count: requestRoi.features.length, fc2Count: jobRoi.features.length });
+    logger.debug({ msg: 'Feature counts differ, not similar', requestRoiCount: requestRoi.features.length, jobRoiCount: jobRoi.features.length });
     return false;
   }
 

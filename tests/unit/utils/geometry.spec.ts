@@ -855,7 +855,7 @@ describe('Geometry Utils', () => {
     });
 
     describe('MultiPolygon as container', () => {
-      it('should return true when any polygon in MultiPolygon contains the feature', () => {
+      it('should return false when only some polygons in MultiPolygon are contained', () => {
         // MultiPolygon with two separate polygons
         const multiPolygon: MultiPolygon = {
           type: 'MultiPolygon',
@@ -901,7 +901,7 @@ describe('Geometry Utils', () => {
         const containedFeature = turf.feature(containedPolygon, props);
 
         const result = isGeometryContained(multiFeature, containedFeature);
-        expect(result).toBeTruthy();
+        expect(result).toBeFalsy();
       });
 
       it('should return false when no polygon in MultiPolygon contains the feature', () => {
@@ -955,7 +955,7 @@ describe('Geometry Utils', () => {
     });
 
     describe('MultiPolygon as contained feature', () => {
-      it('should return false when requestRoi is multipolygon and jobRoi is polygon', () => {
+      it('should return true when requestRoi MultiPolygon is contained in  polygon jobRoi', () => {
         // Large container polygon
         const containerPolygon: Polygon = {
           type: 'Polygon',
@@ -1001,7 +1001,7 @@ describe('Geometry Utils', () => {
         const multiFeature = turf.feature(multiPolygon, props);
 
         const result = isGeometryContained(containerFeature, multiFeature);
-        expect(result).toBeFalsy();
+        expect(result).toBeTruthy();
       });
 
       it('should return false when some polygons in MultiPolygon are not contained', () => {
