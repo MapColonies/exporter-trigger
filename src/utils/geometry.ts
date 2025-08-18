@@ -115,7 +115,13 @@ export const checkRoiFeatureCollectionSimilarity = (
       const propsEqual = areRoiPropertiesEqual(feature1.properties, feature2.properties);
       logger.debug({ msg: 'Checking properties', propsEqual, feature1Properties: feature1.properties, feature2Properties: feature2.properties });
       if (!propsEqual) {
-        return false;
+        logger.info({
+          msg: 'Properties are different, therefore not similar',
+          propsEqual,
+          feature1Properties: feature1.properties,
+          feature2Properties: feature2.properties,
+        });
+        return false; // If properties differ, they are not similar
       }
 
       // Check geometric similarity
