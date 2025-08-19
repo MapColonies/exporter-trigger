@@ -10,7 +10,7 @@ import { configMock, getMock, hasMock, registerDefaultConfig } from '../mocks/co
 function getTestContainerConfig(): InjectionObject<unknown>[] {
   registerDefaultConfig();
   return [
-    { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+    { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false, level: 'info', prettyPrint: true }) } },
     { token: SERVICES.CONFIG, provider: { useValue: configMock } },
     { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
     { token: STORAGE_ROUTER_SYMBOL, provider: { useFactory: storageRouterFactory } },

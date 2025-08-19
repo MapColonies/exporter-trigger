@@ -9,17 +9,28 @@ import {
   createExportNotIntersectedPolygon,
   createExportRequestNoRoiWithCallback,
   createExportRequestWithoutCallback,
+  createExportRequestWithoutRoi,
   createExportRequestWithRoiAndCallback,
   createExportRequestWithRoiAndNewCallback,
   createExportResponse,
   getJobStatusByIdResponse,
   initExportRequestBody,
   initExportRequestBodyNoRoiWithCallback,
+  initExportRequestBodyWithMultiPolygon,
   initExportResponse,
   layerInfo,
 } from '@tests/mocks/data';
 import nock from 'nock';
-import { completedExportJobsResponse, completedExportParams, completedJobCallback } from '@tests/mocks/completedReqest';
+import {
+  completedExportJobsResponse,
+  completedExportJobsResponseWithBufferedRoi,
+  completedExportJobWithMultiPolygonResponse,
+  completedExportJobWithMultiPolygonRoiForMultiPolygonLayer,
+  completedExportParams,
+  completedJobCallback,
+  completedJobCallbackWithBufferedRoi,
+  completedJobCallbackWithMultiPolygon,
+} from '@tests/mocks/completedReqest';
 import {
   addedCallbackUrl,
   findCriteria,
@@ -32,13 +43,12 @@ import { ValidationManager } from '@src/export/models/validationManager';
 import { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
 import { JobExportResponse } from '@src/common/interfaces';
 import { JobManagerWrapper } from '@src/clients/jobManagerWrapper';
+import { layerWithMultiPolygonFootprint } from '@tests/mocks/geometryMocks';
 import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { getApp } from '../../../src/app';
 import { ExportSender } from './helpers/exportSender';
 
-jest.mock('uuid', () => ({
-  v4: jest.fn(),
-}));
+jest.mock('uuid', () => ({ v4: jest.fn() }));
 
 describe('export', function () {
   let requestSender: ExportSender;
@@ -50,10 +60,7 @@ describe('export', function () {
   });
 
   beforeEach(async function () {
-    const [app] = await getApp({
-      override: [...getTestContainerConfig()],
-      useChild: false,
-    });
+    const [app] = await getApp({ override: [...getTestContainerConfig()], useChild: false });
     requestSender = new ExportSender(app);
     catalogManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url');
     jobManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.jobManager.url');
@@ -116,6 +123,28 @@ describe('export', function () {
         const response = await requestSender.export(createExportRequestWithoutCallback);
 
         expect(response.body).toEqual(completedJobCallback);
+
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 200 status code and return completed job when roi is contained by buffer of job roi', async function () {
+        const layerId = createExportRequestWithoutCallback.dbId;
+
+        nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(completedExportParams as Record<string, string>)
+          .reply(200, completedExportJobsResponseWithBufferedRoi);
+        nock(jobManagerURL)
+          .get(`/jobs/${completedExportJobsResponseWithBufferedRoi[0].id}`)
+          .query({ shouldReturnTasks: false })
+          .reply(200, completedExportJobsResponseWithBufferedRoi[0])
+          .persist();
+
+        const response = await requestSender.export(createExportRequestWithoutCallback);
+
+        expect(response.body).toEqual(completedJobCallbackWithBufferedRoi);
 
         expect(response.status).toBe(httpStatusCodes.OK);
         expect(response).toSatisfyApiSpec();
@@ -335,6 +364,117 @@ describe('export', function () {
         },
         1000000
       );
+
+      it('should return 200 status code and create export job with MultiPolygon footprint from layer', async function () {
+        // Create export request WITHOUT ROI (so it will use layer footprint)
+        const createExportRequestWithMultiPolygon = {
+          dbId: createExportRequestWithoutCallback.dbId,
+          crs: createExportRequestWithoutCallback.crs,
+          callbackURLs: [],
+          description: 'lublub',
+          // No ROI - will use layer footprint
+        };
+
+        const layerId = createExportRequestWithMultiPolygon.dbId;
+
+        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
+        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+
+        nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(completedExportParams as Record<string, string>)
+          .reply(200, undefined);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(inProgressExportParams as Record<string, string>)
+          .reply(200, undefined);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(pendingExportParams as Record<string, string>)
+          .reply(200, undefined);
+        nock(jobManagerURL)
+          .post(`/jobs/find`, findCriteria as Record<string, string>)
+          .reply(200, inProgressJobsResponse);
+
+        nock(jobManagerURL).post(`/jobs`).reply(200, initExportResponse);
+
+        const response = await requestSender.export(createExportRequestWithMultiPolygon);
+
+        // Verify response creates new job with MultiPolygon footprint
+        expect(response.body).toEqual(createExportResponse);
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 200 status code and return completed job when no ROI provided with MultiPolygon footprint', async function () {
+        const layerId = createExportRequestWithoutRoi.dbId;
+
+        nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(completedExportParams as Record<string, string>)
+          .reply(200, completedExportJobWithMultiPolygonResponse);
+        nock(jobManagerURL)
+          .get(`/jobs/${completedExportJobWithMultiPolygonResponse[0].id}`)
+          .query({ shouldReturnTasks: false })
+          .reply(200, completedExportJobWithMultiPolygonResponse[0])
+          .persist();
+
+        const response = await requestSender.export(createExportRequestWithoutRoi);
+
+        expect(response.body).toEqual(completedJobCallbackWithMultiPolygon);
+
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 200 status code and return completed job when roi is multipolygon and contained by job multipolygon', async function () {
+        const createExportRequestWithMultiPolygon = {
+          dbId: createExportRequestWithoutCallback.dbId,
+          crs: createExportRequestWithoutCallback.crs,
+          callbackURLs: [],
+          description: 'lublub',
+          // No ROI - will use layer footprint
+        };
+
+        const layerId = createExportRequestWithMultiPolygon.dbId;
+
+        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
+        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+
+        nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(completedExportParams as Record<string, string>)
+          .reply(200, completedExportJobWithMultiPolygonRoiForMultiPolygonLayer);
+        nock(jobManagerURL)
+          .get(`/jobs/${completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0].id}`)
+          .query({ shouldReturnTasks: false })
+          .reply(200, completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0])
+          .persist();
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(inProgressExportParams as Record<string, string>)
+          .reply(200, undefined)
+          .persist();
+        nock(jobManagerURL)
+          .get('/jobs')
+          .query(pendingExportParams as Record<string, string>)
+          .reply(200, undefined);
+        nock(jobManagerURL)
+          .post(`/jobs/find`, findCriteria as Record<string, string>)
+          .reply(200, inProgressJobsResponse);
+
+        nock(jobManagerURL).post(`/jobs`).reply(200, initExportResponse);
+
+        const response = await requestSender.export(createExportRequestWithMultiPolygon);
+
+        // Verify response creates new job with MultiPolygon footprint
+        expect(response.body).toEqual(createExportResponse);
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
     });
 
     describe('Bad Path', function () {
@@ -451,10 +591,6 @@ describe('export', function () {
   });
 
   describe('getJobStatus', function () {
-    afterEach(function () {
-      resetContainer();
-      jest.resetAllMocks();
-    });
     describe('Happy Path', function () {
       it('should return 200 status code and the tasks matched the jobId', async function () {
         const jobRequest = inProgressJobsResponse[0] as unknown as JobExportResponse;

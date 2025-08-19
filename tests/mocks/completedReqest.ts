@@ -272,6 +272,136 @@ export const completedExportJobsResponse = [
   },
 ];
 
+export const completedExportJobsResponseWithBufferedRoi = [
+  {
+    ...completedExportJobsResponse[0],
+    parameters: {
+      ...completedExportJobsResponse[0].parameters,
+      exportInputParams: {
+        ...completedExportJobsResponse[0].parameters.exportInputParams,
+        roi: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [34.85674548920005, 32.30655137739643],
+                    [34.858100499442344, 32.30243096524444],
+                    [34.86232390679237, 32.302638641426896],
+                    [34.86153951511287, 32.30707719844892],
+                    [34.85674548920005, 32.30655137739643],
+                  ],
+                ],
+              },
+              properties: {
+                maxResolutionDeg: 0.703125,
+                minResolutionDeg: 0.703125,
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
+];
+
+export const completedExportJobWithMultiPolygonResponse = [
+  {
+    ...completedExportJobsResponse[0],
+    parameters: {
+      ...completedExportJobsResponse[0].parameters,
+      exportInputParams: {
+        ...completedExportJobsResponse[0].parameters.exportInputParams,
+        roi: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'MultiPolygon',
+                coordinates: [
+                  [
+                    [
+                      [34.85671849225366, 32.306563240778644],
+                      [34.858090125180894, 32.30241218787266],
+                      [34.862337900781455, 32.30263664191864],
+                      [34.86154145051941, 32.30708703329364],
+                      [34.85671849225366, 32.306563240778644],
+                    ],
+                  ],
+                  [
+                    [
+                      [34.87, 32.31],
+                      [34.88, 32.31],
+                      [34.88, 32.32],
+                      [34.87, 32.32],
+                      [34.87, 32.31],
+                    ],
+                  ],
+                ],
+              },
+              properties: {
+                maxResolutionDeg: 0.703125,
+                minResolutionDeg: 0.703125,
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
+];
+
+export const completedExportJobWithMultiPolygonRoiForMultiPolygonLayer = [
+  {
+    ...completedExportJobsResponse[0],
+    parameters: {
+      ...completedExportJobsResponse[0].parameters,
+      exportInputParams: {
+        ...completedExportJobsResponse[0].parameters.exportInputParams,
+        roi: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'MultiPolygon',
+                coordinates: [
+                  [
+                    [
+                      [34.85671849225366, 32.306563240778644],
+                      [34.858090125180894, 32.30241218787266],
+                      [34.862337900781455, 32.30263664191864],
+                      [34.86154145051941, 32.30708703329364],
+                      [34.85671849225366, 32.306563240778644],
+                    ],
+                  ],
+                  [
+                    [
+                      [34.85665225898083, 32.306571066376634],
+                      [34.85801528568973, 32.30236857700437],
+                      [34.86239653319174, 32.30260060006512],
+                      [34.86165826981073, 32.3071650263976],
+                      [34.85665225898083, 32.306571066376634],
+                    ],
+                  ],
+                ],
+              },
+              properties: {
+                maxResolutionDeg: 0.703125,
+                minResolutionDeg: 0.703125,
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
+];
+
 export const updateCompletedExpirationParams = {
   parameters: {
     ...completedExportJobsResponse[0].parameters,
@@ -285,5 +415,15 @@ export const updateCompletedExpirationParams = {
 
 export const completedJobCallback = {
   ...completedExportJobsResponse[0].parameters.callbackParams,
+  status: OperationStatus.COMPLETED,
+};
+
+export const completedJobCallbackWithMultiPolygon = {
+  ...completedExportJobWithMultiPolygonResponse[0].parameters.callbackParams,
+  status: OperationStatus.COMPLETED,
+};
+
+export const completedJobCallbackWithBufferedRoi = {
+  ...completedExportJobsResponseWithBufferedRoi[0].parameters.callbackParams,
   status: OperationStatus.COMPLETED,
 };

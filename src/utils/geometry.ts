@@ -1,80 +1,127 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { Logger } from '@map-colonies/js-logger';
-import { container } from 'tsyringe';
-import { area, buffer, feature, featureCollection, intersect } from '@turf/turf';
+import { area, booleanContains, buffer, feature, featureCollection, intersect } from '@turf/turf';
 import PolygonBbox from '@turf/bbox';
 import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
-import booleanContains from '@turf/boolean-contains';
+import booleanEqual from '@turf/boolean-equal';
 import { snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
-import { SERVICES } from '@src/common/constants';
-import { IConfig } from '@src/common/interfaces';
 
 const areRoiPropertiesEqual = (props1: RoiProperties, props2: RoiProperties): boolean => {
   return props1.maxResolutionDeg === props2.maxResolutionDeg && props1.minResolutionDeg === props2.minResolutionDeg;
 };
 
-const areGeometriesSimilar = (feature1: Feature, feature2: Feature, options: { minContainedPercentage: number; bufferMeter: number }): boolean => {
-  // Check direct containment
-  const feature1ContainsFeature2 = booleanContains(feature1, feature2);
-  const feature2ContainsFeature1 = booleanContains(feature2, feature1);
+/**
+ * Check if containment exists and area ratio is within threshold
+ */
+const isContainedWithAreaThreshold = (containerFeature: Feature, containedFeature: Feature, thresholdRatio: number): boolean => {
+  if (!isGeometryContained(containerFeature, containedFeature)) {
+    return false;
+  }
 
-  if (feature1ContainsFeature2 || feature2ContainsFeature1) {
-    // Even with containment, check if areas are within threshold
-    const area1 = area(feature1);
-    const area2 = area(feature2);
+  const areaRatio = calculateAreaRatio(containedFeature, containerFeature);
+  return areaRatio >= thresholdRatio;
+};
 
-    const areaRatio = Math.min(area1, area2) / Math.max(area1, area2);
-    const thresholdRatio = options.minContainedPercentage / 100;
+const areGeometriesSimilar = (
+  requestRoiFeature: Feature,
+  jobRoiFeature: Feature,
+  options: { minContainedPercentage: number; bufferMeter: number }
+): boolean => {
+  const thresholdRatio = options.minContainedPercentage / 100;
 
-    // If the area ratio is below threshold, they're too different in size
-    if (areaRatio < thresholdRatio) {
-      return false;
-    }
+  // Check if job ROI contains the request ROI with area threshold
+  if (isContainedWithAreaThreshold(jobRoiFeature, requestRoiFeature, thresholdRatio)) {
     return true;
   }
 
-  // Create buffered features
-  const bufferedFeature1 = buffer(feature1, options.bufferMeter, { units: 'meters' });
-  const bufferedFeature2 = buffer(feature2, options.bufferMeter, { units: 'meters' });
+  // If no direct containment, try with buffered job feature
+  const bufferedJobFeature = buffer(jobRoiFeature, options.bufferMeter, { units: 'meters' });
 
-  if (bufferedFeature1 === undefined || bufferedFeature2 === undefined) {
+  if (bufferedJobFeature === undefined) {
     return false;
   }
-  // Check if buffered feature1 contains feature2 or vice versa
-  return booleanContains(bufferedFeature1, feature2) || booleanContains(bufferedFeature2, feature1);
+
+  // Check if buffered job ROI contains the request ROI with area threshold
+  return isContainedWithAreaThreshold(bufferedJobFeature, requestRoiFeature, thresholdRatio);
 };
 
-export const checkRoiFeatureCollectionSimilarity = (fc1: RoiFeatureCollection, fc2: RoiFeatureCollection, options: { config: IConfig }): boolean => {
-  const roiBufferMeter = options.config.get<number>('roiBufferMeter');
-  const minContainedPercentage = options.config.get<number>('minContainedPercentage');
-  const logger: Logger = container.resolve(SERVICES.LOGGER);
+const calculateAreaRatio = (feature1: Feature, feature2: Feature): number => {
+  const feature1Area = area(feature1);
+  const feature2Area = area(feature2);
+  const areaRatio = feature1Area / feature2Area;
+  return areaRatio;
+};
+
+/**
+ * Helper function to handle booleanContains with MultiPolygon geometries
+ * Works around Turf.js bug with MultiPolygon containment checks
+ */
+export const isGeometryContained = (completedJobRoi: Feature, requestedRoi: Feature): boolean => {
+  try {
+    if (booleanEqual(completedJobRoi, requestedRoi)) {
+      return true;
+    }
+
+    if (completedJobRoi.geometry.type === 'Polygon' && requestedRoi.geometry.type === 'MultiPolygon') {
+      const multiPolygon = requestedRoi.geometry;
+      return multiPolygon.coordinates.every((coords) => {
+        const polygon = { type: 'Polygon', coordinates: coords } as Polygon;
+        const polygonFeature = feature(polygon, requestedRoi.properties);
+        return booleanContains(completedJobRoi as Feature<Polygon>, polygonFeature);
+      });
+    }
+
+    if (completedJobRoi.geometry.type === 'Polygon' && requestedRoi.geometry.type === 'Polygon') {
+      return booleanContains(completedJobRoi as Feature<Polygon>, requestedRoi as Feature<Polygon>);
+    }
+
+    return false;
+  } catch (error) {
+    // If there's any error with the containment check, return false
+    return false;
+  }
+};
+
+export const checkRoiFeatureCollectionSimilarity = (
+  requestRoi: RoiFeatureCollection,
+  jobRoi: RoiFeatureCollection,
+  roiBufferMeter: number,
+  minContainedPercentage: number,
+  logger: Logger
+): boolean => {
   // If feature counts differ, they're not similar
-  if (fc1.features.length !== fc2.features.length) {
-    logger.debug({ msg: 'Feature counts differ, not similar', fc1Count: fc1.features.length, fc2Count: fc2.features.length });
+  if (requestRoi.features.length !== jobRoi.features.length) {
+    logger.debug({ msg: 'Feature counts differ, not similar', requestRoiCount: requestRoi.features.length, jobRoiCount: jobRoi.features.length });
     return false;
   }
 
   // Track which features have found a match
-  const fc1Matched = new Array<boolean>(fc1.features.length).fill(false);
-  const fc2Matched = new Array<boolean>(fc2.features.length).fill(false);
+  const fc1Matched = new Array<boolean>(requestRoi.features.length).fill(false);
+  const fc2Matched = new Array<boolean>(jobRoi.features.length).fill(false);
 
-  for (let i = 0; i < fc1.features.length; i++) {
-    const feature1 = fc1.features[i];
+  for (let i = 0; i < requestRoi.features.length; i++) {
+    const feature1 = requestRoi.features[i];
 
-    for (let j = 0; j < fc2.features.length; j++) {
+    for (let j = 0; j < jobRoi.features.length; j++) {
       // Skip already matched features in fc2
       if (fc2Matched[j]) {
         continue;
       }
 
-      const feature2 = fc2.features[j];
+      const feature2 = jobRoi.features[j];
 
       // Check if properties are exactly the same
       const propsEqual = areRoiPropertiesEqual(feature1.properties, feature2.properties);
       logger.debug({ msg: 'Checking properties', propsEqual, feature1Properties: feature1.properties, feature2Properties: feature2.properties });
       if (!propsEqual) {
-        continue;
+        logger.info({
+          msg: 'Properties are different, therefore not similar',
+          propsEqual,
+          feature1Properties: feature1.properties,
+          feature2Properties: feature2.properties,
+        });
+        return false; // If properties differ, they are not similar
       }
 
       // Check geometric similarity

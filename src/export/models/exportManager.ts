@@ -84,6 +84,7 @@ export class ExportManager {
     }
 
     const gpkgEstimatedSize = calculateEstimatedGpkgSize(featuresRecords, layerMetadata.tileOutputFormat);
+
     await this.validationManager.validateFreeSpace(gpkgEstimatedSize, this.gpkgsLocation);
 
     //creation of params
@@ -110,6 +111,7 @@ export class ExportManager {
       jobTrackerUrl: this.jobTrackerUrl,
       polygonPartsEntityName,
     };
+
     const jobCreated = await this.jobManagerClient.createExportJob(exportInitRequest);
     return jobCreated;
   }

@@ -30,6 +30,8 @@ import { checkRoiFeatureCollectionSimilarity, sanitizeBbox } from '../../utils/g
 @injectable()
 export class ValidationManager {
   private readonly storageEstimation: IStorageEstimation;
+  private readonly roiBufferMeter: number;
+  private readonly minContainedPercentage: number;
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
@@ -39,6 +41,8 @@ export class ValidationManager {
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
     this.storageEstimation = config.get<IStorageEstimation>('storageEstimation');
+    this.roiBufferMeter = config.get<number>('roiBufferMeter');
+    this.minContainedPercentage = config.get<number>('minContainedPercentage');
   }
 
   @withSpanAsyncV4
@@ -154,7 +158,13 @@ export class ValidationManager {
           job.internalId === jobParams.catalogId &&
           job.version === jobParams.version &&
           job.parameters.exportInputParams.crs === jobParams.crs &&
-          checkRoiFeatureCollectionSimilarity(job.parameters.exportInputParams.roi, jobParams.roi, { config: this.config })
+          checkRoiFeatureCollectionSimilarity(
+            jobParams.roi,
+            job.parameters.exportInputParams.roi,
+            this.roiBufferMeter,
+            this.minContainedPercentage,
+            this.logger
+          )
       );
       return duplicateJob;
     }

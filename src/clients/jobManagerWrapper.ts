@@ -139,11 +139,13 @@ export class JobManagerWrapper extends JobManagerClient {
         };
       }),
     };
+
     const res = await this.createJob<ExportJobParameters, ITaskParameters>(createJobRequest);
     const createJobResponse: ICreateExportJobResponse = {
       jobId: res.id,
       status: OperationStatus.PENDING,
     };
+
     return createJobResponse;
   }
 

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { RoiFeatureCollection } from '@map-colonies/raster-shared';
 import { BBox, Polygon } from 'geojson';
+import { layerInfo } from './data';
 
 export const multiplePolygonsFeatureCollection: RoiFeatureCollection = {
   type: 'FeatureCollection',
@@ -154,3 +155,34 @@ export const notIntersectedPolygon: Polygon = {
   ],
 };
 export const sanitizeBboxMock: BBox = [0, -90, 180, 90];
+
+export const layerWithMultiPolygonFootprint = {
+  ...layerInfo,
+  metadata: {
+    ...layerInfo.metadata,
+    footprint: {
+      type: 'MultiPolygon',
+      coordinates: [
+        [
+          [
+            [34.85671849225366, 32.306563240778644],
+            [34.858090125180894, 32.30241218787266],
+            [34.862337900781455, 32.30263664191864],
+            [34.86154145051941, 32.30708703329364],
+            [34.85671849225366, 32.306563240778644],
+          ],
+        ],
+        [
+          [
+            [34.87, 32.31],
+            [34.88, 32.31],
+            [34.88, 32.32],
+            [34.87, 32.32],
+            [34.87, 32.31],
+          ],
+        ],
+      ],
+      bbox: [34.85671849225366, 32.30241218787266, 34.88, 32.32],
+    },
+  },
+};
