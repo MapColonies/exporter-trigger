@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.4](https://github.com/MapColonies/exporter-trigger/compare/v3.1.3...v3.1.4) (2025-08-19)
+
+
+### Bug Fixes
+
+* Boolean contains multipolygon error (MAPCO-7996) ([#117](https://github.com/MapColonies/exporter-trigger/issues/117)) ([7497aaf](https://github.com/MapColonies/exporter-trigger/commit/7497aafce9819b0b2ef33a7ebabf8aaf40327070))
+* product name added in job ([#118](https://github.com/MapColonies/exporter-trigger/issues/118)) ([b920a7c](https://github.com/MapColonies/exporter-trigger/commit/b920a7c7f43af8be01c8b7d4c197993fcf6af124))
+
 ## [3.1.3](https://github.com/MapColonies/exporter-trigger/compare/v3.1.2...v3.1.3) (2025-05-25)
 
 
