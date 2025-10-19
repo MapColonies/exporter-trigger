@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.5](https://github.com/MapColonies/exporter-trigger/compare/v3.1.4...v3.1.5) (2025-10-19)
+
+
+### Bug Fixes
+
+* correct gpkgLocation formatting and add subPath for volume mount ([#120](https://github.com/MapColonies/exporter-trigger/issues/120)) ([fed6a3b](https://github.com/MapColonies/exporter-trigger/commit/fed6a3b01993a70cf085c2b3e99a89acd327ea3b))
+
 ## [3.1.4](https://github.com/MapColonies/exporter-trigger/compare/v3.1.3...v3.1.4) (2025-08-19)
 
 
