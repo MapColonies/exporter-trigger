@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.6](https://github.com/MapColonies/exporter-trigger/compare/v3.1.5...v3.1.6) (2025-10-19)
+
+
+### Bug Fixes
+
+* initialize config in offline mode ([2600ec2](https://github.com/MapColonies/exporter-trigger/commit/2600ec24dd95bdcb34bee96ac5d684bbf671c6c3))
+
 ## [3.1.5](https://github.com/MapColonies/exporter-trigger/compare/v3.1.4...v3.1.5) (2025-10-19)
 
 
