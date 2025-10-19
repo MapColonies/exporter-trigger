@@ -4,8 +4,8 @@
 import { tracingFactory } from './common/tracing.js';
 import { getConfig, initConfig } from './common/config.js';
 
-// TODO: Consider making the offlineMode configurable via environment variable - change when supporting config management
-await initConfig(true); // Initialize config in offline mode
+await initConfig();
+
 const config = getConfig();
 
 const tracingConfig = config.get('telemetry.tracing');
