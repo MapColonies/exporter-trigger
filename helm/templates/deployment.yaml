@@ -10,7 +10,7 @@
 {{- $fs := (include "common.fs.merged" .) | fromYaml }}
 {{- $configmapName := include "configmap.fullname" . }}
 {{- $deploymentName := include "deployment.fullname" . }}
-{{ $gpkgLocation := (printf "%s%s" $fs.internalPvc.outputPath $fs.internalPvc.gpkgSubPath) }}
+{{ $gpkgLocation := (printf "%s/%s" $fs.internalPvc.outputPath $fs.internalPvc.gpkgSubPath) }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -79,6 +79,9 @@ spec:
           volumeMounts:
             - name: internal-storage
               mountPath: {{ $fs.internalPvc.outputPath }}
+              {{- if $fs.internalPvc.gpkgSubPath }}
+              subPath: {{ $fs.internalPvc.gpkgSubPath }}
+              {{- end }}
           {{- if .Values.resources.enabled }}
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
