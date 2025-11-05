@@ -47,6 +47,7 @@ import { layerWithMultiPolygonFootprint } from '@tests/mocks/geometryMocks';
 import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { getApp } from '../../../src/app';
 import { ExportSender } from './helpers/exportSender';
+import { CreateExportRequest } from '@src/utils/zod/schemas';
 
 jest.mock('uuid', () => ({ v4: jest.fn() }));
 
@@ -478,6 +479,37 @@ describe('export', function () {
     });
 
     describe('Bad Path', function () {
+      it('should return 400 bad request when zod validation fails with invalid request body', async function () {
+        // Send completely invalid request body that will fail Zod parsing
+        const invalidRequest = {
+          dbId: 123, // Should be string
+          crs: ['invalid'], // Should be string
+          priority: 'high', // Should be number
+          roi: 'not-a-valid-geojson', // Should be valid FeatureCollection
+          callbackURLs: 'not-an-array', // Should be array
+        };
+
+        const response = await requestSender.export(invalidRequest as unknown as CreateExportRequest);
+
+        expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message');
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 400 bad request when zod validation fails with missing required fields', async function () {
+        // Send request without required dbId field
+        const invalidRequest = {
+          crs: 'EPSG:4326',
+          description: 'test',
+        };
+
+        const response = await requestSender.export(invalidRequest as unknown as CreateExportRequest);
+
+        expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message');
+        expect(response).toSatisfyApiSpec();
+      });
+
       it('should return not found status code when layer not found', async function () {
         const layerId = createExportRequestWithoutCallback.dbId;
 
