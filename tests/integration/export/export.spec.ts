@@ -44,10 +44,10 @@ import { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/rast
 import { JobExportResponse } from '@src/common/interfaces';
 import { JobManagerWrapper } from '@src/clients/jobManagerWrapper';
 import { layerWithMultiPolygonFootprint } from '@tests/mocks/geometryMocks';
+import { CreateExportRequest } from '@src/utils/zod/schemas';
 import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { getApp } from '../../../src/app';
 import { ExportSender } from './helpers/exportSender';
-import { CreateExportRequest } from '@src/utils/zod/schemas';
 
 jest.mock('uuid', () => ({ v4: jest.fn() }));
 
