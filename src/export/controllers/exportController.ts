@@ -1,9 +1,10 @@
 import { Logger } from '@map-colonies/js-logger';
 import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
+import { HttpError } from '@map-colonies/error-types';
 import { injectable, inject } from 'tsyringe';
 import { CallbackExportResponse } from '@map-colonies/raster-shared';
-import { CreateExportRequest, createExportRequestSchema } from '@src/utils/zod/schemas';
+import { createExportRequestSchema } from '@src/utils/zod/schemas';
 import { SERVICES } from '../../common/constants';
 import { ExportManager } from '../models/exportManager';
 import { ICreateExportJobResponse, IJobStatusResponse } from '../../common/interfaces';
@@ -19,10 +20,13 @@ export class ExportController {
   ) {}
 
   public createExport: CreateExportHandler = async (req, res, next) => {
-    const exportRequest: CreateExportRequest = createExportRequestSchema.parse(req.body);
     try {
+      const exportRequest = createExportRequestSchema.safeParse(req.body);
+      if (!exportRequest.success) {
+        throw new HttpError(exportRequest.error.message, httpStatus.BAD_REQUEST);
+      }
       this.logger.debug({ msg: `Creating export request:`, exportRequest });
-      const jobCreated = await this.manager.createExport(exportRequest);
+      const jobCreated = await this.manager.createExport(exportRequest.data);
       return res.status(httpStatus.OK).json(jobCreated);
     } catch (err) {
       next(err);
