@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.6](https://github.com/MapColonies/exporter-trigger/compare/v3.1.5...v3.1.6) (2025-11-06)
+
+
+### Bug Fixes
+
+* move zod validation insdie try-catch block in createExport- `ExportController` ([#123](https://github.com/MapColonies/exporter-trigger/issues/123)) ([9dc4ee1](https://github.com/MapColonies/exporter-trigger/commit/9dc4ee126274d2efbcfc7125178e358f43a57946))
+
 ## [3.1.5](https://github.com/MapColonies/exporter-trigger/compare/v3.1.4...v3.1.5) (2025-10-19)
 
 
