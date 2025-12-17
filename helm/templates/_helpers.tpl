@@ -30,12 +30,14 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "exporter-trigger.labels" -}}
+app.kubernetes.io/name: {{ include "exporter-trigger.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
 helm.sh/chart: {{ include "exporter-trigger.chart" . }}
-{{ include "exporter-trigger.selectorLabels" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{ include "mclabels.labels" . }}
 {{- end }}
 
 {{/*
@@ -51,6 +53,7 @@ Selector labels
 {{- define "exporter-trigger.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "exporter-trigger.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "mclabels.selectorLabels" . }}
 {{- end }}
 
 {{/*
