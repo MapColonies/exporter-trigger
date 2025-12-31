@@ -119,6 +119,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+security:
+  - {}
 components:
   requestBodies:
     ExportByRoiBody:
