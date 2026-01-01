@@ -48,6 +48,7 @@ spec:
         prometheus.io/port: {{ $metrics.prometheus.port | quote }}
         prometheus.io/scrape: {{ $metrics.prometheus.scrape | quote }}
         {{- end }}
+        {{- include "mclabels.annotations" . | nindent 8 }}
     spec:
       {{- if $cloudProviderImagePullSecretName }}
       imagePullSecrets:
