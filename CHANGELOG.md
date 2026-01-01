@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.7](https://github.com/MapColonies/exporter-trigger/compare/v3.1.6...v3.1.7) (2026-01-01)
+
+
+### helm
+
+* add infra labels and annotatios (MAPCO-9063) ([#124](https://github.com/MapColonies/exporter-trigger/issues/124)) ([8a44337](https://github.com/MapColonies/exporter-trigger/commit/8a4433767be5dbd269e78d796d7d499bcdcc4301))
+
 ## [3.1.6](https://github.com/MapColonies/exporter-trigger/compare/v3.1.5...v3.1.6) (2025-11-06)
 
 
