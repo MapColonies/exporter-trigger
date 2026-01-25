@@ -40,7 +40,7 @@ storage:
       enabled: false
       name: ""
       gpkgSubPath: ""
-      outputPath: ""
+      mountPath: ""
 
 enabled: true
 environment: development
