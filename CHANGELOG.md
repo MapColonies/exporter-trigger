@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.8](https://github.com/MapColonies/exporter-trigger/compare/v3.1.7...v3.1.8) (2026-01-25)
+
+
+### Bug Fixes
+
+* update internal PVC path references in deployment and values files ([#126](https://github.com/MapColonies/exporter-trigger/issues/126)) ([d9604e1](https://github.com/MapColonies/exporter-trigger/commit/d9604e1b69addef5f5e840891ad7e2451d1c5c03))
+
 ## [3.1.7](https://github.com/MapColonies/exporter-trigger/compare/v3.1.6...v3.1.7) (2026-01-01)
 
 
