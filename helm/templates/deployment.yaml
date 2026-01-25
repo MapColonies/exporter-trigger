@@ -10,7 +10,7 @@
 {{- $fs := (include "common.fs.merged" .) | fromYaml }}
 {{- $configmapName := include "configmap.fullname" . }}
 {{- $deploymentName := include "deployment.fullname" . }}
-{{ $gpkgLocation := (printf "%s/%s" $fs.internalPvc.outputPath $fs.internalPvc.gpkgSubPath) }}
+{{ $gpkgLocation := (printf "%s/%s" $fs.internalPvc.mountPath $fs.internalPvc.gpkgSubPath) }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -78,11 +78,13 @@ spec:
               path: /liveness
               port: http
           volumeMounts:
+            {{- if $fs.internalPvc.enabled }}
             - name: internal-storage
-              mountPath: {{ $fs.internalPvc.outputPath }}
+              mountPath: {{ $fs.internalPvc.mountPath }}
               {{- if $fs.internalPvc.gpkgSubPath }}
               subPath: {{ $fs.internalPvc.gpkgSubPath }}
               {{- end }}
+            {{- end }}  
           {{- if .Values.resources.enabled }}
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
