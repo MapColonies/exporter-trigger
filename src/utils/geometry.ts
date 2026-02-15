@@ -3,10 +3,10 @@ import { area, booleanContains, buffer, feature, featureCollection, intersect } 
 import PolygonBbox from '@turf/bbox';
 import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
 import booleanEqual from '@turf/boolean-equal';
-import { BBox2d, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
+import { snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
+import { BBox2d } from '../common/interfaces';
 
-const BBOX_3D_LENGTH = 6;
 const PERCENTAGE_TO_RATIO = 100;
 
 const areRoiPropertiesEqual = (props1: RoiProperties, props2: RoiProperties): boolean => {
@@ -167,9 +167,7 @@ export const sanitizeBbox = ({
     if (intersection === null) {
       return null;
     }
-    const bbox = PolygonBbox(intersection);
-    const bbox2d = bbox.length === BBOX_3D_LENGTH ? ([bbox[0], bbox[1], bbox[3], bbox[4]] as BBox2d) : (bbox as BBox2d);
-    const sanitized = snapBBoxToTileGrid(bbox2d, zoom);
+    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersection) as BBox2d, zoom);
 
     return sanitized;
   } catch (error) {
