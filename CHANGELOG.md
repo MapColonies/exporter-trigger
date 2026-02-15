@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.8](https://github.com/MapColonies/exporter-trigger/compare/v3.1.7...v3.1.8) (2026-01-25)
+
+
+### Bug Fixes
+
+* update internal PVC path references in deployment and values files ([#126](https://github.com/MapColonies/exporter-trigger/issues/126)) ([d9604e1](https://github.com/MapColonies/exporter-trigger/commit/d9604e1b69addef5f5e840891ad7e2451d1c5c03))
+
+## [3.1.7](https://github.com/MapColonies/exporter-trigger/compare/v3.1.6...v3.1.7) (2026-01-01)
+
+
+### helm
+
+* add infra labels and annotatios (MAPCO-9063) ([#124](https://github.com/MapColonies/exporter-trigger/issues/124)) ([8a44337](https://github.com/MapColonies/exporter-trigger/commit/8a4433767be5dbd269e78d796d7d499bcdcc4301))
+
+## [3.1.6](https://github.com/MapColonies/exporter-trigger/compare/v3.1.5...v3.1.6) (2025-11-06)
+
+
+### Bug Fixes
+
+* move zod validation insdie try-catch block in createExport- `ExportController` ([#123](https://github.com/MapColonies/exporter-trigger/issues/123)) ([9dc4ee1](https://github.com/MapColonies/exporter-trigger/commit/9dc4ee126274d2efbcfc7125178e358f43a57946))
+
 ## [3.1.5](https://github.com/MapColonies/exporter-trigger/compare/v3.1.4...v3.1.5) (2025-10-19)
 
 

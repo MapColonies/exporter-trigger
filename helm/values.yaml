@@ -11,6 +11,16 @@ global:
   domain: ''
   configOfflineMode: false
 
+mclabels:
+  #environment: development
+  component: backend
+  partOf: export
+  owner: raster
+  gisDomain: raster
+  prometheus:
+    enabled: true
+    port: 8080
+
 jobDefinitions:
   jobs:
     export:
@@ -30,7 +40,7 @@ storage:
       enabled: false
       name: ""
       gpkgSubPath: ""
-      outputPath: ""
+      mountPath: ""
 
 enabled: true
 environment: development
