@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers */
 import { Logger } from '@map-colonies/js-logger';
 import { area, booleanContains, buffer, feature, featureCollection, intersect } from '@turf/turf';
 import PolygonBbox from '@turf/bbox';
@@ -6,6 +5,9 @@ import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
 import booleanEqual from '@turf/boolean-equal';
 import { BBox2d, snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
+
+const BBOX_3D_LENGTH = 6;
+const PERCENTAGE_TO_RATIO = 100;
 
 const areRoiPropertiesEqual = (props1: RoiProperties, props2: RoiProperties): boolean => {
   return props1.maxResolutionDeg === props2.maxResolutionDeg && props1.minResolutionDeg === props2.minResolutionDeg;
@@ -28,7 +30,7 @@ const areGeometriesSimilar = (
   jobRoiFeature: Feature,
   options: { minContainedPercentage: number; bufferMeter: number }
 ): boolean => {
-  const thresholdRatio = options.minContainedPercentage / 100;
+  const thresholdRatio = options.minContainedPercentage / PERCENTAGE_TO_RATIO;
 
   // Check if job ROI contains the request ROI with area threshold
   if (isContainedWithAreaThreshold(jobRoiFeature, requestRoiFeature, thresholdRatio)) {
@@ -166,7 +168,7 @@ export const sanitizeBbox = ({
       return null;
     }
     const bbox = PolygonBbox(intersection);
-    const bbox2d = bbox.length === 6 ? ([bbox[0], bbox[1], bbox[3], bbox[4]] as BBox2d) : (bbox as BBox2d);
+    const bbox2d = bbox.length === BBOX_3D_LENGTH ? ([bbox[0], bbox[1], bbox[3], bbox[4]] as BBox2d) : (bbox as BBox2d);
     const sanitized = snapBBoxToTileGrid(bbox2d, zoom);
 
     return sanitized;

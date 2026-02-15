@@ -4,6 +4,8 @@ import { RoiFeatureCollection, TileOutputFormat } from '@map-colonies/raster-sha
 import config from 'config';
 import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
 
+const BBOX_3D_LENGTH = 6;
+
 export const getStorageStatus = async (gpkgsLocation: string): Promise<IStorageStatusResponse> => {
   return checkDiskSpace(gpkgsLocation);
 };
@@ -35,7 +37,7 @@ export const calculateEstimatedGpkgSize = (featuresRecords: IGeometryRecord[], t
   featuresRecords.forEach((record) => {
     for (let zoom = record.minZoomLevel; zoom <= record.zoomLevel; zoom++) {
       const bbox = record.sanitizedBox;
-      const bbox2d = bbox && bbox.length === 6 ? ([bbox[0], bbox[1], bbox[3], bbox[4]] as BBox2d) : (bbox as BBox2d);
+      const bbox2d = bbox && bbox.length === BBOX_3D_LENGTH ? ([bbox[0], bbox[1], bbox[3], bbox[4]] as BBox2d) : (bbox as BBox2d);
       const recordBatches = bboxToTileRange(bbox2d, zoom);
       batches.push(recordBatches);
     }
