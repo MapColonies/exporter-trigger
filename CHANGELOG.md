@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.2.0](https://github.com/MapColonies/exporter-trigger/compare/v3.1.8...v3.2.0) (2026-02-16)
+
+
+### Features
+
+* upgrade node to 24 and update workflows (MAPCO-7219) ([#128](https://github.com/MapColonies/exporter-trigger/issues/128)) ([fb23391](https://github.com/MapColonies/exporter-trigger/commit/fb23391dd5733d37933884463376cc41b9d7f29c))
+
 ## [3.1.8](https://github.com/MapColonies/exporter-trigger/compare/v3.1.7...v3.1.8) (2026-01-25)
 
 
