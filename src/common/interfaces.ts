@@ -12,6 +12,8 @@ import {
 } from '@map-colonies/raster-shared';
 import { BBox, Geometry } from 'geojson';
 
+export type BBox2d = [number, number, number, number];
+
 export interface IConfig {
   get: <T>(setting: string) => T;
   has: (setting: string) => boolean;

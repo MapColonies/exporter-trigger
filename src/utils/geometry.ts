@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers */
 import { Logger } from '@map-colonies/js-logger';
 import { area, booleanContains, buffer, feature, featureCollection, intersect } from '@turf/turf';
 import PolygonBbox from '@turf/bbox';
@@ -6,6 +5,9 @@ import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
 import booleanEqual from '@turf/boolean-equal';
 import { snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
+import { BBox2d } from '../common/interfaces';
+
+const PERCENTAGE_TO_RATIO = 100;
 
 const areRoiPropertiesEqual = (props1: RoiProperties, props2: RoiProperties): boolean => {
   return props1.maxResolutionDeg === props2.maxResolutionDeg && props1.minResolutionDeg === props2.minResolutionDeg;
@@ -28,7 +30,7 @@ const areGeometriesSimilar = (
   jobRoiFeature: Feature,
   options: { minContainedPercentage: number; bufferMeter: number }
 ): boolean => {
-  const thresholdRatio = options.minContainedPercentage / 100;
+  const thresholdRatio = options.minContainedPercentage / PERCENTAGE_TO_RATIO;
 
   // Check if job ROI contains the request ROI with area threshold
   if (isContainedWithAreaThreshold(jobRoiFeature, requestRoiFeature, thresholdRatio)) {
@@ -165,7 +167,8 @@ export const sanitizeBbox = ({
     if (intersection === null) {
       return null;
     }
-    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersection), zoom) as BBox;
+    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersection) as BBox2d, zoom);
+
     return sanitized;
   } catch (error) {
     throw new Error(`Error occurred while trying to sanitized bbox: ${JSON.stringify(error)}`);
