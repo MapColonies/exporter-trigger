@@ -67,7 +67,7 @@
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
     "@map-colonies/eslint-config": "^4.0.0",
-    "@map-colonies/openapi-helpers": "^1.2.0",
+    "@map-colonies/openapi-helpers": "^5.1.0",
     "@map-colonies/prettier-config": "0.0.1",
     "@swc/core": "^1.7.26",
     "@swc/jest": "^0.2.36",
