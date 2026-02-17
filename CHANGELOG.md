@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.2.1](https://github.com/MapColonies/exporter-trigger/compare/v3.2.0...v3.2.1) (2026-02-17)
+
+
+### Bug Fixes
+
+* docker gdal bin setup ([#144](https://github.com/MapColonies/exporter-trigger/issues/144)) ([85bbbd9](https://github.com/MapColonies/exporter-trigger/commit/85bbbd94a55e092e5fb9a823cf5922d49bab6a7c))
+
 ## [3.2.0](https://github.com/MapColonies/exporter-trigger/compare/v3.1.8...v3.2.0) (2026-02-16)
 
 
