@@ -1,4 +1,4 @@
-FROM node:24.0.0 AS build
+FROM node:24-slim AS build
 
 WORKDIR /tmp/buildApp
 
@@ -9,9 +9,12 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-FROM node:24.0.0-alpine3.21 AS production
-
-RUN apk add --no-cache dumb-init python3 make g++
+# Production stage with GDAL setup
+FROM node:24-slim AS production
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    dumb-init \
+    gdal-bin \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 ENV SERVER_PORT=8080
