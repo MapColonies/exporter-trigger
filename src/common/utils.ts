@@ -2,7 +2,7 @@ import checkDiskSpace from 'check-disk-space';
 import { bboxToTileRange, degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
 import { RoiFeatureCollection, TileOutputFormat } from '@map-colonies/raster-shared';
 import config from 'config';
-import { IGeometryRecord, IStorageStatusResponse } from './interfaces';
+import { BBox2d, IGeometryRecord, IStorageStatusResponse } from './interfaces';
 
 export const getStorageStatus = async (gpkgsLocation: string): Promise<IStorageStatusResponse> => {
   return checkDiskSpace(gpkgsLocation);
@@ -34,7 +34,7 @@ export const calculateEstimatedGpkgSize = (featuresRecords: IGeometryRecord[], t
   const batches: ITileRange[] = [];
   featuresRecords.forEach((record) => {
     for (let zoom = record.minZoomLevel; zoom <= record.zoomLevel; zoom++) {
-      const recordBatches = bboxToTileRange(record.sanitizedBox, zoom);
+      const recordBatches = bboxToTileRange(record.sanitizedBox as BBox2d, zoom);
       batches.push(recordBatches);
     }
   });
