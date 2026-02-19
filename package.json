@@ -50,7 +50,7 @@
     "@turf/helpers": "^7.1.0",
     "@turf/turf": "^7.1.0",
     "check-disk-space": "^3.4.0",
-    "compression": "^1.7.4",
+    "compression": "^1.8.1",
     "config": "^4.2.0",
     "express": "^4.19.2",
     "express-openapi-validator": "^5.0.4",
