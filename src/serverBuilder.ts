@@ -5,11 +5,11 @@ import { OpenapiViewerRouter } from '@map-colonies/openapi-express-viewer';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
 import { inject, injectable } from 'tsyringe';
-import { Logger } from '@map-colonies/js-logger';
-import httpLogger from '@map-colonies/express-access-log-middleware';
-import { getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
-import { collectMetricsExpressMiddleware } from '@map-colonies/telemetry/prom-metrics';
-import { ConfigType } from '@common/config';
+import type { Logger } from '@map-colonies/js-logger';
+import { httpLogger } from '@map-colonies/express-access-log-middleware';
+import { collectMetricsExpressMiddleware } from '@map-colonies/prometheus';
+import { Registry } from 'prom-client';
+import type { ConfigType } from '@common/config';
 import { SERVICES } from '@common/constants';
 import { STORAGE_ROUTER_SYMBOL } from './storage/routes/storageRouter';
 import { EXPORT_ROUTER_SYMBOL } from './export/routes/exportRouter';
@@ -21,6 +21,7 @@ export class ServerBuilder {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry,
     @inject(STORAGE_ROUTER_SYMBOL) private readonly createStorageRouter: Router,
     @inject(EXPORT_ROUTER_SYMBOL) private readonly createPackageRouter: Router
   ) {
@@ -51,7 +52,7 @@ export class ServerBuilder {
   }
 
   private registerPreRoutesMiddleware(): void {
-    this.serverInstance.use(collectMetricsExpressMiddleware({}));
+    this.serverInstance.use(collectMetricsExpressMiddleware({ registry: this.metricsRegistry }));
     this.serverInstance.use(httpLogger({ logger: this.logger, ignorePaths: ['/metrics'] }));
 
     if (this.config.get('server.response.compression.enabled')) {
@@ -59,7 +60,6 @@ export class ServerBuilder {
     }
 
     this.serverInstance.use(bodyParser.json(this.config.get('server.request.payload')));
-    this.serverInstance.use(getTraceContexHeaderMiddleware());
 
     const ignorePathRegex = new RegExp(`^${this.config.get('openapiConfig.basePath')}/.*`, 'i');
     const apiSpecPath = this.config.get('openapiConfig.filePath');

@@ -1,19 +1,12 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { RecordType } from '@map-colonies/mc-model-types';
-import { BBox, Polygon } from 'geojson';
-import { IFindJobsRequest, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import {
-  CallbackExportResponse,
-  ExportArtifactType,
-  ExportJobParameters,
-  RasterProductTypes,
-  RoiFeatureCollection,
-  TileFormatStrategy,
-  TileOutputFormat,
-  Transparency,
-} from '@map-colonies/raster-shared';
-import { CreateExportRequest } from '@src/utils/zod/schemas';
-import {
+import type { BBox, Polygon } from 'geojson';
+import type { IFindJobsRequest, IJobResponse } from '@map-colonies/mc-priority-queue';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import type { CallbackExportResponse, ExportJobParameters, RoiFeatureCollection } from '@map-colonies/raster-shared';
+import { ExportArtifactType, RasterProductTypes, TileFormatStrategy, TileOutputFormat, Transparency } from '@map-colonies/raster-shared';
+import type { CreateExportRequest } from '@src/utils/zod/schemas';
+import type {
   CreateExportJobBody,
   ICreateExportJobResponse,
   IExportInitRequest,
@@ -688,7 +681,7 @@ export const dupParams = {
   catalogId,
   roi: defaultRoi,
   crs,
-} as JobExportDuplicationParams;
+};
 
 export const createExportRequestWithoutCallback: CreateExportRequest = {
   dbId: catalogId,

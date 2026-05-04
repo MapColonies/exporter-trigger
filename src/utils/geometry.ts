@@ -1,11 +1,11 @@
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 import { area, booleanContains, buffer, feature, featureCollection, intersect } from '@turf/turf';
 import PolygonBbox from '@turf/bbox';
-import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
+import type { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
 import booleanEqual from '@turf/boolean-equal';
 import { snapBBoxToTileGrid } from '@map-colonies/mc-utils';
-import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
-import { BBox2d } from '../common/interfaces';
+import type { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
+import type { BBox2d } from '../common/interfaces';
 
 const PERCENTAGE_TO_RATIO = 100;
 

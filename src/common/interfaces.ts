@@ -1,6 +1,6 @@
-import { IRasterCatalogUpsertRequestBody } from '@map-colonies/mc-model-types';
-import { ICreateJobBody, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import {
+import type { IRasterCatalogUpsertRequestBody } from '@map-colonies/mc-model-types';
+import type { ICreateJobBody, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
+import type {
   CallbackUrlsTargetArray,
   ExportJobParameters,
   FileNamesTemplates,
@@ -10,7 +10,7 @@ import {
   TileFormatStrategy,
   TileOutputFormat,
 } from '@map-colonies/raster-shared';
-import { BBox, Geometry } from 'geojson';
+import type { BBox, Geometry } from 'geojson';
 
 export type BBox2d = [number, number, number, number];
 

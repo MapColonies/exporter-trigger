@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import httpStatusCodes from 'http-status-codes';
+import nock from 'nock';
+import type { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
 import { initConfig } from '@src/common/config';
 import { configMock } from '@tests/mocks/config';
 import {
@@ -20,7 +22,6 @@ import {
   initExportResponse,
   layerInfo,
 } from '@tests/mocks/data';
-import nock from 'nock';
 import {
   completedExportJobsResponse,
   completedExportJobsResponseWithBufferedRoi,
@@ -40,16 +41,15 @@ import {
   processingResponse,
 } from '@tests/mocks/processingRequest';
 import { ValidationManager } from '@src/export/models/validationManager';
-import { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
-import { JobExportResponse } from '@src/common/interfaces';
+import type { JobExportResponse } from '@src/common/interfaces';
 import { JobManagerWrapper } from '@src/clients/jobManagerWrapper';
 import { layerWithMultiPolygonFootprint } from '@tests/mocks/geometryMocks';
-import { CreateExportRequest } from '@src/utils/zod/schemas';
+import type { CreateExportRequest } from '@src/utils/zod/schemas';
 import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { getApp } from '../../../src/app';
 import { ExportSender } from './helpers/exportSender';
 
-jest.mock('uuid', () => ({ v4: jest.fn() }));
+vi.mock('uuid', () => ({ v4: vi.fn() }));
 
 describe('export', function () {
   let requestSender: ExportSender;
@@ -61,7 +61,7 @@ describe('export', function () {
   });
 
   beforeEach(async function () {
-    const [app] = await getApp({ override: [...getTestContainerConfig()], useChild: false });
+    const [app] = await getApp({ override: [...(await getTestContainerConfig())], useChild: false });
     requestSender = new ExportSender(app);
     catalogManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url');
     jobManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.jobManager.url');
@@ -70,16 +70,16 @@ describe('export', function () {
   afterEach(function () {
     nock.cleanAll();
     resetContainer();
-    jest.resetAllMocks();
-    jest.restoreAllMocks();
+    vi.resetAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('create', function () {
     describe('Happy Path', function () {
       it('should return 200 status code and create an export init', async function () {
         const layerId = createExportRequestWithoutCallback.dbId;
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBody.additionalIdentifiers);
-        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBody.additionalIdentifiers);
+        vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
         nock(jobManagerURL)
           .get('/jobs')
@@ -228,8 +228,8 @@ describe('export', function () {
 
       it('should return 200 status code , create init job when no roi provided and with callback', async function () {
         const layerId = createExportRequestWithoutCallback.dbId;
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
-        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T12_39_36_961Z');
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
+        vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T12_39_36_961Z');
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
         nock(jobManagerURL)
           .get('/jobs')
@@ -256,6 +256,7 @@ describe('export', function () {
         expect(response.status).toBe(httpStatusCodes.OK);
         expect(response).toSatisfyApiSpec();
       });
+
       it('should return 200 status code, return a processing job and add non duplicate callbackUrls', async function () {
         const layerId = createExportRequestNoRoiWithCallback.dbId;
         const duplicateJob = [{ ...inProgressJobsResponse[0] }];
@@ -355,11 +356,12 @@ describe('export', function () {
             .query({ shouldReturnTasks: false })
             .reply(200, duplicateJobResponseWithParams);
           nock(jobManagerURL).put(`/jobs/${duplicateJobsResponseWithoutParams[0].id}`).reply(200);
-          jest
-            .spyOn(JobManagerWrapper.prototype, 'updateJobExpirationDate')
-            .mockResolvedValue(duplicateJobResponseWithParams.parameters.cleanupDataParams?.cleanupExpirationTimeUTC);
+          vi.spyOn(JobManagerWrapper.prototype, 'updateJobExpirationDate').mockResolvedValue(
+            duplicateJobResponseWithParams.parameters.cleanupDataParams?.cleanupExpirationTimeUTC
+          );
 
           const response = await requestSender.export(request);
+
           expect(response.body).toEqual(expected);
           expect(response.status).toBe(httpStatusCodes.OK);
         },
@@ -378,8 +380,8 @@ describe('export', function () {
 
         const layerId = createExportRequestWithMultiPolygon.dbId;
 
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
-        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
+        vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
         nock(jobManagerURL)
@@ -441,8 +443,8 @@ describe('export', function () {
 
         const layerId = createExportRequestWithMultiPolygon.dbId;
 
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
-        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
+        vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
         nock(jobManagerURL)
@@ -612,7 +614,7 @@ describe('export', function () {
           .post(`/jobs/find`, findCriteria as Record<string, string>)
           .reply(200, inProgressJobsResponse);
 
-        jest.spyOn(ValidationManager.prototype as unknown as { getFreeStorage: () => Promise<number> }, 'getFreeStorage').mockResolvedValue(1);
+        vi.spyOn(ValidationManager.prototype, 'getFreeStorage').mockResolvedValue(1);
 
         const response = await requestSender.export(createExportRequestWithoutCallback);
 

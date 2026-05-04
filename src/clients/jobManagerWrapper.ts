@@ -4,7 +4,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { IFindJobsByCriteriaBody, IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { Tracer } from '@opentelemetry/api';
-import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { withSpanAsyncV4 } from '@map-colonies/tracing-utils';
 import { ExportJobParameters } from '@map-colonies/raster-shared';
 import {
   CreateExportJobBody,

@@ -1,10 +1,11 @@
-import jsLogger from '@map-colonies/js-logger';
+import { jsLogger } from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { BadRequestError, InsufficientStorage, NotFoundError } from '@map-colonies/error-types';
 import nock from 'nock';
 import { container } from 'tsyringe';
-import { SERVICES } from '@src/common/constants';
 import { getUTCDate } from '@map-colonies/mc-utils';
+import type { ExportJobParameters } from '@map-colonies/raster-shared';
+import { SERVICES } from '@src/common/constants';
 import { completedExportJobsResponse, completedExportParams, completedJobCallback } from '@tests/mocks/completedReqest';
 import {
   addedCallbackUrl,
@@ -13,8 +14,6 @@ import {
   pendingExportParams,
   processingResponse,
 } from '@tests/mocks/processingRequest';
-import { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
-import { JobExportResponse } from '@src/common/interfaces';
 import { RasterCatalogManagerClient } from '../../../../src/clients/rasterCatalogManagerClient';
 import { JobManagerWrapper } from '../../../../src/clients/jobManagerWrapper';
 import { dupParams, layerInfo, validateFeatureCollection } from '../../../mocks/data';
@@ -28,9 +27,10 @@ describe('ValidationManager', () => {
   registerDefaultConfig();
   const catalogManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url');
   const jobManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.jobManager.url');
-  beforeEach(() => {
+
+  beforeEach(async () => {
     registerDefaultConfig();
-    const logger = jsLogger({ enabled: false });
+    const logger = await jsLogger({ enabled: false });
     container.register(SERVICES.LOGGER, { useValue: logger });
     jobManagerWrapper = new JobManagerWrapper(logger, trace.getTracer('testTracer'));
     const catalogManagerClient = new RasterCatalogManagerClient(logger, trace.getTracer('testTracer'));
@@ -40,7 +40,7 @@ describe('ValidationManager', () => {
   afterEach(() => {
     nock.cleanAll();
     clearConfig();
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('findLayer', () => {
@@ -207,7 +207,7 @@ describe('ValidationManager', () => {
         },
       };
 
-      const expirationDateSpy = jest.spyOn(jobManagerWrapper, 'updateJobExpirationDate');
+      const expirationDateSpy = vi.spyOn(jobManagerWrapper, 'updateJobExpirationDate');
       const completedJobCallbackWithUpdatedExpiration = { ...completedJobCallback, expirationTime: newExpirationDate as unknown as string };
 
       completedJobWithChangedExpiration.parameters.cleanupDataParams.cleanupExpirationTimeUTC = '2025-02-01T12:28:50.000Z';
@@ -260,7 +260,6 @@ describe('ValidationManager', () => {
     it('should return a processing export job and add new callbacks', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
       const updatedCallbackParameters: ExportJobParameters = { ...(inProgressJobsResponse[0].parameters as ExportJobParameters) };
-      //This uses the logical assignment operator (||=), which assigns a value only if the left-hand side is falsy.
       (updatedCallbackParameters.exportInputParams.callbackUrls ||= []).push(addedCallbackUrl[0]);
 
       nock(jobManagerURL)
@@ -295,9 +294,7 @@ describe('ValidationManager', () => {
     it('should return an processing export job and add a callback', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
       const duplicateJob = [{ ...inProgressJobsResponse[0] }];
-      // Perform a deep copy of the parameters object
       const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
-      // Use type assertion to safely delete the property
       delete (duplicateJob[0].parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
       updatedCallbackParameters.exportInputParams.callbackUrls = addedCallbackUrl;
 
@@ -320,26 +317,18 @@ describe('ValidationManager', () => {
         .put(`/jobs/${duplicateJob[0].id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
         .reply(200, []);
 
-      const updateCallbackSpy = jest.spyOn(
-        validationManager as unknown as {
-          updateExportCallbackURLs: (processingJob: JobExportResponse, newCallbacks?: CallbackUrlsTargetArray) => Promise<void>;
-        },
-        'updateExportCallbackURLs'
-      );
+      const updateCallbackSpy = vi.spyOn(validationManager, 'updateExportCallbackURLs');
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, addedCallbackUrl);
 
       expect(result).toEqual(processingResponse);
 
       expect(updateCallbackSpy).toHaveBeenNthCalledWith(1, duplicateJob[0], addedCallbackUrl);
-      //expect(updateCallbackSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should return an processing export job and create a new callback property', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
       const duplicateJob = [{ ...inProgressJobsResponse[0] }];
-      // Perform a deep copy of the parameters object
       const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
-      // Use type assertion to safely delete the property
       delete (duplicateJob[0].parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
       updatedCallbackParameters.exportInputParams.callbackUrls = addedCallbackUrl;
 
@@ -390,14 +379,14 @@ describe('ValidationManager', () => {
 
   describe('validateFreeSpace', () => {
     it('should not throw error when sufficient free space', async () => {
-      jest.spyOn(validationManager as unknown as { getFreeStorage: () => Promise<number> }, 'getFreeStorage').mockResolvedValue(10000);
+      vi.spyOn(validationManager, 'getFreeStorage').mockResolvedValue(10000);
       const action = async () => validationManager.validateFreeSpace(1111, 'path');
 
       await expect(action()).resolves.not.toThrow();
     });
 
     it('should throw InsufficientStorage error when not enough sufficient free space', async () => {
-      jest.spyOn(validationManager as unknown as { getFreeStorage: () => Promise<number> }, 'getFreeStorage').mockResolvedValue(1);
+      vi.spyOn(validationManager, 'getFreeStorage').mockResolvedValue(1);
       const action = async () => validationManager.validateFreeSpace(1111, 'path');
 
       await expect(action()).rejects.toThrow(InsufficientStorage);

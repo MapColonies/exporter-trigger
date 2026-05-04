@@ -1,10 +1,11 @@
+import { vi } from 'vitest';
 import config from 'config';
 import { get, has } from 'lodash';
-import { IConfig } from '../../src/common/interfaces';
+import type { IConfig } from '../../src/common/interfaces';
 
 let mockConfig: Record<string, unknown> = {};
-const getMock = jest.fn();
-const hasMock = jest.fn();
+const getMock = vi.fn();
+const hasMock = vi.fn();
 
 const configMock: IConfig = {
   get: getMock,

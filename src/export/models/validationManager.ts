@@ -1,6 +1,6 @@
 import { Logger } from '@map-colonies/js-logger';
 import { Tracer } from '@opentelemetry/api';
-import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
+import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/tracing-utils';
 import type { MultiPolygon, Polygon } from 'geojson';
 import { inject, injectable } from 'tsyringe';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
@@ -113,7 +113,7 @@ export class ValidationManager {
         zoom: record.zoomLevel,
       });
       if (!record.sanitizedBox) {
-        throw new BadRequestError(`Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer`);
+        throw new BadRequestError(`Requested ${JSON.stringify(record.geometry)} has no intersection with requested layer`);
       }
     });
     return featuresRecords;

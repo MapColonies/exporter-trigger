@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
+import type { IFindJobsRequest } from '@map-colonies/mc-priority-queue';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
 import { TileFormatStrategy, TileOutputFormat } from '@map-colonies/raster-shared';
 import { dupParams } from './data';

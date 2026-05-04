@@ -1,19 +1,20 @@
+import type { MockInstance } from 'vitest';
 import httpStatusCodes from 'http-status-codes';
 import { InvalidPathError, NoMatchError } from 'check-disk-space';
 import { initConfig } from '@src/common/config';
 import { getApp } from '../../../src/app';
 import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
-import { IStorageStatusResponse } from '../../../src/common/interfaces';
+import type { IStorageStatusResponse } from '../../../src/common/interfaces';
 import * as utils from '../../../src/common/utils';
 import { StorageSender } from './helpers/storageSender';
 
-jest.mock('../../../src/common/utils', () => ({
-  getStorageStatus: jest.fn(),
+vi.mock('../../../src/common/utils', () => ({
+  getStorageStatus: vi.fn(),
 }));
 
 describe('storage', function () {
   let requestSender: StorageSender;
-  let getStorageSpy: jest.SpyInstance;
+  let getStorageSpy: MockInstance;
 
   beforeAll(async function () {
     await initConfig(true);
@@ -21,16 +22,16 @@ describe('storage', function () {
 
   beforeEach(async function () {
     const [app] = await getApp({
-      override: [...getTestContainerConfig()],
+      override: [...(await getTestContainerConfig())],
       useChild: true,
     });
     requestSender = new StorageSender(app);
-    getStorageSpy = jest.spyOn(utils, 'getStorageStatus');
+    getStorageSpy = vi.spyOn(utils, 'getStorageStatus');
   });
 
   afterEach(function () {
     resetContainer();
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('Happy Path', function () {
@@ -43,6 +44,7 @@ describe('storage', function () {
       getStorageSpy.mockResolvedValue(storageStatusResponse);
 
       const resposne = await requestSender.getStorage();
+
       expect(resposne).toSatisfyApiSpec();
       expect(JSON.stringify(resposne.body)).toBe(JSON.stringify(storageStatusResponse));
       expect(getStorageSpy).toHaveBeenCalledTimes(1);
@@ -57,6 +59,7 @@ describe('storage', function () {
       });
 
       const resposne = await requestSender.getStorage();
+
       expect(resposne).toSatisfyApiSpec();
       expect(getStorageSpy).toHaveBeenCalledTimes(1);
       expect(resposne.status).toBe(httpStatusCodes.INTERNAL_SERVER_ERROR);
@@ -68,6 +71,7 @@ describe('storage', function () {
       });
 
       const resposne = await requestSender.getStorage();
+
       expect(resposne).toSatisfyApiSpec();
       expect(getStorageSpy).toHaveBeenCalledTimes(1);
       expect(resposne.status).toBe(httpStatusCodes.INTERNAL_SERVER_ERROR);

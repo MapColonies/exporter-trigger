@@ -5,8 +5,7 @@ import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { feature, featureCollection } from '@turf/helpers';
-import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
-import { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
+import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/tracing-utils';
 import { MultiPolygon, Polygon } from 'geojson';
 import { calculateEstimatedGpkgSize, parseFeatureCollection } from '@src/common/utils';
 import {
@@ -23,6 +22,7 @@ import {
   FileNamesTemplates,
 } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
+import { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
 import { CreateExportRequest } from '@src/utils/zod/schemas';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
@@ -61,12 +61,7 @@ export class ExportManager {
 
     const { productId, productVersion: version, maxResolutionDeg: srcRes, productName } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;
-    const callbackUrls = callbackURLs?.map(
-      (url) =>
-        <CallbackUrl>{
-          url,
-        }
-    );
+    const callbackUrls = callbackURLs?.map((url) => ({ url }));
 
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
 
@@ -139,7 +134,7 @@ export class ExportManager {
   ): Promise<CallbackExportResponse | ICreateExportJobResponse | undefined> {
     const duplicationExist = await this.validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, callbackUrls);
 
-    if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
+    if (duplicationExist?.status === OperationStatus.COMPLETED) {
       const callbackParam = duplicationExist as CallbackExportResponse;
       this.logger.info({
         jobStatus: callbackParam.status,

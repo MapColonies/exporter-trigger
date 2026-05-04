@@ -1,8 +1,10 @@
 import checkDiskSpace from 'check-disk-space';
-import { bboxToTileRange, degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
-import { RoiFeatureCollection, TileOutputFormat } from '@map-colonies/raster-shared';
+import type { ITileRange } from '@map-colonies/mc-utils';
+import { bboxToTileRange, degreesPerPixelToZoomLevel, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
+import type { RoiFeatureCollection } from '@map-colonies/raster-shared';
+import { TileOutputFormat } from '@map-colonies/raster-shared';
 import config from 'config';
-import { BBox2d, IGeometryRecord, IStorageStatusResponse } from './interfaces';
+import type { BBox2d, IGeometryRecord, IStorageStatusResponse } from './interfaces';
 
 export const getStorageStatus = async (gpkgsLocation: string): Promise<IStorageStatusResponse> => {
   return checkDiskSpace(gpkgsLocation);
