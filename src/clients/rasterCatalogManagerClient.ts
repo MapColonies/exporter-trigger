@@ -1,16 +1,16 @@
 import { inject, injectable } from 'tsyringe';
 import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import config from 'config';
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 import { NotFoundError } from '@map-colonies/error-types';
-import { Tracer } from '@opentelemetry/api';
+import type { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import { LayerInfo } from '../common/interfaces';
 
 @injectable()
 export class RasterCatalogManagerClient extends HttpClient {
   public constructor(
-    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.LOGGER) protected override readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
     super(
@@ -33,6 +33,6 @@ export class RasterCatalogManagerClient extends HttpClient {
     }
 
     this.logger.debug({ msg: `Retrieved layer with id ${id}` });
-    return layers[0];
+    return layers[0]!;
   }
 }

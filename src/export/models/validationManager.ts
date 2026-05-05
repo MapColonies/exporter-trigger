@@ -1,11 +1,11 @@
-import { Logger } from '@map-colonies/js-logger';
-import { Tracer } from '@opentelemetry/api';
+import type { Logger } from '@map-colonies/js-logger';
+import type { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/tracing-utils';
 import type { MultiPolygon, Polygon } from 'geojson';
 import { inject, injectable } from 'tsyringe';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
-import {
+import type {
   CallbackExportResponse,
   CallbackUrlsTargetArray,
   ExportJobParameters,
@@ -16,7 +16,7 @@ import { getStorageStatus } from '@src/common/utils';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
-import {
+import type {
   IConfig,
   ICreateExportJobResponse,
   IGeometryRecord,

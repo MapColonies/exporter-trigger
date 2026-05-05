@@ -80,7 +80,7 @@ describe('ExportManager', () => {
   describe('createExport', () => {
     it('should create an init export job successfully', async () => {
       const layerId = createExportRequestWithoutCallback.dbId;
-      vi.mocked(uuidv4).mockImplementation(() => initExportRequestBody.additionalIdentifiers);
+      vi.mocked(uuidv4 as unknown as () => string).mockImplementation(() => initExportRequestBody.additionalIdentifiers);
       vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
       nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
       nock(jobManagerURL)
@@ -115,7 +115,7 @@ describe('ExportManager', () => {
         .query(completedExportParams as Record<string, string>)
         .reply(200, completedExportJobsResponse);
       nock(jobManagerURL)
-        .get(`/jobs/${completedExportJobsResponse[0].id}`)
+        .get(`/jobs/${completedExportJobsResponse[0]!.id}`)
         .query({ shouldReturnTasks: false })
         .reply(200, completedExportJobsResponse[0])
         .persist();
@@ -139,17 +139,17 @@ describe('ExportManager', () => {
         .query(inProgressExportParams as Record<string, string>)
         .reply(200, inProgressJobsResponse);
       nock(jobManagerURL)
-        .get(`/jobs/${inProgressJobsResponse[0].id}`)
+        .get(`/jobs/${inProgressJobsResponse[0]!.id}`)
         .query({ shouldReturnTasks: false })
         .reply(200, inProgressJobsResponse[0])
         .persist();
-      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1].id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
+      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
       nock(jobManagerURL)
         .get('/jobs')
         .query(pendingExportParams as Record<string, string>)
         .reply(200, []);
 
-      nock(jobManagerURL).put(`/jobs/${inProgressJobsResponse[0].id}`, JSON.stringify(inProgressJobsResponse[0].parameters)).reply(200, []);
+      nock(jobManagerURL).put(`/jobs/${inProgressJobsResponse[0]!.id}`, JSON.stringify(inProgressJobsResponse[0]!.parameters)).reply(200, []);
       const result = await exportManager.createExport(createExportRequestWithoutCallback);
 
       expect(result).toEqual(processingResponse);
@@ -166,7 +166,7 @@ describe('ExportManager', () => {
 
     it('should create init export job when no roi provided and with callback', async () => {
       const layerId = createExportRequestWithoutCallback.dbId;
-      vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
+      vi.mocked(uuidv4 as unknown as () => string).mockImplementation(() => initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
 
       nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
       nock(jobManagerURL)

@@ -1,29 +1,26 @@
 import { sep } from 'node:path';
-import { Logger } from '@map-colonies/js-logger';
-import { Tracer } from '@opentelemetry/api';
+import type { Logger } from '@map-colonies/js-logger';
+import type { Tracer } from '@opentelemetry/api';
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { feature, featureCollection } from '@turf/helpers';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/tracing-utils';
-import { MultiPolygon, Polygon } from 'geojson';
-import {
-  TileFormatStrategy,
-  SourceType,
+import type { MultiPolygon, Polygon } from 'geojson';
+import type {
   CallbackExportResponse,
   RoiProperties,
   RasterProductTypes,
   RoiFeatureCollection,
   RasterLayerMetadata,
-  CORE_VALIDATIONS,
-  generateEntityName,
   CallbackUrl,
   FileNamesTemplates,
 } from '@map-colonies/raster-shared';
+import { TileFormatStrategy, SourceType, CORE_VALIDATIONS, generateEntityName } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateEstimatedGpkgSize, parseFeatureCollection } from '@src/common/utils';
-import { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
-import { CreateExportRequest } from '@src/utils/zod/schemas';
+import type { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
+import type { CreateExportRequest } from '@src/utils/zod/schemas';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
 import { ValidationManager } from './validationManager';

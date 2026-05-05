@@ -44,7 +44,7 @@ describe('JobManagerClient', () => {
     it('should return job percentage and status by id', async () => {
       get = vi.fn();
       (jobManagerClient as unknown as { get: unknown }).get = get.mockResolvedValue(getJobStatusByIdResponse);
-      const response = await jobManagerClient.getJobByJobId(inProgressJobsResponse[0].id);
+      const response = await jobManagerClient.getJobByJobId(inProgressJobsResponse[0]!.id);
 
       expect(get).toHaveBeenCalledTimes(1);
       expect(response).toBeDefined();
@@ -53,7 +53,7 @@ describe('JobManagerClient', () => {
     it('should throw NotFound error on non-existed job', async () => {
       get = vi.fn();
       (jobManagerClient as unknown as { get: unknown }).get = get.mockRejectedValue(new NotFoundError('Job not found'));
-      const action = async () => jobManagerClient.getJobByJobId(inProgressJobsResponse[0].id);
+      const action = async () => jobManagerClient.getJobByJobId(inProgressJobsResponse[0]!.id);
 
       await expect(action()).rejects.toThrow(NotFoundError);
       expect(get).toHaveBeenCalledTimes(1);
@@ -102,7 +102,7 @@ describe('JobManagerClient', () => {
       (jobManagerClient as unknown as { get: unknown }).get = get.mockResolvedValue(completedExportJobsResponse[1]);
 
       const action = async () => {
-        await jobManagerClient.updateJobExpirationDate(completedExportJobsResponse[1].id);
+        await jobManagerClient.updateJobExpirationDate(completedExportJobsResponse[1]!.id);
       };
 
       await expect(action()).resolves.not.toThrow();
@@ -116,7 +116,7 @@ describe('JobManagerClient', () => {
       (jobManagerClient as unknown as { put: unknown }).put = put.mockResolvedValue(undefined);
       (jobManagerClient as unknown as { get: unknown }).get = get.mockResolvedValue(completedExportJobsResponse[0]);
       const action = async () => {
-        await jobManagerClient.updateJobExpirationDate(completedExportJobsResponse[0].id);
+        await jobManagerClient.updateJobExpirationDate(completedExportJobsResponse[0]!.id);
       };
 
       await expect(action()).resolves.not.toThrow();

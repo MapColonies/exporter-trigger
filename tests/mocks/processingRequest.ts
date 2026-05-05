@@ -250,8 +250,8 @@ export const inProgressJobsResponse = [
 ];
 
 export const processingResponse = {
-  jobId: inProgressJobsResponse[0].id,
-  percentage: inProgressJobsResponse[0].percentage,
+  jobId: inProgressJobsResponse[0]!.id,
+  percentage: inProgressJobsResponse[0]!.percentage,
   status: OperationStatus.IN_PROGRESS,
   isDuplicated: true,
 };

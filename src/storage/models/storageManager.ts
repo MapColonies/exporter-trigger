@@ -1,8 +1,8 @@
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import config from 'config';
 import { withSpanAsyncV4 } from '@map-colonies/tracing-utils';
-import { Tracer } from '@opentelemetry/api';
+import type { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../../common/constants';
 import { IStorageStatusResponse } from '../../common/interfaces';
 import * as utils from '../../common/utils';

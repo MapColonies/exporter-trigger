@@ -100,7 +100,7 @@ export const checkRoiFeatureCollectionSimilarity = (
   const fc2Matched = new Array<boolean>(jobRoi.features.length).fill(false);
 
   for (let i = 0; i < requestRoi.features.length; i++) {
-    const feature1 = requestRoi.features[i];
+    const feature1 = requestRoi.features[i]!;
 
     for (let j = 0; j < jobRoi.features.length; j++) {
       // Skip already matched features in fc2
@@ -108,7 +108,7 @@ export const checkRoiFeatureCollectionSimilarity = (
         continue;
       }
 
-      const feature2 = jobRoi.features[j];
+      const feature2 = jobRoi.features[j]!;
 
       // Check if properties are exactly the same
       const propsEqual = areRoiPropertiesEqual(feature1.properties, feature2.properties);

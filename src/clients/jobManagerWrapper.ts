@@ -1,12 +1,13 @@
 import { inject, injectable } from 'tsyringe';
 import config from 'config';
-import { Logger } from '@map-colonies/js-logger';
-import { IFindJobsByCriteriaBody, IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
+import type { Logger } from '@map-colonies/js-logger';
+import type { IFindJobsByCriteriaBody, IFindJobsRequest } from '@map-colonies/mc-priority-queue';
+import { JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
-import { Tracer } from '@opentelemetry/api';
+import type { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/tracing-utils';
 import { ExportJobParameters } from '@map-colonies/raster-shared';
-import {
+import type {
   CreateExportJobBody,
   ICreateExportJobResponse,
   IExportInitRequest,
@@ -23,7 +24,7 @@ export class JobManagerWrapper extends JobManagerClient {
   private readonly expirationDays: number;
   private readonly jobDomain: string;
   public constructor(
-    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.LOGGER) protected override readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
     super(

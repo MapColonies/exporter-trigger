@@ -73,7 +73,7 @@ const notIntersectedPolygon: RoiFeatureCollection = {
 };
 
 export const getJobStatusByIdResponse: IJobStatusResponse = {
-  percentage: inProgressJobsResponse[0].percentage,
+  percentage: inProgressJobsResponse[0]!.percentage,
   status: OperationStatus.IN_PROGRESS,
 };
 
@@ -721,7 +721,7 @@ export const createExportInvalidMaxZoomLevel: CreateExportRequest = {
           maxResolutionDeg: 0.0439453125,
           minResolutionDeg: 0.703125,
         },
-        geometry: defaultRoi.features[0].geometry,
+        geometry: defaultRoi.features[0]!.geometry,
       },
     ],
   },
@@ -739,7 +739,7 @@ export const createExportInvalidMinZoomLevel: CreateExportRequest = {
           maxResolutionDeg: 0.703125,
           minResolutionDeg: 0.1,
         },
-        geometry: defaultRoi.features[0].geometry,
+        geometry: defaultRoi.features[0]!.geometry,
       },
     ],
   },
@@ -880,7 +880,7 @@ export const duplicateJobsResponseWithoutParams: IJobResponse<unknown, unknown>[
 ];
 
 export const duplicateJobResponseWithParams: IJobResponse<ExportJobParameters, unknown> = {
-  ...duplicateJobsResponseWithoutParams[0],
+  ...duplicateJobsResponseWithoutParams[0]!,
   parameters: {
     callbackParams: {
       roi: {
