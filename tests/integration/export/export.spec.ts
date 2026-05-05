@@ -78,7 +78,7 @@ describe('export', function () {
     describe('Happy Path', function () {
       it('should return 200 status code and create an export init', async function () {
         const layerId = createExportRequestWithoutCallback.dbId;
-        vi.mocked(uuidv4 as unknown as () => string).mockImplementation(() => initExportRequestBody.additionalIdentifiers);
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBody.additionalIdentifiers);
         vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
         nock(jobManagerURL)
@@ -118,7 +118,7 @@ describe('export', function () {
         nock(jobManagerURL)
           .get(`/jobs/${completedExportJobsResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
-          .reply(200, completedExportJobsResponse[0]!)
+          .reply(200, completedExportJobsResponse[0])
           .persist();
 
         const response = await requestSender.export(createExportRequestWithoutCallback);
@@ -140,7 +140,7 @@ describe('export', function () {
         nock(jobManagerURL)
           .get(`/jobs/${completedExportJobsResponseWithBufferedRoi[0]!.id}`)
           .query({ shouldReturnTasks: false })
-          .reply(200, completedExportJobsResponseWithBufferedRoi[0]!)
+          .reply(200, completedExportJobsResponseWithBufferedRoi[0])
           .persist();
 
         const response = await requestSender.export(createExportRequestWithoutCallback);
@@ -166,9 +166,9 @@ describe('export', function () {
         nock(jobManagerURL)
           .get(`/jobs/${inProgressJobsResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
-          .reply(200, inProgressJobsResponse[0]!)
+          .reply(200, inProgressJobsResponse[0])
           .persist();
-        nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]!);
+        nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
         nock(jobManagerURL)
           .get('/jobs')
           .query(pendingExportParams as Record<string, string>)
@@ -181,7 +181,7 @@ describe('export', function () {
         nock(jobManagerURL)
           .get(`/jobs/${completedExportJobsResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
-          .reply(200, completedExportJobsResponse[0]!)
+          .reply(200, completedExportJobsResponse[0])
           .persist();
 
         const response = await requestSender.export(createExportRequestWithoutCallback);
@@ -208,9 +208,9 @@ describe('export', function () {
         nock(jobManagerURL)
           .get(`/jobs/${inProgressJobsResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
-          .reply(200, inProgressJobsResponse[0]!)
+          .reply(200, inProgressJobsResponse[0])
           .persist();
-        nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]!);
+        nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
         nock(jobManagerURL)
           .get('/jobs')
           .query(pendingExportParams as Record<string, string>)
@@ -228,7 +228,7 @@ describe('export', function () {
 
       it('should return 200 status code , create init job when no roi provided and with callback', async function () {
         const layerId = createExportRequestWithoutCallback.dbId;
-        vi.mocked(uuidv4 as unknown as () => string).mockImplementation(() => initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
         vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T12_39_36_961Z');
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
         nock(jobManagerURL)
@@ -380,7 +380,7 @@ describe('export', function () {
 
         const layerId = createExportRequestWithMultiPolygon.dbId;
 
-        vi.mocked(uuidv4 as unknown as () => string).mockImplementation(() => initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
         vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
@@ -421,7 +421,7 @@ describe('export', function () {
         nock(jobManagerURL)
           .get(`/jobs/${completedExportJobWithMultiPolygonResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
-          .reply(200, completedExportJobWithMultiPolygonResponse[0]!)
+          .reply(200, completedExportJobWithMultiPolygonResponse[0])
           .persist();
 
         const response = await requestSender.export(createExportRequestWithoutRoi);
@@ -443,7 +443,7 @@ describe('export', function () {
 
         const layerId = createExportRequestWithMultiPolygon.dbId;
 
-        vi.mocked(uuidv4 as unknown as () => string).mockImplementation(() => initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
         vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
@@ -454,7 +454,7 @@ describe('export', function () {
         nock(jobManagerURL)
           .get(`/jobs/${completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0]!.id}`)
           .query({ shouldReturnTasks: false })
-          .reply(200, completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0]!)
+          .reply(200, completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0])
           .persist();
         nock(jobManagerURL)
           .get('/jobs')

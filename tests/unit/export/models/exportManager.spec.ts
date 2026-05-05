@@ -80,7 +80,7 @@ describe('ExportManager', () => {
   describe('createExport', () => {
     it('should create an init export job successfully', async () => {
       const layerId = createExportRequestWithoutCallback.dbId;
-      vi.mocked(uuidv4 as unknown as () => string).mockImplementation(() => initExportRequestBody.additionalIdentifiers);
+      vi.mocked(uuidv4).mockImplementation(() => initExportRequestBody.additionalIdentifiers);
       vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
       nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
       nock(jobManagerURL)
@@ -166,7 +166,7 @@ describe('ExportManager', () => {
 
     it('should create init export job when no roi provided and with callback', async () => {
       const layerId = createExportRequestWithoutCallback.dbId;
-      vi.mocked(uuidv4 as unknown as () => string).mockImplementation(() => initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
+      vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
 
       nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
       nock(jobManagerURL)

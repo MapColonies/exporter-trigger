@@ -1,6 +1,5 @@
 import { container } from 'tsyringe';
 import type { Polygon, MultiPolygon } from 'geojson';
-import type { RoiFeatureCollection } from '@map-colonies/raster-shared';
 import { jsLogger } from '@map-colonies/js-logger';
 import * as turf from '@turf/turf';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
@@ -104,8 +103,8 @@ describe('Geometry Utils', () => {
 
     // Empty feature collections
     it('should return true when both collections are empty', () => {
-      const fc1 = turf.featureCollection([]) as RoiFeatureCollection;
-      const fc2 = turf.featureCollection([]) as RoiFeatureCollection;
+      const fc1 = turf.featureCollection([]);
+      const fc2 = turf.featureCollection([]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
