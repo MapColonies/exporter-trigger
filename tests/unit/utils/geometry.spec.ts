@@ -1,7 +1,6 @@
 import { container } from 'tsyringe';
 import type { Polygon, MultiPolygon } from 'geojson';
 import { jsLogger } from '@map-colonies/js-logger';
-import { RoiFeatureCollection } from '@map-colonies/raster-shared';
 import * as turf from '@turf/turf';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { sanitizeBboxMock, sanitizeBboxRequestMock, notIntersectedPolygon } from '../../mocks/geometryMocks';
@@ -10,7 +9,7 @@ import { SERVICES } from '../../../src/common/constants';
 
 // vi.mock must be used to make @turf/turf exports spyable in ESM mode
 vi.mock('@turf/turf', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@turf/turf')>();
+  const actual = await importOriginal<typeof turf>();
   return { ...actual };
 });
 

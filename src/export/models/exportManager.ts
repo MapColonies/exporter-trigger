@@ -7,7 +7,6 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { feature, featureCollection } from '@turf/helpers';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/tracing-utils';
 import { MultiPolygon, Polygon } from 'geojson';
-import { calculateEstimatedGpkgSize, parseFeatureCollection } from '@src/common/utils';
 import {
   TileFormatStrategy,
   SourceType,
@@ -22,6 +21,7 @@ import {
   FileNamesTemplates,
 } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
+import { calculateEstimatedGpkgSize, parseFeatureCollection } from '@src/common/utils';
 import { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
 import { CreateExportRequest } from '@src/utils/zod/schemas';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
@@ -54,10 +54,8 @@ export class ExportManager {
 
     let roi = exportRequest.roi;
 
-    if (!roi) {
-      // convert and wrap layer's footprint to featureCollection
-      roi = this.setRoi(layerMetadata);
-    }
+    // convert and wrap layer's footprint to featureCollection
+    roi ??= this.setRoi(layerMetadata);
 
     const { productId, productVersion: version, maxResolutionDeg: srcRes, productName } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;

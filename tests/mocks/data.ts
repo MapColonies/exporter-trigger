@@ -12,7 +12,6 @@ import type {
   IExportInitRequest,
   IGeometryRecord,
   IJobStatusResponse,
-  JobExportDuplicationParams,
   LayerInfo,
 } from '../../src/common/interfaces';
 import { inProgressJobsResponse } from './processingRequest';

@@ -1,8 +1,6 @@
 import type { Logger } from '@map-colonies/js-logger';
-import { area, booleanContains, buffer, feature, featureCollection, intersect } from '@turf/turf';
-import PolygonBbox from '@turf/bbox';
+import { area, bbox, booleanContains, booleanEqual, buffer, feature, featureCollection, intersect } from '@turf/turf';
 import type { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
-import booleanEqual from '@turf/boolean-equal';
 import { snapBBoxToTileGrid } from '@map-colonies/mc-utils';
 import type { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
 import type { BBox2d } from '../common/interfaces';
@@ -79,8 +77,7 @@ export const isGeometryContained = (completedJobRoi: Feature, requestedRoi: Feat
     }
 
     return false;
-  } catch (error) {
-    // If there's any error with the containment check, return false
+  } catch {
     return false;
   }
 };
@@ -107,7 +104,7 @@ export const checkRoiFeatureCollectionSimilarity = (
 
     for (let j = 0; j < jobRoi.features.length; j++) {
       // Skip already matched features in fc2
-      if (fc2Matched[j]) {
+      if (fc2Matched[j] === true) {
         continue;
       }
 
@@ -140,7 +137,7 @@ export const checkRoiFeatureCollectionSimilarity = (
         break;
       }
     }
-    if (!fc1Matched[i]) {
+    if (fc1Matched[i] !== true) {
       logger.debug({ msg: 'At least one feature in fc1 has no match, featureCollection has no similarity' });
       return false;
     }
@@ -167,7 +164,7 @@ export const sanitizeBbox = ({
     if (intersection === null) {
       return null;
     }
-    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersection) as BBox2d, zoom);
+    const sanitized = snapBBoxToTileGrid(bbox(intersection) as BBox2d, zoom);
 
     return sanitized;
   } catch (error) {

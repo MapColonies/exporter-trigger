@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import httpStatusCodes from 'http-status-codes';
-import nock from 'nock';
+import nock, { cleanAll as nockCleanAll } from 'nock';
 import type { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
 import { initConfig } from '@src/common/config';
 import { configMock } from '@tests/mocks/config';
@@ -68,7 +68,7 @@ describe('export', function () {
   });
 
   afterEach(function () {
-    nock.cleanAll();
+    nockCleanAll();
     resetContainer();
     vi.resetAllMocks();
     vi.restoreAllMocks();
@@ -260,7 +260,7 @@ describe('export', function () {
       it('should return 200 status code, return a processing job and add non duplicate callbackUrls', async function () {
         const layerId = createExportRequestNoRoiWithCallback.dbId;
         const duplicateJob = [{ ...inProgressJobsResponse[0] }];
-        const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
+        const updatedCallbackParameters = structuredClone(duplicateJob[0].parameters) as ExportJobParameters;
         (updatedCallbackParameters.exportInputParams.callbackUrls as CallbackUrlsTargetArray).push(addedCallbackUrl[0]);
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
@@ -298,7 +298,7 @@ describe('export', function () {
         const layerId = createExportRequestNoRoiWithCallback.dbId;
         const duplicateJob = [{ ...inProgressJobsResponse[0] }];
         // Perform a deep copy of the parameters object
-        const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
+        const updatedCallbackParameters = structuredClone(duplicateJob[0].parameters) as ExportJobParameters;
         // Use type assertion to safely delete the property
         delete (duplicateJob[0].parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
 

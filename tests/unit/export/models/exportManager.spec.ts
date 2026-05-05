@@ -1,6 +1,6 @@
 import { jsLogger } from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
-import nock from 'nock';
+import nock, { cleanAll as nockCleanAll } from 'nock';
 import { v4 as uuidv4 } from 'uuid';
 import { container } from 'tsyringe';
 import { NotFoundError } from '@map-colonies/error-types';
@@ -51,7 +51,7 @@ describe('ExportManager', () => {
   });
 
   afterEach(() => {
-    nock.cleanAll();
+    nockCleanAll();
     clearConfig();
     vi.useRealTimers();
     vi.resetAllMocks();

@@ -1,7 +1,7 @@
 import { jsLogger } from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { BadRequestError, InsufficientStorage, NotFoundError } from '@map-colonies/error-types';
-import nock from 'nock';
+import nock, { cleanAll as nockCleanAll } from 'nock';
 import { container } from 'tsyringe';
 import { getUTCDate } from '@map-colonies/mc-utils';
 import type { ExportJobParameters } from '@map-colonies/raster-shared';
@@ -38,7 +38,7 @@ describe('ValidationManager', () => {
   });
 
   afterEach(() => {
-    nock.cleanAll();
+    nockCleanAll();
     clearConfig();
     vi.resetAllMocks();
   });
@@ -210,7 +210,7 @@ describe('ValidationManager', () => {
       const expirationDateSpy = vi.spyOn(jobManagerWrapper, 'updateJobExpirationDate');
       const completedJobCallbackWithUpdatedExpiration = { ...completedJobCallback, expirationTime: newExpirationDate as unknown as string };
 
-      completedJobWithChangedExpiration.parameters.cleanupDataParams.cleanupExpirationTimeUTC = '2025-02-01T12:28:50.000Z';
+      (completedJobWithChangedExpiration.parameters as ExportJobParameters).cleanupDataParams.cleanupExpirationTimeUTC = '2025-02-01T12:28:50.000Z';
       nock(jobManagerURL)
         .get('/jobs')
         .query(completedExportParams as Record<string, string>)
@@ -260,7 +260,7 @@ describe('ValidationManager', () => {
     it('should return a processing export job and add new callbacks', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
       const updatedCallbackParameters: ExportJobParameters = { ...(inProgressJobsResponse[0].parameters as ExportJobParameters) };
-      (updatedCallbackParameters.exportInputParams.callbackUrls ||= []).push(addedCallbackUrl[0]);
+      (updatedCallbackParameters.exportInputParams.callbackUrls ??= []).push(addedCallbackUrl[0]);
 
       nock(jobManagerURL)
         .get('/jobs')
@@ -294,7 +294,7 @@ describe('ValidationManager', () => {
     it('should return an processing export job and add a callback', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
       const duplicateJob = [{ ...inProgressJobsResponse[0] }];
-      const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
+      const updatedCallbackParameters = structuredClone(duplicateJob[0].parameters) as ExportJobParameters;
       delete (duplicateJob[0].parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
       updatedCallbackParameters.exportInputParams.callbackUrls = addedCallbackUrl;
 
@@ -328,7 +328,7 @@ describe('ValidationManager', () => {
     it('should return an processing export job and create a new callback property', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
       const duplicateJob = [{ ...inProgressJobsResponse[0] }];
-      const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
+      const updatedCallbackParameters = structuredClone(duplicateJob[0].parameters) as ExportJobParameters;
       delete (duplicateJob[0].parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
       updatedCallbackParameters.exportInputParams.callbackUrls = addedCallbackUrl;
 
