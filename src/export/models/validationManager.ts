@@ -13,11 +13,11 @@ import type {
   RoiFeatureCollection,
 } from '@map-colonies/raster-shared';
 import { getStorageStatus } from '@src/common/utils';
+import type { ConfigType } from '@src/common/config';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
 import type {
-  IConfig,
   ICreateExportJobResponse,
   IGeometryRecord,
   IStorageEstimation,
@@ -34,15 +34,15 @@ export class ValidationManager {
   private readonly minContainedPercentage: number;
 
   public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
-    this.storageEstimation = config.get<IStorageEstimation>('storageEstimation');
-    this.roiBufferMeter = config.get<number>('roiBufferMeter');
-    this.minContainedPercentage = config.get<number>('minContainedPercentage');
+    this.storageEstimation = config.get('storageEstimation') as IStorageEstimation;
+    this.roiBufferMeter = config.get('roiBufferMeter') as number;
+    this.minContainedPercentage = config.get('minContainedPercentage') as number;
   }
 
   @withSpanAsyncV4

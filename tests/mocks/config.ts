@@ -1,26 +1,24 @@
 import { vi } from 'vitest';
-import config from 'config';
-import { get, has } from 'lodash';
-import type { IConfig } from '../../src/common/interfaces';
+import { get, set } from 'lodash';
+import type { ConfigType } from '@src/common/config';
 
 let mockConfig: Record<string, unknown> = {};
 const getMock = vi.fn();
 const hasMock = vi.fn();
 
-const configMock: IConfig = {
+const configMock = {
   get: getMock,
-  has: hasMock,
-};
+} as unknown as ConfigType;
 
 const init = (): void => {
   getMock.mockImplementation((key: string): unknown => {
-    return mockConfig[key] ?? config.get(key);
+    return get(mockConfig, key);
   });
 };
 
 const setValue = (key: string | Record<string, unknown>, value?: unknown): void => {
   if (typeof key === 'string') {
-    mockConfig[key] = value;
+    set(mockConfig, key, value);
   } else {
     mockConfig = { ...mockConfig, ...key };
   }
@@ -32,10 +30,9 @@ const clear = (): void => {
 
 const setConfigValues = (values: Record<string, unknown>): void => {
   getMock.mockImplementation((key: string) => {
-    const value: unknown = (get as (object: Record<string, unknown>, path: string) => unknown)(values, key) ?? config.get(key);
+    const value: unknown = (get as (object: Record<string, unknown>, path: string) => unknown)(values, key);
     return value;
   });
-  hasMock.mockImplementation((key: string) => (has as (object: Record<string, unknown>, path: string) => boolean)(values, key) || config.has(key));
 };
 
 const registerDefaultConfig = (): void => {
@@ -97,9 +94,9 @@ const registerDefaultConfig = (): void => {
         shouldResetTimeout: true,
       },
       disableHttpClientLogs: false,
-      roiBufferMeter: 5,
-      minContainedPercentage: 75,
     },
+    roiBufferMeter: 5,
+    minContainedPercentage: 75,
     jobDefinitions: {
       tasks: {
         init: {
@@ -113,6 +110,7 @@ const registerDefaultConfig = (): void => {
       },
     },
   };
+  mockConfig = config;
   setConfigValues(config);
 };
 

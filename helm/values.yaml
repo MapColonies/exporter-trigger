@@ -1,7 +1,7 @@
 global:
   cloudProvider: {}
   tracing: {}
-  metrics: {}
+  openTelemetryOptions: {}
   environment: ""
   serviceUrls: {}
   storage: {}
@@ -9,7 +9,6 @@ global:
     domain: 'apps.aroapp.io'
   jobDefinitions: {}
   domain: ''
-  configOfflineMode: false
 
 mclabels:
   #environment: development
@@ -20,6 +19,12 @@ mclabels:
   prometheus:
     enabled: true
     port: 8080
+
+configManagement:
+  offlineMode: false
+  name: 'exporter-trigger'
+  version: 'latest'
+  serverUrl: 'http://localhost:8080/api'
 
 jobDefinitions:
   jobs:
@@ -69,12 +74,6 @@ podAnnotations: {}
 tracing:
   enabled: false
   url: ""
-metrics:
-  enabled: false
-  url: ""
-  prometheus:
-    scrape: true
-    port: 8080
 
 env:
   port: 8080
@@ -82,6 +81,10 @@ env:
   internalPort: 80
   logLevel: info
   logPrettyPrintEnabled: false
+  openTelemetryOptions:
+    enabled: false
+    url: ''
+    resourceAttributes: {}
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
   disableHttpClientLogs: false

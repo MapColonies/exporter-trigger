@@ -1,24 +1,25 @@
 import { inject, injectable } from 'tsyringe';
-import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
-import config from 'config';
+import { HttpClient } from '@map-colonies/mc-utils';
 import type { Logger } from '@map-colonies/js-logger';
 import { NotFoundError } from '@map-colonies/error-types';
 import type { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import { LayerInfo } from '../common/interfaces';
+import type { ConfigType } from '../common/config';
 
 @injectable()
 export class RasterCatalogManagerClient extends HttpClient {
   public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) protected override readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
     super(
       logger,
-      config.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url'),
+      config.get('externalClientsConfig.clientsUrls.rasterCatalogManager.url') as unknown as string,
       'RasterCatalogManager',
-      config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
-      config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
+      config.get('externalClientsConfig.httpRetry'),
+      config.get('externalClientsConfig.disableHttpClientLogs')
     );
   }
 

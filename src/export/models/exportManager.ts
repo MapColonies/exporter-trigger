@@ -19,8 +19,9 @@ import type {
 import { TileFormatStrategy, SourceType, CORE_VALIDATIONS, generateEntityName } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateEstimatedGpkgSize, parseFeatureCollection } from '@src/common/utils';
-import type { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
+import type { ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse, IStorageEstimation } from '@src/common/interfaces';
 import type { CreateExportRequest } from '@src/utils/zod/schemas';
+import type { ConfigType } from '@src/common/config';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
 import { ValidationManager } from './validationManager';
@@ -30,18 +31,20 @@ export class ExportManager {
   private readonly tilesProvider: SourceType;
   private readonly gpkgsLocation: string;
   private readonly jobTrackerUrl: string;
+  private readonly storageEstimation: IStorageEstimation;
 
   public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(ValidationManager) private readonly validationManager: ValidationManager
   ) {
-    this.tilesProvider = config.get<SourceType>('tilesProvider');
-    this.gpkgsLocation = config.get<string>('gpkgsLocation');
+    this.tilesProvider = config.get('tilesProvider') as SourceType;
+    this.gpkgsLocation = config.get('gpkgsLocation') as string;
     this.tilesProvider = this.tilesProvider.toUpperCase() as SourceType;
-    this.jobTrackerUrl = config.get<string>('externalClientsConfig.clientsUrls.jobTracker.url');
+    this.jobTrackerUrl = config.get('externalClientsConfig.clientsUrls.jobTracker.url') as unknown as string;
+    this.storageEstimation = config.get('storageEstimation') as IStorageEstimation;
   }
 
   @withSpanAsyncV4
@@ -73,7 +76,7 @@ export class ExportManager {
       return duplicationExist;
     }
 
-    const gpkgEstimatedSize = calculateEstimatedGpkgSize(featuresRecords, layerMetadata.tileOutputFormat);
+    const gpkgEstimatedSize = calculateEstimatedGpkgSize(featuresRecords, layerMetadata.tileOutputFormat, this.storageEstimation);
 
     await this.validationManager.validateFreeSpace(gpkgEstimatedSize, this.gpkgsLocation);
 

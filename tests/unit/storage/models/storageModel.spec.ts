@@ -2,7 +2,7 @@ import { jsLogger } from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { StorageManager } from '../../../../src/storage/models/storageManager';
 import type { IStorageStatusResponse } from '../../../../src/common/interfaces';
-import { registerDefaultConfig } from '../../../mocks/config';
+import { configMock, registerDefaultConfig } from '../../../mocks/config';
 import * as utils from '../../../../src/common/utils';
 
 vi.mock('../../../../src/common/utils', () => ({
@@ -15,7 +15,7 @@ describe('Storage', () => {
   beforeEach(async () => {
     const logger = await jsLogger({ enabled: false });
     registerDefaultConfig();
-    storageManager = new StorageManager(logger, trace.getTracer('testTracer'));
+    storageManager = new StorageManager(configMock, logger, trace.getTracer('testTracer'));
   });
 
   afterEach(() => {

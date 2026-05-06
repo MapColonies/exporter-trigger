@@ -1,6 +1,5 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "exporter-trigger.name" . -}}
-{{- $metrics := (include "common.metrics.merged" .) | fromYaml }}
 {{- $cloudProviderFlavor := include "exporter-trigger.cloudProviderFlavor" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "exporter-trigger.cloudProviderDockerRegistryUrl" . -}}
 {{- $cloudProviderImagePullSecretName := include "exporter-trigger.cloudProviderImagePullSecretName" . -}}
@@ -44,10 +43,6 @@ spec:
         {{- if .Values.podAnnotations }}
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
-        {{ if $metrics.enabled }}
-        prometheus.io/port: {{ $metrics.prometheus.port | quote }}
-        prometheus.io/scrape: {{ $metrics.prometheus.scrape | quote }}
-        {{- end }}
         {{- include "mclabels.annotations" . | nindent 8 }}
     spec:
       {{- if $cloudProviderImagePullSecretName }}
@@ -60,6 +55,10 @@ spec:
           image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $imageTag }}
           {{- end }}
           env:
+            - name: K8S_POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
             - name: SERVER_PORT
               value: {{ .Values.env.targetPort | quote }}
             - name: GPKGS_LOCATION

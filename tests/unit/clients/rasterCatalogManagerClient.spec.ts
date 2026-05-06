@@ -4,6 +4,7 @@ import { NotFoundError } from '@map-colonies/error-types';
 import { trace } from '@opentelemetry/api';
 import { RasterCatalogManagerClient } from '../../../src/clients/rasterCatalogManagerClient';
 import { layerInfo } from '../../mocks/data';
+import { configMock, registerDefaultConfig } from '../../mocks/config';
 
 let rasterCatalogManagerClient: RasterCatalogManagerClient;
 let post: MockInstance;
@@ -11,7 +12,8 @@ let post: MockInstance;
 describe('RasterCatalogManagerClient', () => {
   beforeEach(async () => {
     const logger = await jsLogger({ enabled: false });
-    rasterCatalogManagerClient = new RasterCatalogManagerClient(logger, trace.getTracer('testTracer'));
+    registerDefaultConfig();
+    rasterCatalogManagerClient = new RasterCatalogManagerClient(configMock, logger, trace.getTracer('testTracer'));
   });
 
   afterEach(() => {

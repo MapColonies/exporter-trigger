@@ -32,8 +32,8 @@ describe('ValidationManager', () => {
     registerDefaultConfig();
     const logger = await jsLogger({ enabled: false });
     container.register(SERVICES.LOGGER, { useValue: logger });
-    jobManagerWrapper = new JobManagerWrapper(logger, trace.getTracer('testTracer'));
-    const catalogManagerClient = new RasterCatalogManagerClient(logger, trace.getTracer('testTracer'));
+    jobManagerWrapper = new JobManagerWrapper(configMock, logger, trace.getTracer('testTracer'));
+    const catalogManagerClient = new RasterCatalogManagerClient(configMock, logger, trace.getTracer('testTracer'));
     validationManager = new ValidationManager(configMock, logger, trace.getTracer('testTracer'), jobManagerWrapper, catalogManagerClient);
   });
 

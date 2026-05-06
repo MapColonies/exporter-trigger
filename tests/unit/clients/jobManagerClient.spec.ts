@@ -16,7 +16,7 @@ import {
   notContainedRoi,
 } from '@tests/mocks/data';
 import { SERVICES } from '../../../src/common/constants';
-import { registerDefaultConfig } from '../../mocks/config';
+import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { JobManagerWrapper } from '../../../src/clients/jobManagerWrapper';
 
 let jobManagerClient: JobManagerWrapper;
@@ -29,7 +29,7 @@ describe('JobManagerClient', () => {
   beforeEach(async () => {
     const logger = await jsLogger({ enabled: false });
     registerDefaultConfig();
-    jobManagerClient = new JobManagerWrapper(logger, trace.getTracer('testTracer'));
+    jobManagerClient = new JobManagerWrapper(configMock, logger, trace.getTracer('testTracer'));
     container.register(SERVICES.LOGGER, { useValue: logger });
   });
 

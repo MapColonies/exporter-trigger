@@ -44,8 +44,8 @@ describe('ExportManager', () => {
     registerDefaultConfig();
     const logger = await jsLogger({ enabled: false });
     container.register(SERVICES.LOGGER, { useValue: logger });
-    const jobManagerWrapper = new JobManagerWrapper(logger, trace.getTracer('testTracer'));
-    const catalogManagerClient = new RasterCatalogManagerClient(logger, trace.getTracer('testTracer'));
+    const jobManagerWrapper = new JobManagerWrapper(configMock, logger, trace.getTracer('testTracer'));
+    const catalogManagerClient = new RasterCatalogManagerClient(configMock, logger, trace.getTracer('testTracer'));
     const validationManager = new ValidationManager(configMock, logger, trace.getTracer('testTracer'), jobManagerWrapper, catalogManagerClient);
     exportManager = new ExportManager(configMock, logger, trace.getTracer('testTracer'), jobManagerWrapper, validationManager);
   });
