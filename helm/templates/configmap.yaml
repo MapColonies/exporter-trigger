@@ -1,6 +1,6 @@
 {{- $chartName := include "exporter-trigger.name" . -}}
 {{- $tracing := (include "common.tracing.merged" .) | fromYaml }}
-{{- $openTelemetryOptions := (include "common.openTelemetryOptions.merged" .) | fromYaml }}
+{{- $logging := (include "common.logging.merged" .) | fromYaml }}
 {{- $serviceUrls := (include "common.serviceUrls.merged" .) | fromYaml }}
 {{- $storage := (include "common.storage.merged" .) | fromYaml }}
 {{- $configmapName := include "configmap.fullname" . }}
@@ -15,13 +15,15 @@ metadata:
 data:
   REQUEST_PAYLOAD_LIMIT: {{ .Values.env.requestPayloadLimit | quote }}
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.env.responseCompressionEnabled | quote }}
-  LOG_LEVEL: {{ .Values.env.logLevel | quote }}
-  LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
-  {{- with $openTelemetryOptions }}
+  {{- with $logging }}
+  LOG_LEVEL: {{ .level | quote }}
+  LOG_PRETTY_PRINT_ENABLED: {{ .prettyPrintEnabled | quote }}
+  {{- with .openTelemetryOptions }}
   OPENTELEMETRY_LOGGING_ENABLED: {{ .enabled | quote }}
   {{ if .enabled }}
   OPENTELEMETRY_LOGGING_URL: {{ .url | quote }}
   OPENTELEMETRY_RESOURCE_ATTRIBUTES: {{ .resourceAttributes | toJson | quote }}
+  {{- end }}
   {{- end }}
   {{- end }}
   TELEMETRY_TRACING_ENABLED: {{ $tracing.enabled | quote }}

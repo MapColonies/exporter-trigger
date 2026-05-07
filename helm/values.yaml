@@ -1,7 +1,7 @@
 global:
   cloudProvider: {}
   tracing: {}
-  openTelemetryOptions: {}
+  logging: {}
   environment: ""
   serviceUrls: {}
   storage: {}
@@ -74,17 +74,18 @@ podAnnotations: {}
 tracing:
   enabled: false
   url: ""
+logging:
+  level: info
+  prettyPrintEnabled: false
+  openTelemetryOptions:
+    enabled: false
+    url: ''
+    resourceAttributes: {}
 
 env:
   port: 8080
   targetPort: 8080
   internalPort: 80
-  logLevel: info
-  logPrettyPrintEnabled: false
-  openTelemetryOptions:
-    enabled: false
-    url: ''
-    resourceAttributes: {}
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
   disableHttpClientLogs: false

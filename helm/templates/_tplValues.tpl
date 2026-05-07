@@ -65,6 +65,6 @@ Custom definitions
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.tracing .Values.global.tracing ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.openTelemetryOptions.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.env.openTelemetryOptions .Values.global.openTelemetryOptions ) "context" . ) }}
+{{- define "common.logging.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.logging .Values.global.logging ) "context" . ) }}
 {{- end -}}
