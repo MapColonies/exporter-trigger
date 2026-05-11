@@ -14,18 +14,6 @@ import type { BBox, Geometry } from 'geojson';
 
 export type BBox2d = [number, number, number, number];
 
-export interface IConfig {
-  get: <T>(setting: string) => T;
-  has: (setting: string) => boolean;
-}
-
-export interface OpenApiConfig {
-  filePath: string;
-  basePath: string;
-  jsonPath: string;
-  uiPath: string;
-}
-
 export interface ICreateExportJobResponse {
   jobId: string;
   status: OperationStatus.PENDING | OperationStatus.COMPLETED | OperationStatus.IN_PROGRESS;
