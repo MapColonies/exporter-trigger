@@ -41,9 +41,9 @@ export class ExportManager {
     @inject(ValidationManager) private readonly validationManager: ValidationManager
   ) {
     this.tilesProvider = config.get('tilesProvider') as SourceType;
-    this.gpkgsLocation = config.get('gpkgsLocation') as string;
+    this.gpkgsLocation = String(config.get('gpkgsLocation'));
     this.tilesProvider = this.tilesProvider.toUpperCase() as SourceType;
-    this.jobTrackerUrl = config.get('externalClientsConfig.clientsUrls.jobTracker.url') as unknown as string;
+    this.jobTrackerUrl = String(config.get('externalClientsConfig.clientsUrls.jobTracker.url'));
     this.storageEstimation = config.get('storageEstimation') as IStorageEstimation;
   }
 

@@ -30,15 +30,15 @@ export class JobManagerWrapper extends JobManagerClient {
   ) {
     super(
       logger,
-      config.get('externalClientsConfig.clientsUrls.jobManager.url') as unknown as string,
+      String(config.get('externalClientsConfig.clientsUrls.jobManager.url')),
       config.get('externalClientsConfig.httpRetry'),
       'jobManagerClient',
       config.get('externalClientsConfig.disableHttpClientLogs')
     );
     this.expirationDays = config.get('cleanupExpirationDays') as number;
-    this.exportJobType = config.get('jobDefinitions.jobs.export.type') as unknown as string;
-    this.exportInitTaskType = config.get('jobDefinitions.tasks.init.type') as unknown as string;
-    this.jobDomain = config.get('domain') as string;
+    this.exportJobType = String(config.get('jobDefinitions.jobs.export.type'));
+    this.exportInitTaskType = String(config.get('jobDefinitions.tasks.init.type'));
+    this.jobDomain = String(config.get('domain'));
   }
 
   @withSpanAsyncV4

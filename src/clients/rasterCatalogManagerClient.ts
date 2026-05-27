@@ -16,7 +16,7 @@ export class RasterCatalogManagerClient extends HttpClient {
   ) {
     super(
       logger,
-      config.get('externalClientsConfig.clientsUrls.rasterCatalogManager.url') as unknown as string,
+      String(config.get('externalClientsConfig.clientsUrls.rasterCatalogManager.url')),
       'RasterCatalogManager',
       config.get('externalClientsConfig.httpRetry'),
       config.get('externalClientsConfig.disableHttpClientLogs')

@@ -16,7 +16,7 @@ export class StorageManager {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
-    this.gpkgsLocation = config.get('gpkgsLocation') as string;
+    this.gpkgsLocation = String(config.get('gpkgsLocation'));
   }
 
   @withSpanAsyncV4
