@@ -62,7 +62,7 @@ Custom definitions
 {{- end -}}
 
 {{- define "common.tracing.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.tracing .Values.env.tracing ) "context" . ) }}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.tracing .Values.global.tracing ) "context" . ) }}
 {{- end -}}
 
 {{- define "common.openTelemetryOptions.merged" -}}

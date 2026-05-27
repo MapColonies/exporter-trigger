@@ -71,6 +71,10 @@ image:
   # annotation2: annotation-value-2
 podAnnotations: {}
 
+tracing:
+  enabled: false
+  url: ""
+
 env:
   port: 8080
   targetPort: 8080
@@ -81,9 +85,6 @@ env:
     enabled: false
     url: ''
     resourceAttributes: {}
-  tracing:
-    enabled: false
-    url: ""
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
   disableHttpClientLogs: false
