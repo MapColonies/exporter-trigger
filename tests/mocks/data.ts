@@ -1,25 +1,17 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { RecordType } from '@map-colonies/mc-model-types';
-import { BBox, Polygon } from 'geojson';
-import { IFindJobsRequest, IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import {
-  CallbackExportResponse,
-  ExportArtifactType,
-  ExportJobParameters,
-  RasterProductTypes,
-  RoiFeatureCollection,
-  TileFormatStrategy,
-  TileOutputFormat,
-  Transparency,
-} from '@map-colonies/raster-shared';
-import { CreateExportRequest } from '@src/utils/zod/schemas';
-import {
+import type { BBox, Polygon } from 'geojson';
+import type { IFindJobsRequest, IJobResponse } from '@map-colonies/mc-priority-queue';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import type { CallbackExportResponse, ExportJobParameters, RoiFeatureCollection } from '@map-colonies/raster-shared';
+import { ExportArtifactType, RasterProductTypes, TileFormatStrategy, TileOutputFormat, Transparency } from '@map-colonies/raster-shared';
+import type { CreateExportRequest } from '@src/utils/zod/schemas';
+import type {
   CreateExportJobBody,
   ICreateExportJobResponse,
   IExportInitRequest,
   IGeometryRecord,
   IJobStatusResponse,
-  JobExportDuplicationParams,
   LayerInfo,
 } from '../../src/common/interfaces';
 import { inProgressJobsResponse } from './processingRequest';
@@ -81,7 +73,7 @@ const notIntersectedPolygon: RoiFeatureCollection = {
 };
 
 export const getJobStatusByIdResponse: IJobStatusResponse = {
-  percentage: inProgressJobsResponse[0].percentage,
+  percentage: inProgressJobsResponse[0]!.percentage,
   status: OperationStatus.IN_PROGRESS,
 };
 
@@ -688,7 +680,7 @@ export const dupParams = {
   catalogId,
   roi: defaultRoi,
   crs,
-} as JobExportDuplicationParams;
+};
 
 export const createExportRequestWithoutCallback: CreateExportRequest = {
   dbId: catalogId,
@@ -729,7 +721,7 @@ export const createExportInvalidMaxZoomLevel: CreateExportRequest = {
           maxResolutionDeg: 0.0439453125,
           minResolutionDeg: 0.703125,
         },
-        geometry: defaultRoi.features[0].geometry,
+        geometry: defaultRoi.features[0]!.geometry,
       },
     ],
   },
@@ -747,7 +739,7 @@ export const createExportInvalidMinZoomLevel: CreateExportRequest = {
           maxResolutionDeg: 0.703125,
           minResolutionDeg: 0.1,
         },
-        geometry: defaultRoi.features[0].geometry,
+        geometry: defaultRoi.features[0]!.geometry,
       },
     ],
   },
@@ -888,7 +880,7 @@ export const duplicateJobsResponseWithoutParams: IJobResponse<unknown, unknown>[
 ];
 
 export const duplicateJobResponseWithParams: IJobResponse<ExportJobParameters, unknown> = {
-  ...duplicateJobsResponseWithoutParams[0],
+  ...duplicateJobsResponseWithoutParams[0]!,
   parameters: {
     callbackParams: {
       roi: {

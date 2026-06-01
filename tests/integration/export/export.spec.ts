@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import httpStatusCodes from 'http-status-codes';
+import nock, { cleanAll as nockCleanAll } from 'nock';
+import type { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
 import { initConfig } from '@src/common/config';
 import { configMock } from '@tests/mocks/config';
 import {
@@ -20,7 +22,6 @@ import {
   initExportResponse,
   layerInfo,
 } from '@tests/mocks/data';
-import nock from 'nock';
 import {
   completedExportJobsResponse,
   completedExportJobsResponseWithBufferedRoi,
@@ -40,16 +41,15 @@ import {
   processingResponse,
 } from '@tests/mocks/processingRequest';
 import { ValidationManager } from '@src/export/models/validationManager';
-import { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
-import { JobExportResponse } from '@src/common/interfaces';
+import type { JobExportResponse } from '@src/common/interfaces';
 import { JobManagerWrapper } from '@src/clients/jobManagerWrapper';
 import { layerWithMultiPolygonFootprint } from '@tests/mocks/geometryMocks';
-import { CreateExportRequest } from '@src/utils/zod/schemas';
+import type { CreateExportRequest } from '@src/utils/zod/schemas';
 import { getTestContainerConfig, resetContainer } from '../testContainerConfig';
 import { getApp } from '../../../src/app';
 import { ExportSender } from './helpers/exportSender';
 
-jest.mock('uuid', () => ({ v4: jest.fn() }));
+vi.mock('uuid', () => ({ v4: vi.fn() }));
 
 describe('export', function () {
   let requestSender: ExportSender;
@@ -61,25 +61,25 @@ describe('export', function () {
   });
 
   beforeEach(async function () {
-    const [app] = await getApp({ override: [...getTestContainerConfig()], useChild: false });
+    const [app] = await getApp({ override: [...(await getTestContainerConfig())], useChild: false });
     requestSender = new ExportSender(app);
     catalogManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url');
     jobManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.jobManager.url');
   });
 
   afterEach(function () {
-    nock.cleanAll();
+    nockCleanAll();
     resetContainer();
-    jest.resetAllMocks();
-    jest.restoreAllMocks();
+    vi.resetAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('create', function () {
     describe('Happy Path', function () {
       it('should return 200 status code and create an export init', async function () {
         const layerId = createExportRequestWithoutCallback.dbId;
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBody.additionalIdentifiers);
-        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBody.additionalIdentifiers);
+        vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
         nock(jobManagerURL)
           .get('/jobs')
@@ -116,7 +116,7 @@ describe('export', function () {
           .query(completedExportParams as Record<string, string>)
           .reply(200, completedExportJobsResponse);
         nock(jobManagerURL)
-          .get(`/jobs/${completedExportJobsResponse[0].id}`)
+          .get(`/jobs/${completedExportJobsResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
           .reply(200, completedExportJobsResponse[0])
           .persist();
@@ -138,7 +138,7 @@ describe('export', function () {
           .query(completedExportParams as Record<string, string>)
           .reply(200, completedExportJobsResponseWithBufferedRoi);
         nock(jobManagerURL)
-          .get(`/jobs/${completedExportJobsResponseWithBufferedRoi[0].id}`)
+          .get(`/jobs/${completedExportJobsResponseWithBufferedRoi[0]!.id}`)
           .query({ shouldReturnTasks: false })
           .reply(200, completedExportJobsResponseWithBufferedRoi[0])
           .persist();
@@ -164,11 +164,11 @@ describe('export', function () {
           .query(inProgressExportParams as Record<string, string>)
           .reply(200, inProgressJobsResponse);
         nock(jobManagerURL)
-          .get(`/jobs/${inProgressJobsResponse[0].id}`)
+          .get(`/jobs/${inProgressJobsResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
           .reply(200, inProgressJobsResponse[0])
           .persist();
-        nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1].id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
+        nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
         nock(jobManagerURL)
           .get('/jobs')
           .query(pendingExportParams as Record<string, string>)
@@ -179,7 +179,7 @@ describe('export', function () {
           .query(completedExportParams as Record<string, string>)
           .reply(200, completedExportJobsResponse);
         nock(jobManagerURL)
-          .get(`/jobs/${completedExportJobsResponse[0].id}`)
+          .get(`/jobs/${completedExportJobsResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
           .reply(200, completedExportJobsResponse[0])
           .persist();
@@ -206,17 +206,17 @@ describe('export', function () {
           .query(inProgressExportParams as Record<string, string>)
           .reply(200, inProgressJobsResponse);
         nock(jobManagerURL)
-          .get(`/jobs/${inProgressJobsResponse[0].id}`)
+          .get(`/jobs/${inProgressJobsResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
           .reply(200, inProgressJobsResponse[0])
           .persist();
-        nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1].id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
+        nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
         nock(jobManagerURL)
           .get('/jobs')
           .query(pendingExportParams as Record<string, string>)
           .reply(200, []);
 
-        nock(jobManagerURL).put(`/jobs/${inProgressJobsResponse[0].id}`, JSON.stringify(inProgressJobsResponse[0].parameters)).reply(200, []);
+        nock(jobManagerURL).put(`/jobs/${inProgressJobsResponse[0]!.id}`, JSON.stringify(inProgressJobsResponse[0]!.parameters)).reply(200, []);
 
         const response = await requestSender.export(createExportRequestWithoutCallback);
 
@@ -228,8 +228,8 @@ describe('export', function () {
 
       it('should return 200 status code , create init job when no roi provided and with callback', async function () {
         const layerId = createExportRequestWithoutCallback.dbId;
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
-        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T12_39_36_961Z');
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyNoRoiWithCallback.additionalIdentifiers);
+        vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T12_39_36_961Z');
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
         nock(jobManagerURL)
           .get('/jobs')
@@ -256,11 +256,12 @@ describe('export', function () {
         expect(response.status).toBe(httpStatusCodes.OK);
         expect(response).toSatisfyApiSpec();
       });
+
       it('should return 200 status code, return a processing job and add non duplicate callbackUrls', async function () {
         const layerId = createExportRequestNoRoiWithCallback.dbId;
-        const duplicateJob = [{ ...inProgressJobsResponse[0] }];
-        const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
-        (updatedCallbackParameters.exportInputParams.callbackUrls as CallbackUrlsTargetArray).push(addedCallbackUrl[0]);
+        const duplicateJob = [{ ...inProgressJobsResponse[0]! }];
+        const updatedCallbackParameters = structuredClone(duplicateJob[0]!.parameters) as ExportJobParameters;
+        (updatedCallbackParameters.exportInputParams.callbackUrls as CallbackUrlsTargetArray).push(addedCallbackUrl[0]!);
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
         nock(jobManagerURL)
@@ -272,7 +273,7 @@ describe('export', function () {
           .get('/jobs')
           .query(inProgressExportParams as Record<string, string>)
           .reply(200, duplicateJob);
-        nock(jobManagerURL).get(`/jobs/${duplicateJob[0].id}`).query({ shouldReturnTasks: false }).reply(200, duplicateJob[0]).persist();
+        nock(jobManagerURL).get(`/jobs/${duplicateJob[0]!.id}`).query({ shouldReturnTasks: false }).reply(200, duplicateJob[0]).persist();
         nock(jobManagerURL)
           .get('/jobs')
           .query(pendingExportParams as Record<string, string>)
@@ -282,7 +283,7 @@ describe('export', function () {
           .reply(200, []);
 
         nock(jobManagerURL)
-          .put(`/jobs/${duplicateJob[0].id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
+          .put(`/jobs/${duplicateJob[0]!.id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
           .reply(200, []);
 
         const response = await requestSender.export(createExportRequestWithRoiAndNewCallback);
@@ -295,11 +296,11 @@ describe('export', function () {
 
       it('should return 200 status code, return a processing job and add new callbackUrls', async function () {
         const layerId = createExportRequestNoRoiWithCallback.dbId;
-        const duplicateJob = [{ ...inProgressJobsResponse[0] }];
+        const duplicateJob = [{ ...inProgressJobsResponse[0]! }];
         // Perform a deep copy of the parameters object
-        const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
+        const updatedCallbackParameters = structuredClone(duplicateJob[0]!.parameters) as ExportJobParameters;
         // Use type assertion to safely delete the property
-        delete (duplicateJob[0].parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
+        delete (duplicateJob[0]!.parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerInfo]);
         nock(jobManagerURL)
@@ -311,7 +312,7 @@ describe('export', function () {
           .get('/jobs')
           .query(inProgressExportParams as Record<string, string>)
           .reply(200, duplicateJob);
-        nock(jobManagerURL).get(`/jobs/${duplicateJob[0].id}`).query({ shouldReturnTasks: false }).reply(200, duplicateJob[0]).persist();
+        nock(jobManagerURL).get(`/jobs/${duplicateJob[0]!.id}`).query({ shouldReturnTasks: false }).reply(200, duplicateJob[0]).persist();
         nock(jobManagerURL)
           .get('/jobs')
           .query(pendingExportParams as Record<string, string>)
@@ -321,7 +322,7 @@ describe('export', function () {
           .reply(200, []);
 
         nock(jobManagerURL)
-          .put(`/jobs/${duplicateJob[0].id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
+          .put(`/jobs/${duplicateJob[0]!.id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
           .reply(200, []);
 
         const response = await requestSender.export(createExportRequestWithRoiAndCallback);
@@ -351,15 +352,16 @@ describe('export', function () {
             .query(duplicationParams as Record<string, string>)
             .reply(200, duplicateJobsResponseWithoutParams);
           nock(jobManagerURL)
-            .get(`/jobs/${duplicateJobsResponseWithoutParams[0].id}`)
+            .get(`/jobs/${duplicateJobsResponseWithoutParams[0]!.id}`)
             .query({ shouldReturnTasks: false })
             .reply(200, duplicateJobResponseWithParams);
-          nock(jobManagerURL).put(`/jobs/${duplicateJobsResponseWithoutParams[0].id}`).reply(200);
-          jest
-            .spyOn(JobManagerWrapper.prototype, 'updateJobExpirationDate')
-            .mockResolvedValue(duplicateJobResponseWithParams.parameters.cleanupDataParams?.cleanupExpirationTimeUTC);
+          nock(jobManagerURL).put(`/jobs/${duplicateJobsResponseWithoutParams[0]!.id}`).reply(200);
+          vi.spyOn(JobManagerWrapper.prototype, 'updateJobExpirationDate').mockResolvedValue(
+            duplicateJobResponseWithParams.parameters.cleanupDataParams?.cleanupExpirationTimeUTC
+          );
 
           const response = await requestSender.export(request);
+
           expect(response.body).toEqual(expected);
           expect(response.status).toBe(httpStatusCodes.OK);
         },
@@ -378,8 +380,8 @@ describe('export', function () {
 
         const layerId = createExportRequestWithMultiPolygon.dbId;
 
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
-        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
+        vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
         nock(jobManagerURL)
@@ -417,7 +419,7 @@ describe('export', function () {
           .query(completedExportParams as Record<string, string>)
           .reply(200, completedExportJobWithMultiPolygonResponse);
         nock(jobManagerURL)
-          .get(`/jobs/${completedExportJobWithMultiPolygonResponse[0].id}`)
+          .get(`/jobs/${completedExportJobWithMultiPolygonResponse[0]!.id}`)
           .query({ shouldReturnTasks: false })
           .reply(200, completedExportJobWithMultiPolygonResponse[0])
           .persist();
@@ -441,8 +443,8 @@ describe('export', function () {
 
         const layerId = createExportRequestWithMultiPolygon.dbId;
 
-        (uuidv4 as jest.Mock).mockReturnValue(initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
-        jest.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
+        vi.mocked(uuidv4).mockImplementation(() => initExportRequestBodyWithMultiPolygon.additionalIdentifiers);
+        vi.spyOn(Date.prototype, 'toJSON').mockReturnValue('2025_01_09T10_04_06_711Z');
 
         nock(catalogManagerURL).post(`/records/find`, { id: layerId }).reply(200, [layerWithMultiPolygonFootprint]);
         nock(jobManagerURL)
@@ -450,7 +452,7 @@ describe('export', function () {
           .query(completedExportParams as Record<string, string>)
           .reply(200, completedExportJobWithMultiPolygonRoiForMultiPolygonLayer);
         nock(jobManagerURL)
-          .get(`/jobs/${completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0].id}`)
+          .get(`/jobs/${completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0]!.id}`)
           .query({ shouldReturnTasks: false })
           .reply(200, completedExportJobWithMultiPolygonRoiForMultiPolygonLayer[0])
           .persist();
@@ -612,7 +614,7 @@ describe('export', function () {
           .post(`/jobs/find`, findCriteria as Record<string, string>)
           .reply(200, inProgressJobsResponse);
 
-        jest.spyOn(ValidationManager.prototype as unknown as { getFreeStorage: () => Promise<number> }, 'getFreeStorage').mockResolvedValue(1);
+        vi.spyOn(ValidationManager.prototype as unknown as { getFreeStorage: () => Promise<number> }, 'getFreeStorage').mockResolvedValue(1);
 
         const response = await requestSender.export(createExportRequestWithoutCallback);
 
@@ -625,7 +627,7 @@ describe('export', function () {
   describe('getJobStatus', function () {
     describe('Happy Path', function () {
       it('should return 200 status code and the tasks matched the jobId', async function () {
-        const jobRequest = inProgressJobsResponse[0] as unknown as JobExportResponse;
+        const jobRequest = inProgressJobsResponse[0]! as unknown as JobExportResponse;
 
         nock(jobManagerURL).get(`/jobs/${jobRequest.id}`).query({ shouldReturnTasks: false }).reply(200, jobRequest);
 

@@ -1,12 +1,12 @@
 import { inject, injectable } from 'tsyringe';
-import config from 'config';
-import { Logger } from '@map-colonies/js-logger';
-import { IFindJobsByCriteriaBody, IFindJobsRequest, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { getUTCDate, IHttpRetryConfig } from '@map-colonies/mc-utils';
-import { Tracer } from '@opentelemetry/api';
-import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import type { Logger } from '@map-colonies/js-logger';
+import type { IFindJobsByCriteriaBody, IFindJobsRequest } from '@map-colonies/mc-priority-queue';
+import { JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { getUTCDate } from '@map-colonies/mc-utils';
+import type { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/tracing-utils';
 import { ExportJobParameters } from '@map-colonies/raster-shared';
-import {
+import type {
   CreateExportJobBody,
   ICreateExportJobResponse,
   IExportInitRequest,
@@ -15,6 +15,7 @@ import {
   JobExportResponse,
 } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
+import type { ConfigType } from '../common/config';
 
 @injectable()
 export class JobManagerWrapper extends JobManagerClient {
@@ -23,20 +24,21 @@ export class JobManagerWrapper extends JobManagerClient {
   private readonly expirationDays: number;
   private readonly jobDomain: string;
   public constructor(
-    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
+    @inject(SERVICES.LOGGER) protected override readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
     super(
       logger,
-      config.get<string>('externalClientsConfig.clientsUrls.jobManager.url'),
-      config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
+      String(config.get('externalClientsConfig.clientsUrls.jobManager.url')),
+      config.get('externalClientsConfig.httpRetry'),
       'jobManagerClient',
-      config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
+      config.get('externalClientsConfig.disableHttpClientLogs')
     );
-    this.expirationDays = config.get<number>('cleanupExpirationDays');
-    this.exportJobType = config.get<string>('jobDefinitions.jobs.export.type');
-    this.exportInitTaskType = config.get<string>('jobDefinitions.tasks.init.type');
-    this.jobDomain = config.get<string>('domain');
+    this.expirationDays = config.get('cleanupExpirationDays') as number;
+    this.exportJobType = String(config.get('jobDefinitions.jobs.export.type'));
+    this.exportInitTaskType = String(config.get('jobDefinitions.tasks.init.type'));
+    this.jobDomain = String(config.get('domain'));
   }
 
   @withSpanAsyncV4

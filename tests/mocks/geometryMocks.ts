@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { RoiFeatureCollection } from '@map-colonies/raster-shared';
-import { BBox, Polygon } from 'geojson';
+import type { RoiFeatureCollection } from '@map-colonies/raster-shared';
+import type { BBox, Polygon } from 'geojson';
 import { layerInfo } from './data';
 
 export const multiplePolygonsFeatureCollection: RoiFeatureCollection = {

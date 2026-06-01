@@ -1,29 +1,27 @@
 import { sep } from 'node:path';
-import { Logger } from '@map-colonies/js-logger';
-import { Tracer } from '@opentelemetry/api';
+import type { Logger } from '@map-colonies/js-logger';
+import type { Tracer } from '@opentelemetry/api';
 import { inject, injectable } from 'tsyringe';
 import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { feature, featureCollection } from '@turf/helpers';
-import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
-import { IConfig, ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse } from '@src/common/interfaces';
-import { MultiPolygon, Polygon } from 'geojson';
-import { calculateEstimatedGpkgSize, parseFeatureCollection } from '@src/common/utils';
-import {
-  TileFormatStrategy,
-  SourceType,
+import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/tracing-utils';
+import type { MultiPolygon, Polygon } from 'geojson';
+import type {
   CallbackExportResponse,
   RoiProperties,
   RasterProductTypes,
   RoiFeatureCollection,
   RasterLayerMetadata,
-  CORE_VALIDATIONS,
-  generateEntityName,
   CallbackUrl,
   FileNamesTemplates,
 } from '@map-colonies/raster-shared';
+import { TileFormatStrategy, SourceType, CORE_VALIDATIONS, generateEntityName } from '@map-colonies/raster-shared';
 import { v4 as uuidv4 } from 'uuid';
-import { CreateExportRequest } from '@src/utils/zod/schemas';
+import { calculateEstimatedGpkgSize, parseFeatureCollection } from '@src/common/utils';
+import type { ICreateExportJobResponse, IExportInitRequest, IGeometryRecord, IJobStatusResponse, IStorageEstimation } from '@src/common/interfaces';
+import type { CreateExportRequest } from '@src/utils/zod/schemas';
+import type { ConfigType } from '@src/common/config';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import { DEFAULT_CRS, DEFAULT_PRIORITY, SERVICES } from '../../common/constants';
 import { ValidationManager } from './validationManager';
@@ -33,18 +31,20 @@ export class ExportManager {
   private readonly tilesProvider: SourceType;
   private readonly gpkgsLocation: string;
   private readonly jobTrackerUrl: string;
+  private readonly storageEstimation: IStorageEstimation;
 
   public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(ValidationManager) private readonly validationManager: ValidationManager
   ) {
-    this.tilesProvider = config.get<SourceType>('tilesProvider');
-    this.gpkgsLocation = config.get<string>('gpkgsLocation');
+    this.tilesProvider = config.get('tilesProvider') as SourceType;
+    this.gpkgsLocation = String(config.get('gpkgsLocation'));
     this.tilesProvider = this.tilesProvider.toUpperCase() as SourceType;
-    this.jobTrackerUrl = config.get<string>('externalClientsConfig.clientsUrls.jobTracker.url');
+    this.jobTrackerUrl = String(config.get('externalClientsConfig.clientsUrls.jobTracker.url'));
+    this.storageEstimation = config.get('storageEstimation') as IStorageEstimation;
   }
 
   @withSpanAsyncV4
@@ -54,19 +54,12 @@ export class ExportManager {
 
     let roi = exportRequest.roi;
 
-    if (!roi) {
-      // convert and wrap layer's footprint to featureCollection
-      roi = this.setRoi(layerMetadata);
-    }
+    // convert and wrap layer's footprint to featureCollection
+    roi ??= this.setRoi(layerMetadata);
 
     const { productId, productVersion: version, maxResolutionDeg: srcRes, productName } = layerMetadata;
     const productType = layerMetadata.productType as RasterProductTypes;
-    const callbackUrls = callbackURLs?.map(
-      (url) =>
-        <CallbackUrl>{
-          url,
-        }
-    );
+    const callbackUrls = callbackURLs?.map((url) => ({ url }));
 
     const maxZoom = degreesPerPixelToZoomLevel(srcRes);
 
@@ -83,7 +76,7 @@ export class ExportManager {
       return duplicationExist;
     }
 
-    const gpkgEstimatedSize = calculateEstimatedGpkgSize(featuresRecords, layerMetadata.tileOutputFormat);
+    const gpkgEstimatedSize = calculateEstimatedGpkgSize(featuresRecords, layerMetadata.tileOutputFormat, this.storageEstimation);
 
     await this.validationManager.validateFreeSpace(gpkgEstimatedSize, this.gpkgsLocation);
 
@@ -139,7 +132,7 @@ export class ExportManager {
   ): Promise<CallbackExportResponse | ICreateExportJobResponse | undefined> {
     const duplicationExist = await this.validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, callbackUrls);
 
-    if (duplicationExist && duplicationExist.status === OperationStatus.COMPLETED) {
+    if (duplicationExist?.status === OperationStatus.COMPLETED) {
       const callbackParam = duplicationExist as CallbackExportResponse;
       this.logger.info({
         jobStatus: callbackParam.status,

@@ -1,4 +1,4 @@
-import jsLogger from '@map-colonies/js-logger';
+import { jsLogger } from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import httpStatusCodes from 'http-status-codes';
 import { getApp } from '@src/app';
@@ -14,9 +14,10 @@ describe('docs', function () {
   });
 
   beforeEach(async function () {
+    const logger = await jsLogger({ enabled: false });
     const [app] = await getApp({
       override: [
-        { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+        { token: SERVICES.LOGGER, provider: { useValue: logger } },
         { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
       ],
       useChild: true,

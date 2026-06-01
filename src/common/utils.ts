@@ -1,8 +1,9 @@
 import checkDiskSpace from 'check-disk-space';
-import { bboxToTileRange, degreesPerPixelToZoomLevel, ITileRange, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
-import { RoiFeatureCollection, TileOutputFormat } from '@map-colonies/raster-shared';
-import config from 'config';
-import { BBox2d, IGeometryRecord, IStorageStatusResponse } from './interfaces';
+import type { ITileRange } from '@map-colonies/mc-utils';
+import { bboxToTileRange, degreesPerPixelToZoomLevel, zoomLevelToResolutionMeter } from '@map-colonies/mc-utils';
+import type { RoiFeatureCollection } from '@map-colonies/raster-shared';
+import { TileOutputFormat } from '@map-colonies/raster-shared';
+import type { BBox2d, IGeometryRecord, IStorageEstimation, IStorageStatusResponse } from './interfaces';
 
 export const getStorageStatus = async (gpkgsLocation: string): Promise<IStorageStatusResponse> => {
   return checkDiskSpace(gpkgsLocation);
@@ -29,8 +30,12 @@ export const parseFeatureCollection = (featuresCollection: RoiFeatureCollection)
   return parsedGeoRecord;
 };
 
-export const calculateEstimatedGpkgSize = (featuresRecords: IGeometryRecord[], tileOutputFormat: TileOutputFormat): number => {
-  const tileEstimatedSize = getTileEstimatedSize(tileOutputFormat);
+export const calculateEstimatedGpkgSize = (
+  featuresRecords: IGeometryRecord[],
+  tileOutputFormat: TileOutputFormat,
+  storageEstimation: IStorageEstimation
+): number => {
+  const tileEstimatedSize = getTileEstimatedSize(tileOutputFormat, storageEstimation);
   const batches: ITileRange[] = [];
   featuresRecords.forEach((record) => {
     for (let zoom = record.minZoomLevel; zoom <= record.zoomLevel; zoom++) {
@@ -50,16 +55,11 @@ export const calculateEstimatedGpkgSize = (featuresRecords: IGeometryRecord[], t
   return gpkgEstimatedSize;
 };
 
-export const getTileEstimatedSize = (tileOutputFormat: TileOutputFormat): number => {
-  const jpegTileEstimatedSizeInBytes = config.get<number>('storageEstimation.jpegTileEstimatedSizeInBytes');
-  const pngTileEstimatedSizeInBytes = config.get<number>('storageEstimation.pngTileEstimatedSizeInBytes');
-  let tileEstimatedSize;
+export const getTileEstimatedSize = (tileOutputFormat: TileOutputFormat, storageEstimation: IStorageEstimation): number => {
+  const { jpegTileEstimatedSizeInBytes, pngTileEstimatedSizeInBytes } = storageEstimation;
 
   if (tileOutputFormat === TileOutputFormat.JPEG) {
-    tileEstimatedSize = jpegTileEstimatedSizeInBytes;
-  } else {
-    tileEstimatedSize = pngTileEstimatedSizeInBytes;
+    return jpegTileEstimatedSizeInBytes;
   }
-
-  return tileEstimatedSize;
+  return pngTileEstimatedSizeInBytes;
 };

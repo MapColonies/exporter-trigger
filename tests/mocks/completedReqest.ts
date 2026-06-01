@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
+import type { IFindJobsRequest } from '@map-colonies/mc-priority-queue';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getUTCDate } from '@map-colonies/mc-utils';
 import { TileFormatStrategy, TileOutputFormat } from '@map-colonies/raster-shared';
 import { dupParams } from './data';
@@ -274,11 +275,11 @@ export const completedExportJobsResponse = [
 
 export const completedExportJobsResponseWithBufferedRoi = [
   {
-    ...completedExportJobsResponse[0],
+    ...completedExportJobsResponse[0]!,
     parameters: {
-      ...completedExportJobsResponse[0].parameters,
+      ...completedExportJobsResponse[0]!.parameters,
       exportInputParams: {
-        ...completedExportJobsResponse[0].parameters.exportInputParams,
+        ...completedExportJobsResponse[0]!.parameters.exportInputParams,
         roi: {
           type: 'FeatureCollection',
           features: [
@@ -310,11 +311,11 @@ export const completedExportJobsResponseWithBufferedRoi = [
 
 export const completedExportJobWithMultiPolygonResponse = [
   {
-    ...completedExportJobsResponse[0],
+    ...completedExportJobsResponse[0]!,
     parameters: {
-      ...completedExportJobsResponse[0].parameters,
+      ...completedExportJobsResponse[0]!.parameters,
       exportInputParams: {
-        ...completedExportJobsResponse[0].parameters.exportInputParams,
+        ...completedExportJobsResponse[0]!.parameters.exportInputParams,
         roi: {
           type: 'FeatureCollection',
           features: [
@@ -357,11 +358,11 @@ export const completedExportJobWithMultiPolygonResponse = [
 
 export const completedExportJobWithMultiPolygonRoiForMultiPolygonLayer = [
   {
-    ...completedExportJobsResponse[0],
+    ...completedExportJobsResponse[0]!,
     parameters: {
-      ...completedExportJobsResponse[0].parameters,
+      ...completedExportJobsResponse[0]!.parameters,
       exportInputParams: {
-        ...completedExportJobsResponse[0].parameters.exportInputParams,
+        ...completedExportJobsResponse[0]!.parameters.exportInputParams,
         roi: {
           type: 'FeatureCollection',
           features: [
@@ -404,26 +405,26 @@ export const completedExportJobWithMultiPolygonRoiForMultiPolygonLayer = [
 
 export const updateCompletedExpirationParams = {
   parameters: {
-    ...completedExportJobsResponse[0].parameters,
+    ...completedExportJobsResponse[0]!.parameters,
     cleanupDataParams: {
-      ...completedExportJobsResponse[0].parameters.cleanupDataParams,
+      ...completedExportJobsResponse[0]!.parameters.cleanupDataParams,
       cleanupExpirationTimeUTC: new Date(getUTCDate().getDate() + 30),
-      directoryPath: completedExportJobsResponse[0].parameters.cleanupDataParams.directoryPath,
+      directoryPath: completedExportJobsResponse[0]!.parameters.cleanupDataParams.directoryPath,
     },
   },
 };
 
 export const completedJobCallback = {
-  ...completedExportJobsResponse[0].parameters.callbackParams,
+  ...completedExportJobsResponse[0]!.parameters.callbackParams,
   status: OperationStatus.COMPLETED,
 };
 
 export const completedJobCallbackWithMultiPolygon = {
-  ...completedExportJobWithMultiPolygonResponse[0].parameters.callbackParams,
+  ...completedExportJobWithMultiPolygonResponse[0]!.parameters.callbackParams,
   status: OperationStatus.COMPLETED,
 };
 
 export const completedJobCallbackWithBufferedRoi = {
-  ...completedExportJobsResponseWithBufferedRoi[0].parameters.callbackParams,
+  ...completedExportJobsResponseWithBufferedRoi[0]!.parameters.callbackParams,
   status: OperationStatus.COMPLETED,
 };

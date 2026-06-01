@@ -1,11 +1,9 @@
-import { Logger } from '@map-colonies/js-logger';
-import { area, booleanContains, buffer, feature, featureCollection, intersect } from '@turf/turf';
-import PolygonBbox from '@turf/bbox';
-import { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
-import booleanEqual from '@turf/boolean-equal';
+import type { Logger } from '@map-colonies/js-logger';
+import { area, bbox, booleanContains, booleanEqual, buffer, feature, featureCollection, intersect } from '@turf/turf';
+import type { BBox, Feature, MultiPolygon, Polygon } from 'geojson';
 import { snapBBoxToTileGrid } from '@map-colonies/mc-utils';
-import { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
-import { BBox2d } from '../common/interfaces';
+import type { RoiFeatureCollection, RoiProperties } from '@map-colonies/raster-shared';
+import type { BBox2d } from '../common/interfaces';
 
 const PERCENTAGE_TO_RATIO = 100;
 
@@ -79,8 +77,7 @@ export const isGeometryContained = (completedJobRoi: Feature, requestedRoi: Feat
     }
 
     return false;
-  } catch (error) {
-    // If there's any error with the containment check, return false
+  } catch {
     return false;
   }
 };
@@ -103,15 +100,15 @@ export const checkRoiFeatureCollectionSimilarity = (
   const fc2Matched = new Array<boolean>(jobRoi.features.length).fill(false);
 
   for (let i = 0; i < requestRoi.features.length; i++) {
-    const feature1 = requestRoi.features[i];
+    const feature1 = requestRoi.features[i]!;
 
     for (let j = 0; j < jobRoi.features.length; j++) {
       // Skip already matched features in fc2
-      if (fc2Matched[j]) {
+      if (fc2Matched[j] === true) {
         continue;
       }
 
-      const feature2 = jobRoi.features[j];
+      const feature2 = jobRoi.features[j]!;
 
       // Check if properties are exactly the same
       const propsEqual = areRoiPropertiesEqual(feature1.properties, feature2.properties);
@@ -140,7 +137,7 @@ export const checkRoiFeatureCollectionSimilarity = (
         break;
       }
     }
-    if (!fc1Matched[i]) {
+    if (fc1Matched[i] !== true) {
       logger.debug({ msg: 'At least one feature in fc1 has no match, featureCollection has no similarity' });
       return false;
     }
@@ -167,7 +164,7 @@ export const sanitizeBbox = ({
     if (intersection === null) {
       return null;
     }
-    const sanitized = snapBBoxToTileGrid(PolygonBbox(intersection) as BBox2d, zoom);
+    const sanitized = snapBBoxToTileGrid(bbox(intersection) as BBox2d, zoom);
 
     return sanitized;
   } catch (error) {

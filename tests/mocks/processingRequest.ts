@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { IFindJobsByCriteriaBody, IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { CallbackUrlsTargetArray, TileFormatStrategy, TileOutputFormat } from '@map-colonies/raster-shared';
-import { JobExportDuplicationParams } from '@src/common/interfaces';
+import type { IFindJobsByCriteriaBody, IFindJobsRequest } from '@map-colonies/mc-priority-queue';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import type { CallbackUrlsTargetArray } from '@map-colonies/raster-shared';
+import { TileFormatStrategy, TileOutputFormat } from '@map-colonies/raster-shared';
+import type { JobExportDuplicationParams } from '@src/common/interfaces';
 
 export const processingDupParams = {
   productId: 'SOME_NAME',
@@ -248,8 +250,8 @@ export const inProgressJobsResponse = [
 ];
 
 export const processingResponse = {
-  jobId: inProgressJobsResponse[0].id,
-  percentage: inProgressJobsResponse[0].percentage,
+  jobId: inProgressJobsResponse[0]!.id,
+  percentage: inProgressJobsResponse[0]!.percentage,
   status: OperationStatus.IN_PROGRESS,
   isDuplicated: true,
 };

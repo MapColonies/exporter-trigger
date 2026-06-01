@@ -8,8 +8,8 @@ describe('Utils', () => {
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
-    jest.restoreAllMocks();
+    vi.resetAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('FeatureCollection Utils', () => {
@@ -23,9 +23,10 @@ describe('Utils', () => {
           minZoomLevel: 0,
         };
         const result = utils.parseFeatureCollection(fc1);
+
         expect(result).toHaveLength(2);
-        expect(result[0]).toStrictEqual({ ...expectedObjectBase, geometry: fc1.features[0].geometry });
-        expect(result[1]).toStrictEqual({ ...expectedObjectBase, geometry: fc1.features[1].geometry });
+        expect(result[0]!).toStrictEqual({ ...expectedObjectBase, geometry: fc1.features[0]!.geometry });
+        expect(result[1]!).toStrictEqual({ ...expectedObjectBase, geometry: fc1.features[1]!.geometry });
       });
 
       it('should return array of 1 IGeometry objects', () => {
@@ -37,8 +38,9 @@ describe('Utils', () => {
           minZoomLevel: 0,
         };
         const result = utils.parseFeatureCollection(fcTooHighResolution);
+
         expect(result).toHaveLength(1);
-        expect(result[0]).toStrictEqual({ ...expectedObjectBase, geometry: fcTooHighResolution.features[0].geometry });
+        expect(result[0]!).toStrictEqual({ ...expectedObjectBase, geometry: fcTooHighResolution.features[0]!.geometry });
       });
     });
   });

@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV NODE_ENV=production
 ENV SERVER_PORT=8080
+ENV CONFIG_OFFLINE_MODE=true
 
 
 WORKDIR /usr/src/app

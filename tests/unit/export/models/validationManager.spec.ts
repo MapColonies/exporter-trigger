@@ -1,10 +1,11 @@
-import jsLogger from '@map-colonies/js-logger';
+import { jsLogger } from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { BadRequestError, InsufficientStorage, NotFoundError } from '@map-colonies/error-types';
-import nock from 'nock';
+import nock, { cleanAll as nockCleanAll } from 'nock';
 import { container } from 'tsyringe';
-import { SERVICES } from '@src/common/constants';
 import { getUTCDate } from '@map-colonies/mc-utils';
+import type { ExportJobParameters } from '@map-colonies/raster-shared';
+import { SERVICES } from '@src/common/constants';
 import { completedExportJobsResponse, completedExportParams, completedJobCallback } from '@tests/mocks/completedReqest';
 import {
   addedCallbackUrl,
@@ -13,8 +14,6 @@ import {
   pendingExportParams,
   processingResponse,
 } from '@tests/mocks/processingRequest';
-import { CallbackUrlsTargetArray, ExportJobParameters } from '@map-colonies/raster-shared';
-import { JobExportResponse } from '@src/common/interfaces';
 import { RasterCatalogManagerClient } from '../../../../src/clients/rasterCatalogManagerClient';
 import { JobManagerWrapper } from '../../../../src/clients/jobManagerWrapper';
 import { dupParams, layerInfo, validateFeatureCollection } from '../../../mocks/data';
@@ -28,19 +27,20 @@ describe('ValidationManager', () => {
   registerDefaultConfig();
   const catalogManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url');
   const jobManagerURL = configMock.get<string>('externalClientsConfig.clientsUrls.jobManager.url');
-  beforeEach(() => {
+
+  beforeEach(async () => {
     registerDefaultConfig();
-    const logger = jsLogger({ enabled: false });
+    const logger = await jsLogger({ enabled: false });
     container.register(SERVICES.LOGGER, { useValue: logger });
-    jobManagerWrapper = new JobManagerWrapper(logger, trace.getTracer('testTracer'));
-    const catalogManagerClient = new RasterCatalogManagerClient(logger, trace.getTracer('testTracer'));
+    jobManagerWrapper = new JobManagerWrapper(configMock, logger, trace.getTracer('testTracer'));
+    const catalogManagerClient = new RasterCatalogManagerClient(configMock, logger, trace.getTracer('testTracer'));
     validationManager = new ValidationManager(configMock, logger, trace.getTracer('testTracer'), jobManagerWrapper, catalogManagerClient);
   });
 
   afterEach(() => {
-    nock.cleanAll();
+    nockCleanAll();
     clearConfig();
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('findLayer', () => {
@@ -142,12 +142,12 @@ describe('ValidationManager', () => {
         .query(completedExportParams as Record<string, string>)
         .reply(200, completedExportJobsResponse);
       nock(jobManagerURL)
-        .get(`/jobs/${completedExportJobsResponse[0].id}`)
+        .get(`/jobs/${completedExportJobsResponse[0]!.id}`)
         .query({ shouldReturnTasks: false })
         .reply(200, completedExportJobsResponse[0])
         .persist();
       nock(jobManagerURL)
-        .get(`/jobs/${completedExportJobsResponse[1].id}`)
+        .get(`/jobs/${completedExportJobsResponse[1]!.id}`)
         .query({ shouldReturnTasks: false })
         .reply(200, completedExportJobsResponse[1])
         .persist();
@@ -167,8 +167,8 @@ describe('ValidationManager', () => {
         .get('/jobs')
         .query(inProgressExportParams as Record<string, string>)
         .reply(200, inProgressJobsResponse);
-      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[0].id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[0]);
-      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1].id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
+      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[0]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[0]);
+      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
       nock(jobManagerURL)
         .get('/jobs')
         .query(pendingExportParams as Record<string, string>)
@@ -179,12 +179,12 @@ describe('ValidationManager', () => {
         .reply(200, completedExportJobsResponse);
 
       nock(jobManagerURL)
-        .get(`/jobs/${completedExportJobsResponse[0].id}`)
+        .get(`/jobs/${completedExportJobsResponse[0]!.id}`)
         .query({ shouldReturnTasks: false })
         .reply(200, completedExportJobsResponse[0])
         .persist();
 
-      nock(jobManagerURL).put(`/jobs/${inProgressJobsResponse[0].id}`, JSON.stringify(inProgressJobsResponse[0].parameters)).reply(200, []);
+      nock(jobManagerURL).put(`/jobs/${inProgressJobsResponse[0]!.id}`, JSON.stringify(inProgressJobsResponse[0]!.parameters)).reply(200, []);
 
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs);
 
@@ -193,21 +193,21 @@ describe('ValidationManager', () => {
 
     it('should return completed job duplication with expirationDate update', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
-      const completedJobWithChangedExpiration = { ...completedExportJobsResponse[0] };
+      const completedJobWithChangedExpiration = { ...completedExportJobsResponse[0]! };
       const newExpirationDate = getUTCDate();
       newExpirationDate.setDate(newExpirationDate.getDate() + 30);
       const updateExpirationParams = {
         parameters: {
-          ...completedExportJobsResponse[0].parameters,
+          ...completedExportJobsResponse[0]!.parameters,
           cleanupDataParams: {
-            ...completedExportJobsResponse[0].parameters.cleanupDataParams,
+            ...completedExportJobsResponse[0]!.parameters.cleanupDataParams,
             cleanupExpirationTimeUTC: newExpirationDate,
-            directoryPath: completedExportJobsResponse[0].parameters.cleanupDataParams.directoryPath,
+            directoryPath: completedExportJobsResponse[0]!.parameters.cleanupDataParams.directoryPath,
           },
         },
       };
 
-      const expirationDateSpy = jest.spyOn(jobManagerWrapper, 'updateJobExpirationDate');
+      const expirationDateSpy = vi.spyOn(jobManagerWrapper, 'updateJobExpirationDate');
       const completedJobCallbackWithUpdatedExpiration = { ...completedJobCallback, expirationTime: newExpirationDate as unknown as string };
 
       completedJobWithChangedExpiration.parameters.cleanupDataParams.cleanupExpirationTimeUTC = '2025-02-01T12:28:50.000Z';
@@ -216,11 +216,11 @@ describe('ValidationManager', () => {
         .query(completedExportParams as Record<string, string>)
         .reply(200, [completedJobWithChangedExpiration]);
       nock(jobManagerURL)
-        .get(`/jobs/${completedExportJobsResponse[0].id}`)
+        .get(`/jobs/${completedExportJobsResponse[0]!.id}`)
         .query({ shouldReturnTasks: false })
         .reply(200, completedJobWithChangedExpiration)
         .persist();
-      nock(jobManagerURL).put(`/jobs/${completedExportJobsResponse[0].id}`, JSON.stringify(updateExpirationParams)).reply(200);
+      nock(jobManagerURL).put(`/jobs/${completedExportJobsResponse[0]!.id}`, JSON.stringify(updateExpirationParams)).reply(200);
 
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs);
 
@@ -240,17 +240,17 @@ describe('ValidationManager', () => {
         .query(inProgressExportParams as Record<string, string>)
         .reply(200, inProgressJobsResponse);
       nock(jobManagerURL)
-        .get(`/jobs/${inProgressJobsResponse[0].id}`)
+        .get(`/jobs/${inProgressJobsResponse[0]!.id}`)
         .query({ shouldReturnTasks: false })
         .reply(200, inProgressJobsResponse[0])
         .persist();
-      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1].id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
+      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
       nock(jobManagerURL)
         .get('/jobs')
         .query(pendingExportParams as Record<string, string>)
         .reply(200, []);
 
-      nock(jobManagerURL).put(`/jobs/${inProgressJobsResponse[0].id}`, JSON.stringify(inProgressJobsResponse[0].parameters)).reply(200, []);
+      nock(jobManagerURL).put(`/jobs/${inProgressJobsResponse[0]!.id}`, JSON.stringify(inProgressJobsResponse[0]!.parameters)).reply(200, []);
 
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs);
 
@@ -259,9 +259,8 @@ describe('ValidationManager', () => {
 
     it('should return a processing export job and add new callbacks', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
-      const updatedCallbackParameters: ExportJobParameters = { ...(inProgressJobsResponse[0].parameters as ExportJobParameters) };
-      //This uses the logical assignment operator (||=), which assigns a value only if the left-hand side is falsy.
-      (updatedCallbackParameters.exportInputParams.callbackUrls ||= []).push(addedCallbackUrl[0]);
+      const updatedCallbackParameters: ExportJobParameters = { ...(inProgressJobsResponse[0]!.parameters as ExportJobParameters) };
+      (updatedCallbackParameters.exportInputParams.callbackUrls ??= []).push(addedCallbackUrl[0]!);
 
       nock(jobManagerURL)
         .get('/jobs')
@@ -273,18 +272,18 @@ describe('ValidationManager', () => {
         .query(inProgressExportParams as Record<string, string>)
         .reply(200, inProgressJobsResponse);
       nock(jobManagerURL)
-        .get(`/jobs/${inProgressJobsResponse[0].id}`)
+        .get(`/jobs/${inProgressJobsResponse[0]!.id}`)
         .query({ shouldReturnTasks: false })
         .reply(200, inProgressJobsResponse[0])
         .persist();
-      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1].id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
+      nock(jobManagerURL).get(`/jobs/${inProgressJobsResponse[1]!.id}`).query({ shouldReturnTasks: false }).reply(200, inProgressJobsResponse[1]);
       nock(jobManagerURL)
         .get('/jobs')
         .query(pendingExportParams as Record<string, string>)
         .reply(200, []);
 
       nock(jobManagerURL)
-        .put(`/jobs/${inProgressJobsResponse[0].id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
+        .put(`/jobs/${inProgressJobsResponse[0]!.id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
         .reply(200, []);
 
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, addedCallbackUrl);
@@ -294,11 +293,9 @@ describe('ValidationManager', () => {
 
     it('should return an processing export job and add a callback', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
-      const duplicateJob = [{ ...inProgressJobsResponse[0] }];
-      // Perform a deep copy of the parameters object
-      const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
-      // Use type assertion to safely delete the property
-      delete (duplicateJob[0].parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
+      const duplicateJob = [{ ...inProgressJobsResponse[0]! }];
+      const updatedCallbackParameters = structuredClone(duplicateJob[0]!.parameters) as ExportJobParameters;
+      delete (duplicateJob[0]!.parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
       updatedCallbackParameters.exportInputParams.callbackUrls = addedCallbackUrl;
 
       nock(jobManagerURL)
@@ -310,37 +307,32 @@ describe('ValidationManager', () => {
         .get('/jobs')
         .query(inProgressExportParams as Record<string, string>)
         .reply(200, duplicateJob);
-      nock(jobManagerURL).get(`/jobs/${duplicateJob[0].id}`).query({ shouldReturnTasks: false }).reply(200, duplicateJob[0]).persist();
+      nock(jobManagerURL).get(`/jobs/${duplicateJob[0]!.id}`).query({ shouldReturnTasks: false }).reply(200, duplicateJob[0]).persist();
       nock(jobManagerURL)
         .get('/jobs')
         .query(pendingExportParams as Record<string, string>)
         .reply(200, []);
 
       nock(jobManagerURL)
-        .put(`/jobs/${duplicateJob[0].id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
+        .put(`/jobs/${duplicateJob[0]!.id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
         .reply(200, []);
 
-      const updateCallbackSpy = jest.spyOn(
-        validationManager as unknown as {
-          updateExportCallbackURLs: (processingJob: JobExportResponse, newCallbacks?: CallbackUrlsTargetArray) => Promise<void>;
-        },
+      const updateCallbackSpy = vi.spyOn(
+        validationManager as unknown as { updateExportCallbackURLs: (job: unknown, urls: unknown) => Promise<void> },
         'updateExportCallbackURLs'
       );
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, addedCallbackUrl);
 
       expect(result).toEqual(processingResponse);
 
-      expect(updateCallbackSpy).toHaveBeenNthCalledWith(1, duplicateJob[0], addedCallbackUrl);
-      //expect(updateCallbackSpy).toHaveBeenCalledTimes(1);
+      expect(updateCallbackSpy).toHaveBeenNthCalledWith(1, duplicateJob[0]!, addedCallbackUrl);
     });
 
     it('should return an processing export job and create a new callback property', async () => {
       const { crs, productId, version, catalogId, roi } = dupParams;
-      const duplicateJob = [{ ...inProgressJobsResponse[0] }];
-      // Perform a deep copy of the parameters object
-      const updatedCallbackParameters = JSON.parse(JSON.stringify(duplicateJob[0].parameters)) as ExportJobParameters;
-      // Use type assertion to safely delete the property
-      delete (duplicateJob[0].parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
+      const duplicateJob = [{ ...inProgressJobsResponse[0]! }];
+      const updatedCallbackParameters = structuredClone(duplicateJob[0]!.parameters) as ExportJobParameters;
+      delete (duplicateJob[0]!.parameters.exportInputParams as { callbackUrls?: unknown }).callbackUrls;
       updatedCallbackParameters.exportInputParams.callbackUrls = addedCallbackUrl;
 
       nock(jobManagerURL)
@@ -352,14 +344,14 @@ describe('ValidationManager', () => {
         .get('/jobs')
         .query(inProgressExportParams as Record<string, string>)
         .reply(200, duplicateJob);
-      nock(jobManagerURL).get(`/jobs/${duplicateJob[0].id}`).query({ shouldReturnTasks: false }).reply(200, duplicateJob[0]).persist();
+      nock(jobManagerURL).get(`/jobs/${duplicateJob[0]!.id}`).query({ shouldReturnTasks: false }).reply(200, duplicateJob[0]).persist();
       nock(jobManagerURL)
         .get('/jobs')
         .query(pendingExportParams as Record<string, string>)
         .reply(200, []);
 
       nock(jobManagerURL)
-        .put(`/jobs/${duplicateJob[0].id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
+        .put(`/jobs/${duplicateJob[0]!.id}`, JSON.stringify({ parameters: updatedCallbackParameters }))
         .reply(200, []);
 
       const result = await validationManager.checkForExportDuplicate(productId, version, catalogId, roi, crs, addedCallbackUrl);
@@ -390,14 +382,14 @@ describe('ValidationManager', () => {
 
   describe('validateFreeSpace', () => {
     it('should not throw error when sufficient free space', async () => {
-      jest.spyOn(validationManager as unknown as { getFreeStorage: () => Promise<number> }, 'getFreeStorage').mockResolvedValue(10000);
+      vi.spyOn(validationManager as unknown as { getFreeStorage: (path: string) => Promise<number> }, 'getFreeStorage').mockResolvedValue(10000);
       const action = async () => validationManager.validateFreeSpace(1111, 'path');
 
       await expect(action()).resolves.not.toThrow();
     });
 
     it('should throw InsufficientStorage error when not enough sufficient free space', async () => {
-      jest.spyOn(validationManager as unknown as { getFreeStorage: () => Promise<number> }, 'getFreeStorage').mockResolvedValue(1);
+      vi.spyOn(validationManager as unknown as { getFreeStorage: (path: string) => Promise<number> }, 'getFreeStorage').mockResolvedValue(1);
       const action = async () => validationManager.validateFreeSpace(1111, 'path');
 
       await expect(action()).rejects.toThrow(InsufficientStorage);

@@ -1,11 +1,11 @@
-import { Logger } from '@map-colonies/js-logger';
-import { Tracer } from '@opentelemetry/api';
-import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
+import type { Logger } from '@map-colonies/js-logger';
+import type { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/tracing-utils';
 import type { MultiPolygon, Polygon } from 'geojson';
 import { inject, injectable } from 'tsyringe';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { BadRequestError, InsufficientStorage } from '@map-colonies/error-types';
-import {
+import type {
   CallbackExportResponse,
   CallbackUrlsTargetArray,
   ExportJobParameters,
@@ -13,11 +13,11 @@ import {
   RoiFeatureCollection,
 } from '@map-colonies/raster-shared';
 import { getStorageStatus } from '@src/common/utils';
+import type { ConfigType } from '@src/common/config';
 import { SERVICES } from '../../common/constants';
 import { JobManagerWrapper } from '../../clients/jobManagerWrapper';
 import { RasterCatalogManagerClient } from '../../clients/rasterCatalogManagerClient';
-import {
-  IConfig,
+import type {
   ICreateExportJobResponse,
   IGeometryRecord,
   IStorageEstimation,
@@ -34,15 +34,15 @@ export class ValidationManager {
   private readonly minContainedPercentage: number;
 
   public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(JobManagerWrapper) private readonly jobManagerClient: JobManagerWrapper,
     @inject(RasterCatalogManagerClient) private readonly rasterCatalogManager: RasterCatalogManagerClient
   ) {
-    this.storageEstimation = config.get<IStorageEstimation>('storageEstimation');
-    this.roiBufferMeter = config.get<number>('roiBufferMeter');
-    this.minContainedPercentage = config.get<number>('minContainedPercentage');
+    this.storageEstimation = config.get('storageEstimation') as IStorageEstimation;
+    this.roiBufferMeter = config.get('roiBufferMeter') as number;
+    this.minContainedPercentage = config.get('minContainedPercentage') as number;
   }
 
   @withSpanAsyncV4
@@ -113,7 +113,7 @@ export class ValidationManager {
         zoom: record.zoomLevel,
       });
       if (!record.sanitizedBox) {
-        throw new BadRequestError(`Requested ${JSON.stringify(record.geometry as Polygon | MultiPolygon)} has no intersection with requested layer`);
+        throw new BadRequestError(`Requested ${JSON.stringify(record.geometry)} has no intersection with requested layer`);
       }
     });
     return featuresRecords;

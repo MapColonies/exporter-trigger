@@ -60,6 +60,7 @@ describe('SchemasValidations', () => {
 
   it('should return valid input for a correct request with roi', () => {
     const userInput = createExportRequestSchema.parse({ ...validUserExportRequest, roi: { ...roi } });
+
     expect(userInput.roi?.features[0]).toHaveProperty('properties.minResolutionDeg');
   });
 });

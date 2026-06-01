@@ -1,45 +1,54 @@
 import { container } from 'tsyringe';
-import { Polygon, MultiPolygon } from 'geojson';
-import jsLogger from '@map-colonies/js-logger';
-import { RoiFeatureCollection } from '@map-colonies/raster-shared';
+import type { Polygon, MultiPolygon } from 'geojson';
+import { jsLogger } from '@map-colonies/js-logger';
 import * as turf from '@turf/turf';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { sanitizeBboxMock, sanitizeBboxRequestMock, notIntersectedPolygon } from '../../mocks/geometryMocks';
 import { checkRoiFeatureCollectionSimilarity, sanitizeBbox, isGeometryContained } from '../../../src/utils/geometry';
 import { SERVICES } from '../../../src/common/constants';
 
+// vi.mock must be used to make @turf/turf exports spyable in ESM mode
+vi.mock('@turf/turf', async (importOriginal) => {
+  const actual = await importOriginal<typeof turf>();
+  return { ...actual };
+});
+
 describe('Geometry Utils', () => {
   let ROI_BUFFER_METER = 0;
   let MIN_CONTAINED_PERCENTAGE = 0;
-  let logger;
-  beforeEach(() => {
+  let logger: Awaited<ReturnType<typeof jsLogger>>;
+
+  beforeEach(async () => {
     registerDefaultConfig();
-    logger = jsLogger({ enabled: false });
+    logger = await jsLogger({ enabled: false });
     container.register(SERVICES.LOGGER, { useValue: logger });
     ROI_BUFFER_METER = configMock.get<number>('roiBufferMeter');
     MIN_CONTAINED_PERCENTAGE = configMock.get<number>('minContainedPercentage');
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('sanitizedBbox', () => {
     it('should return the sanitized bbox for zoom 0', () => {
       const response = sanitizeBbox(sanitizeBboxRequestMock);
+
       expect(response).toStrictEqual(sanitizeBboxMock);
     });
 
     it('should return null when polygon and footprint dont intersect', () => {
       const response = sanitizeBbox({ ...sanitizeBboxRequestMock, polygon: notIntersectedPolygon });
+
       expect(response).toBeNull();
     });
 
     it('should throw error when some internal error occurred', () => {
-      jest.spyOn(turf, 'feature').mockImplementation(() => {
+      vi.spyOn(turf, 'feature').mockImplementation(() => {
         throw new Error('Mocked feature error');
       });
       const action = () => sanitizeBbox({ ...sanitizeBboxRequestMock, polygon: notIntersectedPolygon });
+
       expect(action).toThrow(Error);
     });
   });
@@ -66,7 +75,7 @@ describe('Geometry Utils', () => {
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
-      expect(result).toBeTruthy();
+      expect(result).toBe(true);
     });
 
     // Different feature count
@@ -89,17 +98,17 @@ describe('Geometry Utils', () => {
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
 
     // Empty feature collections
     it('should return true when both collections are empty', () => {
-      const fc1 = turf.featureCollection([]) as RoiFeatureCollection;
-      const fc2 = turf.featureCollection([]) as RoiFeatureCollection;
+      const fc1 = turf.featureCollection([]);
+      const fc2 = turf.featureCollection([]);
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
-      expect(result).toBeTruthy();
+      expect(result).toBe(true);
     });
 
     // Different properties
@@ -122,12 +131,11 @@ describe('Geometry Utils', () => {
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
 
     // Job ROI contains request ROI with area ratio within threshold
     it('should return true when job ROI contains request ROI and area ratio is within threshold', () => {
-      // Request ROI: Inner square: 96 sq units
       const requestSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -141,7 +149,6 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Job ROI: Outer square: 100 sq units - contains request (96% ratio above 90% threshold)
       const jobSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -166,12 +173,10 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeTruthy();
+      expect(result).toBe(true);
     });
 
-    // Job ROI contains request ROI but area ratio below threshold
     it('should return false when job ROI contains request ROI but area ratio is below threshold', () => {
-      // Request ROI: Inner square: 64 sq units
       const requestSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -185,7 +190,6 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Job ROI: Outer square: 100 sq units - contains request (64% ratio below 90% threshold)
       const jobSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -210,12 +214,10 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
 
-    // Request ROI larger than job ROI - should not be similar
     it('should return false when request ROI is larger than job ROI', () => {
-      // Request ROI: Large square: 100 sq units
       const requestSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -229,7 +231,6 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Job ROI: Small square: 36 sq units - cannot contain request
       const jobSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -254,12 +255,10 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
 
-    // Buffer doesn't create containment
     it("should return false when buffer doesn't create containment", () => {
-      // Two squares that are 10 meters apart - beyond the 5 meter buffer
       const square1Polygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -291,12 +290,10 @@ describe('Geometry Utils', () => {
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
 
-    // Multiple features - all match (job ROI contains request ROI)
     it('should return true when all features in collections find matches', () => {
-      // Request ROI has two smaller squares
       const requestSquare1: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -323,7 +320,6 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Job ROI has corresponding larger squares that contain the request squares
       const jobSquare1: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -365,12 +361,10 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeTruthy();
+      expect(result).toBe(true);
     });
 
-    // Multiple features - some don't match
     it("should return false when some features don't find matches", () => {
-      // First collection has two squares
       const square1aPolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -397,7 +391,6 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Second collection has one matching square and one non-matching
       const square2aPolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -436,12 +429,10 @@ describe('Geometry Utils', () => {
 
       const result = checkRoiFeatureCollectionSimilarity(fc1, fc2, ROI_BUFFER_METER, MIN_CONTAINED_PERCENTAGE, container.resolve(SERVICES.LOGGER));
 
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
 
-    // Multiple features - different order (job ROI contains request ROI)
     it('should match features correctly regardless of order', () => {
-      // Request ROI has two smaller squares
       const requestSquare1: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -468,7 +459,6 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Job ROI has corresponding larger squares that contain the request squares
       const jobSquare1: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -500,11 +490,7 @@ describe('Geometry Utils', () => {
         turf.feature(requestSquare2, props1, { id: 'f1b' }),
       ]);
 
-      const jobRoi = turf.featureCollection([
-        // Order reversed compared to requestRoi
-        turf.feature(jobSquare2, props1, { id: 'f2b' }),
-        turf.feature(jobSquare1, props1, { id: 'f2a' }),
-      ]);
+      const jobRoi = turf.featureCollection([turf.feature(jobSquare2, props1, { id: 'f2b' }), turf.feature(jobSquare1, props1, { id: 'f2a' })]);
 
       const result = checkRoiFeatureCollectionSimilarity(
         requestRoi,
@@ -514,12 +500,10 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeTruthy();
+      expect(result).toBe(true);
     });
 
-    // Ambiguous matching (job ROI contains request ROI)
     it('should handle ambiguous matching correctly', () => {
-      // Request ROI has two identical smaller squares at the same location
       const requestSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -533,7 +517,6 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Job ROI has two identical larger squares at the same location that contain the request squares
       const jobSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -564,7 +547,7 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeTruthy();
+      expect(result).toBe(true);
     });
 
     it('should return true when buffer polygon contains polygon', () => {
@@ -585,8 +568,6 @@ describe('Geometry Utils', () => {
         type: 'Polygon',
         coordinates: [
           [
-            // Expand small polygon [2,2] to [8,8] by exactly 2 meters on each side
-            // 2 meters ≈ 0.000018 degrees, so expand by 0.000018 on each side
             [1.999982, 1.999982],
             [1.999982, 8.000018],
             [8.000018, 8.000018],
@@ -607,7 +588,7 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeTruthy();
+      expect(result).toBe(true);
     });
 
     it('should return false when buffer polygon doesnt contains polygon', () => {
@@ -628,8 +609,6 @@ describe('Geometry Utils', () => {
         type: 'Polygon',
         coordinates: [
           [
-            // Expand small polygon [2,2] to [8,8] by exactly 10 meters on each side
-            // 10 meters ≈ 0.00009 degrees, so expand by 0.00009 on each side
             [1.99991, 1.99991],
             [1.99991, 8.00009],
             [8.00009, 8.00009],
@@ -650,16 +629,12 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
 
-    // Exactly at threshold boundary
     it('should handle area ratio exactly at threshold boundary', () => {
-      // Request ROI: Inner square with exactly 90% area of job square - exactly at the threshold
-      // For a square, side length = sqrt(area)
-      // So sqrt(90) ≈ 9.487
       const sideLength = Math.sqrt(90);
-      const offset = (10 - sideLength) / 2; // To center the smaller square
+      const offset = (10 - sideLength) / 2;
 
       const requestSquarePolygon: Polygon = {
         type: 'Polygon',
@@ -674,7 +649,6 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Job ROI: Outer square: 100 sq units
       const jobSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -699,12 +673,10 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeTruthy();
+      expect(result).toBe(true);
     });
 
-    // Invalid geometry handling
     it('should handle invalid geometries gracefully', () => {
-      // Request ROI: Create invalid geometry (self-intersecting polygon)
       const invalidPolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -718,7 +690,6 @@ describe('Geometry Utils', () => {
         ],
       };
 
-      // Job ROI: Create valid geometry
       const validSquarePolygon: Polygon = {
         type: 'Polygon',
         coordinates: [
@@ -743,7 +714,7 @@ describe('Geometry Utils', () => {
         container.resolve(SERVICES.LOGGER)
       );
 
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
   });
 
@@ -782,7 +753,8 @@ describe('Geometry Utils', () => {
         const innerFeature = turf.feature(innerPolygon, props);
 
         const result = isGeometryContained(outerFeature, innerFeature);
-        expect(result).toBeTruthy();
+
+        expect(result).toBe(true);
       });
 
       it('should return false when polygons do not overlap', () => {
@@ -816,7 +788,8 @@ describe('Geometry Utils', () => {
         const feature2 = turf.feature(polygon2, props);
 
         const result = isGeometryContained(feature1, feature2);
-        expect(result).toBeFalsy();
+
+        expect(result).toBe(false);
       });
 
       it('should return false when inner polygon is larger than outer polygon', () => {
@@ -850,17 +823,16 @@ describe('Geometry Utils', () => {
         const largeFeature = turf.feature(largePolygon, props);
 
         const result = isGeometryContained(smallFeature, largeFeature);
-        expect(result).toBeFalsy();
+
+        expect(result).toBe(false);
       });
     });
 
     describe('MultiPolygon as container', () => {
       it('should return false when only some polygons in MultiPolygon are contained', () => {
-        // MultiPolygon with two separate polygons
         const multiPolygon: MultiPolygon = {
           type: 'MultiPolygon',
           coordinates: [
-            // First polygon
             [
               [
                 [0, 0],
@@ -870,7 +842,6 @@ describe('Geometry Utils', () => {
                 [0, 0],
               ],
             ],
-            // Second polygon
             [
               [
                 [20, 20],
@@ -883,7 +854,6 @@ describe('Geometry Utils', () => {
           ],
         };
 
-        // Small polygon contained in the first polygon of the MultiPolygon
         const containedPolygon: Polygon = {
           type: 'Polygon',
           coordinates: [
@@ -901,15 +871,14 @@ describe('Geometry Utils', () => {
         const containedFeature = turf.feature(containedPolygon, props);
 
         const result = isGeometryContained(multiFeature, containedFeature);
-        expect(result).toBeFalsy();
+
+        expect(result).toBe(false);
       });
 
       it('should return false when no polygon in MultiPolygon contains the feature', () => {
-        // MultiPolygon with two separate polygons
         const multiPolygon: MultiPolygon = {
           type: 'MultiPolygon',
           coordinates: [
-            // First polygon
             [
               [
                 [0, 0],
@@ -919,7 +888,6 @@ describe('Geometry Utils', () => {
                 [0, 0],
               ],
             ],
-            // Second polygon
             [
               [
                 [20, 20],
@@ -932,7 +900,6 @@ describe('Geometry Utils', () => {
           ],
         };
 
-        // Polygon not contained in any part of the MultiPolygon
         const outsidePolygon: Polygon = {
           type: 'Polygon',
           coordinates: [
@@ -950,13 +917,13 @@ describe('Geometry Utils', () => {
         const outsideFeature = turf.feature(outsidePolygon, props);
 
         const result = isGeometryContained(multiFeature, outsideFeature);
-        expect(result).toBeFalsy();
+
+        expect(result).toBe(false);
       });
     });
 
     describe('MultiPolygon as contained feature', () => {
       it('should return true when requestRoi MultiPolygon is contained in  polygon jobRoi', () => {
-        // Large container polygon
         const containerPolygon: Polygon = {
           type: 'Polygon',
           coordinates: [
@@ -970,11 +937,9 @@ describe('Geometry Utils', () => {
           ],
         };
 
-        // MultiPolygon with two polygons both inside the container
         const multiPolygon: MultiPolygon = {
           type: 'MultiPolygon',
           coordinates: [
-            // First polygon - inside container
             [
               [
                 [0, 0],
@@ -984,7 +949,6 @@ describe('Geometry Utils', () => {
                 [0, 0],
               ],
             ],
-            // Second polygon - also inside container
             [
               [
                 [20, 20],
@@ -1001,11 +965,11 @@ describe('Geometry Utils', () => {
         const multiFeature = turf.feature(multiPolygon, props);
 
         const result = isGeometryContained(containerFeature, multiFeature);
-        expect(result).toBeTruthy();
+
+        expect(result).toBe(true);
       });
 
       it('should return false when some polygons in MultiPolygon are not contained', () => {
-        // Small container polygon
         const containerPolygon: Polygon = {
           type: 'Polygon',
           coordinates: [
@@ -1019,11 +983,9 @@ describe('Geometry Utils', () => {
           ],
         };
 
-        // MultiPolygon with one polygon inside and one outside the container
         const multiPolygon: MultiPolygon = {
           type: 'MultiPolygon',
           coordinates: [
-            // First polygon - inside container
             [
               [
                 [2, 2],
@@ -1033,7 +995,6 @@ describe('Geometry Utils', () => {
                 [2, 2],
               ],
             ],
-            // Second polygon - outside container
             [
               [
                 [20, 20],
@@ -1050,34 +1011,29 @@ describe('Geometry Utils', () => {
         const multiFeature = turf.feature(multiPolygon, props);
 
         const result = isGeometryContained(containerFeature, multiFeature);
-        expect(result).toBeFalsy();
+
+        expect(result).toBe(false);
       });
     });
 
     describe('MultiPolygon to MultiPolygon containment', () => {
       it('should return false when JobRoi is MultiPolygon and RequestedRoi is MultiPolygon but not identical', () => {
-        // Container MultiPolygon with one large polygon that contains both small polygons
         const containerMultiPolygon: MultiPolygon = {
           type: 'MultiPolygon',
           coordinates: [
-            // One large container polygon that contains both small polygons
             [
-              [
-                [-10, -10],
-                [-10, 40],
-                [40, 40],
-                [40, -10],
-                [-10, -10],
-              ],
+              [-10, -10],
+              [-10, 40],
+              [40, 40],
+              [40, -10],
+              [-10, -10],
             ],
-          ],
+          ].map((c) => [c]),
         };
 
-        // Contained MultiPolygon with two smaller polygons inside the large container
         const containedMultiPolygon: MultiPolygon = {
           type: 'MultiPolygon',
           coordinates: [
-            // First small polygon
             [
               [
                 [0, 0],
@@ -1087,7 +1043,6 @@ describe('Geometry Utils', () => {
                 [0, 0],
               ],
             ],
-            // Second small polygon
             [
               [
                 [20, 20],
@@ -1104,15 +1059,14 @@ describe('Geometry Utils', () => {
         const containedFeature = turf.feature(containedMultiPolygon, props);
 
         const result = isGeometryContained(containerFeature, containedFeature);
-        expect(result).toBeFalsy();
+
+        expect(result).toBe(false);
       });
 
       it('should return false when container MultiPolygon cannot contain all polygons of contained MultiPolygon', () => {
-        // Container MultiPolygon with one large polygon
         const containerMultiPolygon: MultiPolygon = {
           type: 'MultiPolygon',
           coordinates: [
-            // Only one container polygon
             [
               [
                 [-5, -5],
@@ -1125,11 +1079,9 @@ describe('Geometry Utils', () => {
           ],
         };
 
-        // Contained MultiPolygon with polygons that can't all fit
         const containedMultiPolygon: MultiPolygon = {
           type: 'MultiPolygon',
           coordinates: [
-            // First polygon - fits in container
             [
               [
                 [0, 0],
@@ -1139,7 +1091,6 @@ describe('Geometry Utils', () => {
                 [0, 0],
               ],
             ],
-            // Second polygon - outside container range
             [
               [
                 [20, 20],
@@ -1156,7 +1107,8 @@ describe('Geometry Utils', () => {
         const containedFeature = turf.feature(containedMultiPolygon, props);
 
         const result = isGeometryContained(containerFeature, containedFeature);
-        expect(result).toBeFalsy();
+
+        expect(result).toBe(false);
       });
     });
   });

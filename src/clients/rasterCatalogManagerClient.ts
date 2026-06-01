@@ -1,30 +1,31 @@
 import { inject, injectable } from 'tsyringe';
-import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
-import config from 'config';
-import { Logger } from '@map-colonies/js-logger';
+import { HttpClient } from '@map-colonies/mc-utils';
+import type { Logger } from '@map-colonies/js-logger';
 import { NotFoundError } from '@map-colonies/error-types';
-import { Tracer } from '@opentelemetry/api';
+import type { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import { LayerInfo } from '../common/interfaces';
+import type { ConfigType } from '../common/config';
 
 @injectable()
 export class RasterCatalogManagerClient extends HttpClient {
   public constructor(
-    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
+    @inject(SERVICES.LOGGER) protected override readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
     super(
       logger,
-      config.get<string>('externalClientsConfig.clientsUrls.rasterCatalogManager.url'),
+      String(config.get('externalClientsConfig.clientsUrls.rasterCatalogManager.url')),
       'RasterCatalogManager',
-      config.get<IHttpRetryConfig>('externalClientsConfig.httpRetry'),
-      config.get<boolean>('externalClientsConfig.disableHttpClientLogs')
+      config.get('externalClientsConfig.httpRetry'),
+      config.get('externalClientsConfig.disableHttpClientLogs')
     );
   }
 
   public async findLayer(id: string): Promise<LayerInfo> {
     const findLayerUrl = `/records/find`;
-    this.logger.info({ msg: `Retrieving catalog record with id ${id}` }, id);
+    this.logger.info({ msg: `Retrieving catalog record with id ${id}` });
 
     const layers = await this.post<LayerInfo[]>(findLayerUrl, { id });
 
@@ -33,6 +34,6 @@ export class RasterCatalogManagerClient extends HttpClient {
     }
 
     this.logger.debug({ msg: `Retrieved layer with id ${id}` });
-    return layers[0];
+    return layers[0]!;
   }
 }

@@ -1,6 +1,6 @@
-import { CreateExportRequest } from '@src/utils/zod/schemas';
-import { Application } from 'express';
+import type { Application } from 'express';
 import supertest from 'supertest';
+import type { CreateExportRequest } from '@src/utils/zod/schemas';
 
 export class ExportSender {
   public constructor(private readonly app: Application) {}
