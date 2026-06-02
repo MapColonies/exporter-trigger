@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.3.0](https://github.com/MapColonies/exporter-trigger/compare/v3.2.1...v3.3.0) (2026-06-02)
+
+
+### Miscellaneous Chores
+
+* force alignment to rc track ([93e5151](https://github.com/MapColonies/exporter-trigger/commit/93e5151420d00f04c024f484a102e58706d2fc9e))
+
 ## [3.2.1](https://github.com/MapColonies/exporter-trigger/compare/v3.2.0...v3.2.1) (2026-02-17)
 
 
