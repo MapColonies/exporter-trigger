@@ -120,7 +120,7 @@ resources:
       memory: 128Mi
 
 route:
-  enabled: true
+  enabled: false
   host:
   path: /api/raster/v1
   https: true
