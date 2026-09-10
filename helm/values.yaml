@@ -21,7 +21,7 @@ mclabels:
     port: 8080
 
 configManagement:
-  offlineMode: false
+  offlineMode: true
   name: 'exporter-trigger'
   version: 'latest'
   serverUrl: 'http://localhost:8080/api'
@@ -53,7 +53,7 @@ replicaCount: 1
 initialDelaySeconds: 60
 nodePort: 30030     # for minikube deployment only
 resetOnConfigChange: true
-imagePullPolicy: Always
+imagePullPolicy: IfNotPresent
 
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
