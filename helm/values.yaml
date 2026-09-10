@@ -1,7 +1,9 @@
 global:
   cloudProvider: {}
-  tracing: {}
-  openTelemetryOptions: {}
+  telemetry:
+    tracing: {}
+    logger:
+      opentelemetryOptions: {}
   environment: ""
   serviceUrls: {}
   storage: {}
@@ -71,22 +73,29 @@ image:
   # annotation2: annotation-value-2
 podAnnotations: {}
 
-tracing:
-  enabled: false
-  url: ""
-
-env:
-  port: 8080
+server:
+  port: 80
   targetPort: 8080
-  internalPort: 80
-  logLevel: info
-  logPrettyPrintEnabled: false
-  openTelemetryOptions:
-    enabled: false
-    url: ''
-    resourceAttributes: {}
+  protocol: TCP
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
+
+telemetry:
+  logger:
+    level: info
+    prettyPrint: false
+    opentelemetryOptions:
+      enabled: true
+      url: http://localhost:4317
+      # Rendered as OTEL_RESOURCE_ATTRIBUTES in "key=value,key=value" format
+      # resourceAttributes:
+      #   service.namespace: namespace
+      #   deployment.environment: dev
+  tracing:
+    enabled: true
+    url: http://localhost:55681/v1/traces
+
+env:
   disableHttpClientLogs: false
   cleanupExpirationDays: 30
   httpRetry:

@@ -4,6 +4,7 @@
 {{- $cloudProviderDockerRegistryUrl := include "exporter-trigger.cloudProviderDockerRegistryUrl" . -}}
 {{- $cloudProviderImagePullSecretName := include "exporter-trigger.cloudProviderImagePullSecretName" . -}}
 {{- $imageTag := include "exporter-trigger.tag" . -}}
+{{- $server := .Values.server -}}
 {{- if .Values.enabled -}}
 
 {{- $fs := (include "common.fs.merged" .) | fromYaml }}
@@ -60,7 +61,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.uid
             - name: SERVER_PORT
-              value: {{ .Values.env.targetPort | quote }}
+              value: {{ $server.targetPort | quote }}
             - name: GPKGS_LOCATION
               value: {{ $gpkgLocation }}
           envFrom:
@@ -68,8 +69,8 @@ spec:
                 name: {{ $configmapName }}
           ports:
             - name: http
-              containerPort: {{ .Values.env.targetPort }}
-              protocol: TCP
+              containerPort: {{ $server.targetPort }}
+              protocol: {{ $server.protocol }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           livenessProbe:
             initialDelaySeconds: {{ .Values.initialDelaySeconds }}

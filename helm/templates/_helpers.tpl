@@ -102,3 +102,37 @@ Returns the cloud provider docker registry url from global if exists or from the
 {{- else -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Returns the tracing url from global if set, otherwise from the chart's values
+*/}}
+{{- define "exporter-trigger.tracingUrl" -}}
+{{- if .Values.global.telemetry.tracing.url }}
+    {{- .Values.global.telemetry.tracing.url -}}
+{{- else if .Values.telemetry.tracing.url -}}
+    {{- .Values.telemetry.tracing.url -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the opentelemetry logging url from global if set, otherwise from the chart's values
+*/}}
+{{- define "exporter-trigger.opentelemetryLoggingUrl" -}}
+{{- if .Values.global.telemetry.logger.opentelemetryOptions.url }}
+    {{- .Values.global.telemetry.logger.opentelemetryOptions.url -}}
+{{- else if .Values.telemetry.logger.opentelemetryOptions.url -}}
+    {{- .Values.telemetry.logger.opentelemetryOptions.url -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Renders a map of resource attributes as key=value,key=value for OTEL_RESOURCE_ATTRIBUTES.
+Usage: {{ include "exporter-trigger.otelResourceAttributes" .resourceAttributes }}
+*/}}
+{{- define "exporter-trigger.otelResourceAttributes" -}}
+{{- $attributes := list }}
+{{- range $key, $value := . }}
+{{- $attributes = append $attributes (printf "%s=%s" $key (toString $value)) }}
+{{- end }}
+{{- join "," $attributes }}
+{{- end -}}
