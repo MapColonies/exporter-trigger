@@ -35,7 +35,7 @@ spec:
         app: {{ $chartName }}
         release: {{ $releaseName }}
         run: {{ $releaseName }}-{{ $chartName }}
-        {{- include "exporter-trigger.selectorLabels" . | nindent 8 }}
+        {{- include "exporter-trigger.labels" . | nindent 8 }}
       annotations:
         {{- if .Values.resetOnConfigChange }}
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
