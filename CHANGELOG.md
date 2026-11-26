@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.3.1](https://github.com/MapColonies/exporter-trigger/compare/v3.3.0...v3.3.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **helm:** add mclabels to pod template labels ([#153](https://github.com/MapColonies/exporter-trigger/issues/153)) ([23e7687](https://github.com/MapColonies/exporter-trigger/commit/23e7687d06bde9a7b9a77c212f83b8735b8e19c3))
+
 ## [3.3.0](https://github.com/MapColonies/exporter-trigger/compare/v3.2.1...v3.3.0) (2026-06-02)
 
 
